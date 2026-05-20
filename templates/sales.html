@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales History - POS System</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/ui.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .status-pill {
+            padding: 0.28rem 0.7rem;
+            border-radius: 100px;
+            border: 1px solid #ddd;
+            background: white;
+            color: #374151;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .status-pill:hover { border-color: #aaa; }
+        /* Date quick-filter mini-chips */
+        .date-chip {
+            padding: 0.18rem 0.5rem;
+            border-radius: 100px;
+            border: 1px solid transparent;
+            background: none;
+            color: #9ca3af;
+            font-size: 0.75rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.15s, border-color 0.15s, background 0.15s;
+        }
+        .date-chip:hover { color: #3498db; border-color: #bfdbfe; background: #eff6ff; }
+        .date-chip.active { color: #1d4ed8; border-color: #3b82f6; background: #eff6ff; font-weight: 600; }
+        #filter-search { box-sizing: border-box; }
+
+        /* ===== Card header accent ===== */
+        .card h2 {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding-left: 0.75rem;
+            border-left: 4px solid #3498db;
+            font-size: 1.05rem;
+            color: #2c3e50;
+        }
+
+        /* ===== Sales table: sticky headers, alternating rows, hover ===== */
+        #sales-table-wrapper {
+            max-height: 70vh; overflow-y: auto;
+            border-radius: 8px; border: 1px solid #e9ecef;
+        }
+        #sales-table-wrapper table { border-collapse: collapse; width: 100%; }
+        #sales-table-wrapper thead th {
+            position: sticky; top: 0; z-index: 2;
+            background: #2c3e50; color: white;
+            padding: 0.65rem 0.75rem; text-align: left;
+            font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;
+            border-bottom: 2px solid #1a252f;
+        }
+        #sales-table-wrapper thead th[onclick] { cursor: pointer; user-select: none; }
+        #sales-table-wrapper thead th[onclick]:hover { background: #34495e; }
+        /* skip alternating on date-group rows and expanded rows */
+        #sales-table-wrapper tbody tr.sale-row:nth-child(even) { background: #f8f9fa; }
+        #sales-table-wrapper tbody tr.sale-row:hover { background: #e8f4fd !important; transition: background 0.1s; }
+        #sales-table-wrapper tbody td { padding: 0.55rem 0.75rem; border-bottom: 1px solid #edf0f2; vertical-align: middle; font-size: 0.85rem; }
+
+        /* ===== Inline expanded sub-table ===== */
+        .expanded-inner-table { border-collapse: collapse; width: 100%; font-size: 0.83rem; margin-top: 0.25rem; border-radius: 6px; overflow: hidden; }
+        .expanded-inner-table thead th {
+            background: #3d5a80; color: white;
+            padding: 0.4rem 0.6rem; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;
+        }
+        .expanded-inner-table tbody tr:nth-child(even) { background: #eef4fb; }
+        .expanded-inner-table tbody td { padding: 0.35rem 0.6rem; border-bottom: 1px solid #e2eaf3; }
+        .expanded-inner-table tbody tr:last-child td { border-bottom: none; }
+
+        /* ===== Day subtotal row ===== */
+        .day-subtotal-row td {
+            background: #e8edf3 !important;
+            border-top: 2px solid #b0bec5 !important;
+            border-bottom: 2px solid #b0bec5 !important;
+            padding: 0.35rem 0.75rem !important;
+            font-size: 0.8rem !important;
+            border-left: 4px solid #3498db;
+        }
+
+        /* ===== Empty state ===== */
+        .sales-empty-state {
+            text-align: center; padding: 3.5rem 2rem;
+        }
+        .sales-empty-state .empty-icon { font-size: 2.8rem; opacity: 0.4; margin-bottom: 0.75rem; }
+        .sales-empty-state p { font-size: 0.95rem; color: #868e96; margin: 0; }
+        .sales-empty-state small { font-size: 0.82rem; color: #adb5bd; }
+
+        /* ===== Results count badge ===== */
+        #results-count {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-size: 0.82rem; color: #6c757d;
+            background: #f1f3f5; border-radius: 20px;
+            padding: 0.2rem 0.7rem; margin-bottom: 0.6rem;
+        }
+
+        /* ===== Tab switcher ===== */
+        .sales-tabs {
+            display: flex; gap: 0; border-bottom: 2px solid #e9ecef; margin-bottom: 1.5rem;
+        }
+        .sales-tab-btn {
+            padding: 0.55rem 1.25rem; font-size: 0.88rem; font-weight: 600;
+            border: none; background: none; cursor: pointer; color: #6c757d;
+            border-bottom: 3px solid transparent; margin-bottom: -2px;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .sales-tab-btn:hover { color: #3498db; }
+        .sales-tab-btn.active { color: #3498db; border-bottom-color: #3498db; }
+
+        /* ===== Summary tab layout ===== */
+        .summary-section-title {
+            font-size: 0.72rem; font-weight: 700; color: #9ca3af;
+            text-transform: uppercase; letter-spacing: 0.07em; margin: 1.25rem 0 0.6rem;
+        }
+        .summary-section-title:first-child { margin-top: 0; }
+
+        /* ===== Right-side detail drawer ===== */
+        #sale-drawer {
+            position: fixed; top: 0; right: 0;
+            width: 420px; max-width: 95vw; height: 100vh;
+            background: white; box-shadow: -4px 0 24px rgba(0,0,0,0.13);
+            z-index: 1200;
+            display: flex; flex-direction: column;
+            transform: translateX(105%); transition: transform 0.27s cubic-bezier(0.4,0,0.2,1);
+            overflow: hidden;
+        }
+        #sale-drawer.open { transform: translateX(0); }
+        #drawer-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.32);
+            z-index: 1100; transition: opacity 0.2s;
+        }
+        #drawer-overlay.open { display: block; }
+        #sale-drawer .drawer-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 1.25rem; border-bottom: 1px solid #e9ecef;
+            background: #2c3e50; color: white; flex-shrink: 0;
+        }
+        #sale-drawer .drawer-header h3 { margin: 0; font-size: 1rem; font-weight: 600; }
+        #sale-drawer .drawer-close {
+            background: none; border: none; color: white; font-size: 1.4rem;
+            cursor: pointer; line-height: 1; padding: 0 0.25rem;
+        }
+        #sale-drawer .drawer-body {
+            flex: 1; overflow-y: auto; padding: 1.25rem;
+        }
+        #sale-drawer .drawer-actions {
+            padding: 0.75rem 1.25rem; border-top: 1px solid #e9ecef;
+            display: flex; gap: 0.5rem; flex-shrink: 0;
+        }
+        .drawer-meta-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 1.5rem;
+            font-size: 0.87rem; margin-bottom: 1rem;
+        }
+        .drawer-meta-grid .dm-label { color: #9ca3af; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.05rem; }
+        .drawer-meta-grid .dm-val { font-weight: 600; color: #1f2937; }
+        .drawer-section-title {
+            font-size: 0.72rem; font-weight: 700; color: #9ca3af;
+            text-transform: uppercase; letter-spacing: 0.07em; margin: 1rem 0 0.5rem;
+            padding-bottom: 0.3rem; border-bottom: 1px solid #f1f3f5;
+        }
+    </style>
+</head>
+<body class="has-sidebar">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <div class="navbar-brand-icon">🛒</div>
+                <span class="sidebar-brand-name" id="shop-name-title">POS System</span>
+            </div>
+        </div>
+        <div class="sidebar-nav">
+            <div class="sidebar-section-title">Overview</div>
+            <a href="/" class="sidebar-item"><span class="sidebar-icon">&#128202;</span><span class="sidebar-label">Dashboard</span></a>
+            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">&#128722;</span><span class="sidebar-label">Point of Sale</span></a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Sales</div>
+            <a href="/sales" class="sidebar-item active"><span class="sidebar-icon">&#128203;</span><span class="sidebar-label">Sales History</span></a>
+            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">&#128200;</span><span class="sidebar-label">Reports</span></a>
+            <div class="sidebar-divider admin-only"></div>
+            <div class="sidebar-section-title admin-only">Inventory</div>
+            <a href="/products" class="sidebar-item admin-only"><span class="sidebar-icon">&#128230;</span><span class="sidebar-label">Products</span></a>
+            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">&#127981;</span><span class="sidebar-label">Suppliers</span></a>
+            <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-icon">&#128204;</span><span class="sidebar-label">Purchase Orders</span></a>
+            <div class="sidebar-divider admin-only"></div>
+            <div class="sidebar-section-title admin-only">Customers</div>
+            <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">&#128101;</span><span class="sidebar-label">Customers</span></a>
+            <div class="sidebar-divider admin-only"></div>
+            <div class="sidebar-section-title admin-only">Administration</div>
+            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">&#128100;</span><span class="sidebar-label">Users</span></a>
+            <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">&#9881;&#65039;</span><span class="sidebar-label">Settings</span></a>
+            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">&#127978;</span><span class="sidebar-label">Shops</span></a>
+        </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+    <div class="main-wrapper" id="main-wrapper">
+        <header class="topbar">
+            <button class="topbar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
+            <div id="shop-switcher" class="shop-switcher" style="display:none;">
+                <select id="shop-select" onchange="switchShop(this.value)">
+                    <option value="">&#127760; All Shops</option>
+                </select>
+            </div>
+            <div class="topbar-spacer"></div>
+            <div class="user-profile-container">
+                <div class="user-profile" id="user-profile-toggle">
+                    <div class="user-profile-icon" id="user-icon">A</div>
+                    <div class="user-profile-info">
+                        <span class="user-profile-name" id="user-name">Admin</span>
+                    </div>
+                    <span class="user-profile-arrow">&#9660;</span>
+                </div>
+                <div class="user-dropdown" id="user-dropdown">
+                    <div class="dropdown-header">
+                        <div class="dropdown-role">
+                            Role: <span class="role-badge admin" id="role-badge">Administrator</span>
+                        </div>
+                    </div>
+                    <div class="dropdown-menu">
+                        <a href="#" onclick="openChangePasswordModal(); return false;" class="dropdown-item">Change Password</a>
+                        <a href="/logout" class="dropdown-item">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+
+    <div class="container">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+                <h2 style="margin:0;">Sales History</h2>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <span id="active-tab-label" style="font-size:0.8rem; color:#888;"></span>
+                    <button class="btn btn-secondary" onclick="exportSalesCSV()" style="font-size:0.8rem; padding:0.35rem 0.7rem;">⬇ Export CSV</button>
+                </div>
+            </div>
+
+            <!-- Tab switcher -->
+            <div class="sales-tabs">
+                <button class="sales-tab-btn active" id="tab-btn-transactions" onclick="switchTab('transactions')">📋 Transactions</button>
+                <button class="sales-tab-btn" id="tab-btn-summary" onclick="switchTab('summary')">📊 Summary</button>
+            </div>
+
+            <!-- ═══ TRANSACTIONS TAB ═══ -->
+            <div id="tab-transactions">
+
+            <!-- Filters Section -->
+            <div class="filters-section" style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:1rem 1.25rem; margin-bottom:1.5rem; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+
+                <!-- Row 1: Search + Advanced toggle + Clear -->
+                <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                    <!-- Search -->
+                    <div style="position:relative; flex:1; min-width:200px;">
+                        <span style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:#9ca3af; pointer-events:none; font-size:0.9rem;">🔍</span>
+                        <input type="text" id="filter-search" placeholder="Search sale ID, product, or customer…" style="width:100%; padding:0.5rem 0.75rem 0.5rem 2.1rem; border:1px solid #ddd; border-radius:8px; font-size:0.9rem; box-sizing:border-box;">
+                    </div>
+                    <!-- Advanced toggle -->
+                    <button id="advanced-toggle-btn" onclick="toggleAdvanced()" style="display:flex; align-items:center; gap:0.35rem; padding:0.42rem 0.75rem; border:1px solid #ddd; border-radius:6px; background:#fff; color:#374151; font-size:0.82rem; cursor:pointer; white-space:nowrap; flex-shrink:0;">
+                        <span>Filters</span>
+                        <span id="advanced-arrow" style="font-size:0.65rem; transition:transform 0.2s;">▼</span>
+                        <span id="advanced-badge" style="display:none; background:#3b82f6; color:white; border-radius:100px; font-size:0.65rem; font-weight:700; padding:0.05rem 0.4rem; line-height:1.4;"></span>
+                    </button>
+                    <!-- Clear all -->
+                    <button id="clear-filters-btn" onclick="clearFilters()" style="display:none; padding:0.38rem 0.7rem; background:none; border:1px solid #e74c3c; color:#e74c3c; border-radius:6px; font-size:0.82rem; cursor:pointer; white-space:nowrap;">× Clear</button>
+                </div>
+
+                <!-- Row 2: Date mini-chips (compact, always visible) -->
+                <div style="display:flex; gap:0.1rem; flex-wrap:wrap; align-items:center; margin-bottom:0.5rem;">
+                    <span style="font-size:0.7rem; color:#d1d5db; margin-right:0.25rem; flex-shrink:0;">Quick:</span>
+                    <button class="date-chip" id="chip-today" onclick="setDateFilter('today')">Today</button>
+                    <button class="date-chip" id="chip-yesterday" onclick="setDateFilter('yesterday')">Yesterday</button>
+                    <button class="date-chip" id="chip-week" onclick="setDateFilter('week')">This Week</button>
+                    <button class="date-chip" id="chip-month" onclick="setDateFilter('month')">This Month</button>
+                    <button class="date-chip" id="chip-all" onclick="setDateFilter('all')" style="color:#6b7280;">All time</button>
+                </div>
+
+                <!-- Advanced panel (hidden by default) -->
+                <div id="advanced-panel" style="display:none; border-top:1px solid #f1f5f9; padding-top:0.75rem; margin-bottom:0.75rem;">
+                    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
+                        <span style="font-size:0.72rem; color:#9ca3af; font-weight:600; letter-spacing:0.05em; flex-shrink:0;">DATE RANGE</span>
+                        <input type="date" id="filter-start-date" style="padding:0.4rem 0.6rem; border:1px solid #ddd; border-radius:6px; font-size:0.85rem;">
+                        <span style="color:#9ca3af; font-size:0.8rem;">→</span>
+                        <input type="date" id="filter-end-date" style="padding:0.4rem 0.6rem; border:1px solid #ddd; border-radius:6px; font-size:0.85rem;">
+                        <div style="width:1px; height:26px; background:#e2e8f0; flex-shrink:0; margin:0 0.25rem;"></div>
+                        <select id="filter-user" style="padding:0.4rem 0.6rem; border:1px solid #ddd; border-radius:6px; font-size:0.85rem; background:#fff;">
+                            <option value="all">All Users</option>
+                        </select>
+                        <select id="filter-payment" style="padding:0.4rem 0.6rem; border:1px solid #ddd; border-radius:6px; font-size:0.85rem; background:#fff;">
+                            <option value="all">All Methods</option>
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="transfer">Transfer</option>
+                            <option value="credit">On Credit</option>
+                            <option value="partial">Partial Payment</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Row 3: Status pills -->
+                <div style="display:flex; flex-wrap:wrap; gap:0.35rem; align-items:center;">
+                    <span style="font-size:0.72rem; color:#9ca3af; font-weight:600; letter-spacing:0.05em; margin-right:0.2rem; flex-shrink:0;">STATUS</span>
+                    <button class="status-pill" data-status="all" onclick="setStatusFilter('all')">All</button>
+                    <button class="status-pill" data-status="completed" onclick="setStatusFilter('completed')">✓ Completed</button>
+                    <button class="status-pill" data-status="unpaid" onclick="setStatusFilter('unpaid')">Unpaid</button>
+                    <button class="status-pill" data-status="partially_paid" onclick="setStatusFilter('partially_paid')">Partially Paid</button>
+                    <button class="status-pill" data-status="refunded" onclick="setStatusFilter('refunded')">Refunded</button>
+                    <button class="status-pill" data-status="partial_refund" onclick="setStatusFilter('partial_refund')">Partial Refund</button>
+                </div>
+
+                <!-- Hidden select — keeps syncUrlState / applyClientSideFilters working -->
+                <select id="filter-status" style="display:none;">
+                    <option value="all">All Statuses</option>
+                    <option value="completed">Completed</option>
+                    <option value="unpaid">Unpaid</option>
+                    <option value="partially_paid">Partially Paid</option>
+                    <option value="partial_refund">Partial Refund</option>
+                    <option value="refunded">Refunded</option>
+                </select>
+            </div>
+
+            <div id="results-count" style="margin-bottom: 0.5rem; color: #6c757d; font-size: 0.95rem;">Loading...</div>
+
+            <div id="sales-table-wrapper">
+                <table style="table-layout:fixed;">
+                    <thead id="sales-table-header">
+                        <tr>
+                            <th style="width:70px;" onclick="sortSales('id')">ID <span id="sort-id"></span></th>
+                            <th style="width:150px;" onclick="sortSales('date')">Date &amp; Time <span id="sort-date">▼</span></th>
+                            <th>Customer</th>
+                            <th style="width:70px; text-align:center;">Items</th>
+                            <th style="width:100px;" onclick="sortSales('total')">Total <span id="sort-total"></span></th>
+                            <th style="width:140px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sales-table">
+                        <tr><td colspan="6" style="text-align:center; padding:2rem; color:#adb5bd;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            </div><!-- /tab-transactions -->
+
+            <!-- ═══ SUMMARY TAB ═══ -->
+            <div id="tab-summary" style="display:none;">
+
+                <p class="summary-section-title">Overview</p>
+                <div id="sales-summary-bar" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:0.75rem; margin-bottom:1.5rem;"></div>
+
+                <p class="summary-section-title">Daily Sales (current filter)</p>
+                <div style="background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px; padding:1rem; overflow-x:auto;">
+                    <canvas id="daily-chart" height="80"></canvas>
+                    <p id="daily-chart-empty" style="text-align:center; color:#adb5bd; font-size:0.88rem; margin:1rem 0; display:none;">No data to display</p>
+                </div>
+
+                <p class="summary-section-title">Payment Method Breakdown</p>
+                <div id="payment-breakdown" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:0.75rem; margin-bottom:1.5rem;"></div>
+
+                <p class="summary-section-title">Top Products (by revenue)</p>
+                <div id="top-products-list"></div>
+
+            </div><!-- /tab-summary -->
+
+        </div>
+    </div>
+
+    <!-- Right-side Detail Drawer -->
+    <div id="drawer-overlay" onclick="closeDrawer()"></div>
+    <div id="sale-drawer" role="dialog" aria-modal="true" aria-label="Sale details">
+        <div class="drawer-header">
+            <h3 id="drawer-title">Sale Details</h3>
+            <button class="drawer-close" onclick="closeDrawer()" title="Close">&times;</button>
+        </div>
+        <div class="drawer-body" id="drawer-body"></div>
+        <div class="drawer-actions" id="drawer-actions"></div>
+    </div>
+    <!-- Keep old modal element so any stale code referencing it doesn't crash -->
+    <div id="details-modal"></div>
+
+    <!-- Refund Details Modal (Feature 7) -->
+    <div id="refund-details-modal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Refund Details - Sale #<span id="refund-sale-id"></span></h2>
+                <button class="close-btn" onclick="closeRefundDetailsModal()">&times;</button>
+            </div>
+            <div id="refund-details-content"><p style="text-align:center; padding:2rem;">Loading...</p></div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Change Password</h2>
+                <button class="close-btn" onclick="closeChangePasswordModal()">&times;</button>
+            </div>
+            <form id="change-password-form">
+                <div class="form-group">
+                    <label>Current Password *</label>
+                    <input type="password" id="current-password" required placeholder="Enter current password">
+                </div>
+                <div class="form-group">
+                    <label>New Password *</label>
+                    <input type="password" id="new-password" required placeholder="Minimum 6 characters" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password *</label>
+                    <input type="password" id="confirm-password" required placeholder="Re-enter new password" minlength="6">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary">Change Password</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let sales = [];
+        let allSales = [];
+        let currentUserRole = 'user';
+        let currencySymbol = '$';
+        let expandedSaleId = null;
+        let sortField = 'date';
+        let sortAsc = false;
+        let activeTab = 'transactions';
+
+        // ── Tab switching ──────────────────────────────────────────────────
+        function switchTab(tab) {
+            activeTab = tab;
+            document.getElementById('tab-transactions').style.display = tab === 'transactions' ? '' : 'none';
+            document.getElementById('tab-summary').style.display = tab === 'summary' ? '' : 'none';
+            document.getElementById('tab-btn-transactions').classList.toggle('active', tab === 'transactions');
+            document.getElementById('tab-btn-summary').classList.toggle('active', tab === 'summary');
+            const label = document.getElementById('active-tab-label');
+            if (label) label.textContent = tab === 'summary' ? 'Showing summary for current filter' : '';
+            // Persist tab in URL
+            const p = new URLSearchParams(window.location.search);
+            if (tab === 'summary') p.set('tab', 'summary'); else p.delete('tab');
+            history.replaceState(null, '', window.location.pathname + (p.toString() ? '?' + p.toString() : ''));
+            if (tab === 'summary') renderSummaryTab();
+        }
+
+        const STATUS_COLORS = {
+            all: '#4b5563', completed: '#27ae60', unpaid: '#e74c3c',
+            partially_paid: '#f39c12', refunded: '#8e44ad', partial_refund: '#e67e22'
+        };
+
+        function setStatusFilter(value) {
+            document.getElementById('filter-status').value = value;
+            document.querySelectorAll('.status-pill').forEach(btn => {
+                const isActive = btn.dataset.status === value;
+                const color = STATUS_COLORS[value] || '#4b5563';
+                if (isActive) {
+                    btn.style.background = color;
+                    btn.style.color = 'white';
+                    btn.style.borderColor = color;
+                } else {
+                    btn.style.background = 'white';
+                    btn.style.color = '#374151';
+                    btn.style.borderColor = '#ddd';
+                }
+            });
+            applyClientSideFilters();
+        }
+
+        let advancedOpen = false;
+
+        function toggleAdvanced() {
+            advancedOpen = !advancedOpen;
+            document.getElementById('advanced-panel').style.display = advancedOpen ? 'block' : 'none';
+            document.getElementById('advanced-arrow').style.transform = advancedOpen ? 'rotate(180deg)' : '';
+            document.getElementById('advanced-toggle-btn').style.borderColor = advancedOpen ? '#3b82f6' : '#ddd';
+            document.getElementById('advanced-toggle-btn').style.color = advancedOpen ? '#3b82f6' : '#374151';
+        }
+
+        function updateClearBtn() {
+            const hasStart   = !!document.getElementById('filter-start-date').value;
+            const hasEnd     = !!document.getElementById('filter-end-date').value;
+            const hasUser    = document.getElementById('filter-user').value !== 'all';
+            const hasPayment = document.getElementById('filter-payment').value !== 'all';
+            const hasStatus  = document.getElementById('filter-status').value !== 'all';
+            const hasSearch  = !!document.getElementById('filter-search').value.trim();
+
+            // Clear button visibility
+            const anyActive = hasStart || hasEnd || hasUser || hasPayment || hasStatus || hasSearch;
+            document.getElementById('clear-filters-btn').style.display = anyActive ? 'inline-block' : 'none';
+
+            // Advanced badge: count active advanced filters
+            const advancedCount = [hasStart || hasEnd, hasUser, hasPayment].filter(Boolean).length;
+            const badge = document.getElementById('advanced-badge');
+            if (advancedCount > 0) {
+                badge.textContent = advancedCount;
+                badge.style.display = 'inline-block';
+                // Auto-open panel if advanced filters were restored from URL
+                if (!advancedOpen) toggleAdvanced();
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Restore filter state from URL
+        (function restoreUrlState() {
+            const p = new URLSearchParams(window.location.search);
+            if (p.get('start')) document.getElementById('filter-start-date').value = p.get('start');
+            if (p.get('end')) document.getElementById('filter-end-date').value = p.get('end');
+            if (p.get('search')) document.getElementById('filter-search').value = p.get('search');
+            if (p.get('payment')) document.getElementById('filter-payment').value = p.get('payment');
+            // Restore pill state (visual only, no filter call yet — data not loaded)
+            const statusVal = p.get('status') || 'all';
+            document.getElementById('filter-status').value = statusVal;
+            document.querySelectorAll('.status-pill').forEach(btn => {
+                const isActive = btn.dataset.status === statusVal;
+                const color = STATUS_COLORS[statusVal] || '#4b5563';
+                btn.style.background = isActive ? color : 'white';
+                btn.style.color = isActive ? 'white' : '#374151';
+                btn.style.borderColor = isActive ? color : '#ddd';
+            });
+            // Set activeTab early so syncUrlState() preserves it during initial load
+            if (p.get('tab') === 'summary') activeTab = 'summary';
+            // user restored after options load
+            updateClearBtn();
+        })();
+
+        function sortSales(field) {
+            if (sortField === field) { sortAsc = !sortAsc; }
+            else { sortField = field; sortAsc = field === 'id' ? false : false; }
+            ['id','date','total'].forEach(f => {
+                const el = document.getElementById('sort-' + f);
+                if (el) el.textContent = sortField === f ? (sortAsc ? '▲' : '▼') : '';
+            });
+            sales.sort((a, b) => {
+                let va, vb;
+                if (field === 'id') { va = a.id; vb = b.id; }
+                else if (field === 'date') { va = new Date(a.sale_date); vb = new Date(b.sale_date); }
+                else if (field === 'total') { va = a.total_amount; vb = b.total_amount; }
+                if (va < vb) return sortAsc ? -1 : 1;
+                if (va > vb) return sortAsc ? 1 : -1;
+                return 0;
+            });
+            renderSales();
+        }
+
+        function syncUrlState() {
+            const p = new URLSearchParams();
+            const v = (id) => (document.getElementById(id)?.value || '').trim();
+            if (v('filter-start-date')) p.set('start', v('filter-start-date'));
+            if (v('filter-end-date')) p.set('end', v('filter-end-date'));
+            if (v('filter-user') && v('filter-user') !== 'all') p.set('user', v('filter-user'));
+            if (v('filter-payment') && v('filter-payment') !== 'all') p.set('payment', v('filter-payment'));
+            if (v('filter-status') && v('filter-status') !== 'all') p.set('status', v('filter-status'));
+            if (v('filter-search')) p.set('search', v('filter-search'));
+            // Always preserve the active tab so refresh lands on the same tab
+            if (activeTab === 'summary') p.set('tab', 'summary');
+            const qs = p.toString();
+            history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
+        }
+
+        // Load sales with filters
+        async function loadSales() {
+            showLoading();
+            try {
+                const startDate = document.getElementById('filter-start-date').value;
+                const endDate = document.getElementById('filter-end-date').value;
+                const userId = document.getElementById('filter-user').value;
+
+                let url = '/api/sales?';
+                const params = [];
+                if (startDate) params.push(`start_date=${startDate}`);
+                if (endDate) params.push(`end_date=${endDate}`);
+                if (userId && userId !== 'all') params.push(`user_id=${userId}`);
+                url += params.join('&');
+
+                const response = await fetch(url);
+                allSales = await response.json();
+                applyClientSideFilters();
+            } catch (error) {
+                console.error('Error loading sales:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function getSaleStatus(sale) {
+            if (sale.refund_status === 'refunded') return 'refunded';
+            if (sale.refund_status === 'partial') return 'partial_refund';
+            // For credit/partial sales, use live invoice status if available
+            if (sale.payment_method === 'credit' || sale.payment_method === 'partial') {
+                if (sale.invoice_status === 'paid') return 'completed';
+                if (sale.invoice_status === 'partial') return 'partially_paid';
+                return 'unpaid';
+            }
+            return 'completed';
+        }
+
+        // Client-side filters (search + payment method + status)
+        function applyClientSideFilters() {
+            syncUrlState();
+            const searchTerm = document.getElementById('filter-search').value.toLowerCase().trim();
+            const paymentFilter = document.getElementById('filter-payment').value;
+            const statusFilter = document.getElementById('filter-status').value;
+
+            sales = allSales.filter(sale => {
+                // Payment method filter
+                if (paymentFilter !== 'all' && (sale.payment_method || 'cash') !== paymentFilter) return false;
+
+                // Status filter
+                if (statusFilter !== 'all' && getSaleStatus(sale) !== statusFilter) return false;
+
+                // Search filter
+                if (searchTerm) {
+                    const matchId = sale.id.toString().includes(searchTerm);
+                    const matchProduct = sale.items.some(i => i.name.toLowerCase().includes(searchTerm));
+                    const matchCustomer = (sale.customer_name || '').toLowerCase().includes(searchTerm);
+                    if (!matchId && !matchProduct && !matchCustomer) return false;
+                }
+                return true;
+            });
+
+            // Re-apply current sort
+            if (sortField) {
+                sales.sort((a, b) => {
+                    let va, vb;
+                    if (sortField === 'id') { va = a.id; vb = b.id; }
+                    else if (sortField === 'date') { va = new Date(a.sale_date); vb = new Date(b.sale_date); }
+                    else if (sortField === 'total') { va = a.total_amount; vb = b.total_amount; }
+                    if (va < vb) return sortAsc ? -1 : 1;
+                    if (va > vb) return sortAsc ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            renderSales();
+            if (activeTab === 'summary') renderSummaryTab();
+            updateClearBtn();
+        }
+
+        // ── Summary tab ───────────────────────────────────────────────────
+        function renderSummaryBar() {
+            // now called only when Summary tab is visible
+        }
+
+        function renderSummaryTab() {
+            const bar = document.getElementById('sales-summary-bar');
+            const isAdmin = isAdminRole(currentUserRole);
+
+            const totalRevenue = sales.reduce((s, sale) => s + sale.total_amount, 0);
+            const totalDiscount = sales.reduce((s, sale) => s + (sale.discount_amount || 0), 0);
+            const totalRefunded = sales.reduce((s, sale) => s + (sale.refund_total || 0), 0);
+            const avgTransaction = sales.length > 0 ? totalRevenue / sales.length : 0;
+
+            const byCash     = sales.filter(s => (s.payment_method || 'cash') === 'cash').reduce((sum, s) => sum + s.total_amount, 0);
+            const byCard     = sales.filter(s => s.payment_method === 'card').reduce((sum, s) => sum + s.total_amount, 0);
+            const byTransfer = sales.filter(s => s.payment_method === 'transfer').reduce((sum, s) => sum + s.total_amount, 0);
+            const byCredit   = sales.filter(s => s.payment_method === 'credit').reduce((sum, s) => sum + s.total_amount, 0);
+            const byPartial  = sales.filter(s => s.payment_method === 'partial').reduce((sum, s) => sum + s.total_amount, 0);
+
+            const unpaidTotal = sales
+                .filter(s => s.payment_method === 'credit' || s.payment_method === 'partial')
+                .reduce((sum, s) => {
+                    const paid = s.payment_method === 'partial' ? (s.cash_tendered || 0) : 0;
+                    return sum + Math.max(0, s.total_amount - paid);
+                }, 0);
+
+            // Stat cards
+            let cards = [
+                { label: 'Transactions', value: sales.length, color: '#3498db', filter: null },
+                { label: 'Revenue', value: `${currencySymbol}${totalRevenue.toFixed(2)}`, color: '#27ae60', filter: null },
+                { label: 'Avg Sale', value: `${currencySymbol}${avgTransaction.toFixed(2)}`, color: '#8e44ad', filter: null },
+                { label: 'Discounts', value: `${currencySymbol}${totalDiscount.toFixed(2)}`, color: '#e67e22', filter: null },
+            ];
+            if (isAdmin) {
+                const totalProfit = sales.reduce((s, sale) => s + (sale.profit || 0), 0);
+                cards.push({ label: 'Profit', value: `${currencySymbol}${totalProfit.toFixed(2)}`, color: '#16a085', filter: null });
+            }
+            if (totalRefunded > 0) cards.push({ label: 'Refunded', value: `${currencySymbol}${totalRefunded.toFixed(2)}`, color: '#e74c3c', filter: 'refunded' });
+            if (unpaidTotal > 0) cards.push({ label: 'Outstanding', value: `${currencySymbol}${unpaidTotal.toFixed(2)}`, color: '#c0392b', filter: 'unpaid' });
+
+            bar.innerHTML = cards.map(c => `
+                <div style="background:white; border:1px solid #e9ecef; border-left:4px solid ${c.color}; border-radius:6px; padding:0.75rem 1rem; cursor:${c.filter ? 'pointer' : 'default'};"
+                     ${c.filter ? `onclick="switchTab('transactions'); setStatusFilter('${c.filter}');" title="Filter by ${c.label}"` : ''}>
+                    <div style="font-size:0.72rem; color:#888; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.25rem;">${c.label}</div>
+                    <div style="font-size:1.2rem; font-weight:700; color:${c.color};">${c.value}</div>
+                </div>
+            `).join('');
+
+            // Payment breakdown pills
+            const pbEl = document.getElementById('payment-breakdown');
+            const methods = [
+                { label: '💵 Cash', value: byCash, color: '#27ae60' },
+                { label: '💳 Card', value: byCard, color: '#3498db' },
+                { label: '🏦 Transfer', value: byTransfer, color: '#8e44ad' },
+                { label: '📋 On Credit', value: byCredit, color: '#e74c3c' },
+                { label: '🔀 Partial', value: byPartial, color: '#e67e22' },
+            ].filter(m => m.value > 0);
+            pbEl.innerHTML = methods.length === 0
+                ? `<p style="color:#adb5bd; font-size:0.88rem;">No data</p>`
+                : methods.map(m => `
+                    <div style="background:white; border:1px solid #e9ecef; border-radius:8px; padding:0.75rem 1rem; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.9rem;">${m.label}</span>
+                        <strong style="color:${m.color};">${currencySymbol}${m.value.toFixed(2)}</strong>
+                    </div>`).join('');
+
+            // Top products
+            const productMap = {};
+            sales.forEach(s => {
+                (s.items || []).forEach(item => {
+                    if (!productMap[item.name]) productMap[item.name] = { qty: 0, revenue: 0 };
+                    productMap[item.name].qty += item.quantity;
+                    productMap[item.name].revenue += item.price * item.quantity;
+                });
+            });
+            const topProducts = Object.entries(productMap)
+                .map(([name, d]) => ({ name, ...d }))
+                .sort((a, b) => b.revenue - a.revenue)
+                .slice(0, 10);
+            const maxRev = topProducts.length > 0 ? topProducts[0].revenue : 1;
+            const tpEl = document.getElementById('top-products-list');
+            if (topProducts.length === 0) {
+                tpEl.innerHTML = `<p style="color:#adb5bd; font-size:0.88rem;">No data</p>`;
+            } else {
+                tpEl.innerHTML = `<div style="background:white; border:1px solid #e9ecef; border-radius:8px; overflow:hidden;">
+                    <table style="border-collapse:collapse; width:100%; font-size:0.88rem;">
+                        <thead><tr>
+                            <th style="background:#2c3e50; color:white; padding:0.6rem 1rem; text-align:left; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em; font-weight:600;">#</th>
+                            <th style="background:#2c3e50; color:white; padding:0.6rem 1rem; text-align:left; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em; font-weight:600;">Product</th>
+                            <th style="background:#2c3e50; color:white; padding:0.6rem 1rem; text-align:right; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em; font-weight:600;">Qty Sold</th>
+                            <th style="background:#2c3e50; color:white; padding:0.6rem 1rem; text-align:right; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em; font-weight:600;">Revenue</th>
+                            <th style="background:#2c3e50; color:white; padding:0.6rem 1rem; width:30%;"></th>
+                        </tr></thead>
+                        <tbody>${topProducts.map((p, i) => {
+                            const pct = ((p.revenue / maxRev) * 100).toFixed(0);
+                            const rowBg = i % 2 === 0 ? '' : 'background:#f8f9fa;';
+                            return `<tr style="${rowBg}">
+                                <td style="padding:0.5rem 1rem; color:#888; font-weight:600;">${i + 1}</td>
+                                <td style="padding:0.5rem 1rem; font-weight:500;">${p.name}</td>
+                                <td style="padding:0.5rem 1rem; text-align:right; color:#6c757d;">${p.qty}</td>
+                                <td style="padding:0.5rem 1rem; text-align:right; font-weight:700; color:#27ae60;">${currencySymbol}${p.revenue.toFixed(2)}</td>
+                                <td style="padding:0.5rem 1rem;">
+                                    <div style="background:#e9ecef; border-radius:4px; height:8px; overflow:hidden;">
+                                        <div style="background:#3498db; height:100%; width:${pct}%; border-radius:4px;"></div>
+                                    </div>
+                                </td>
+                            </tr>`;
+                        }).join('')}</tbody>
+                    </table>
+                </div>`;
+            }
+
+            // Daily bar chart
+            renderDailyChart();
+        }
+
+        let dailyChartInstance = null;
+        function renderDailyChart() {
+            const canvas = document.getElementById('daily-chart');
+            const emptyEl = document.getElementById('daily-chart-empty');
+
+            // Group by date
+            const byDate = {};
+            sales.forEach(s => {
+                const d = new Date(s.sale_date).toLocaleDateString(undefined, {month:'short', day:'numeric'});
+                byDate[d] = (byDate[d] || 0) + s.total_amount;
+            });
+            const labels = Object.keys(byDate);
+            const values = Object.values(byDate);
+
+            if (labels.length === 0) {
+                canvas.style.display = 'none';
+                emptyEl.style.display = 'block';
+                return;
+            }
+            canvas.style.display = '';
+            emptyEl.style.display = 'none';
+
+            if (dailyChartInstance) dailyChartInstance.destroy();
+            dailyChartInstance = new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Revenue',
+                        data: values,
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                        borderColor: '#2980b9',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ` ${currencySymbol}${ctx.parsed.y.toFixed(2)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: v => currencySymbol + v.toLocaleString() }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderSales() {
+            const tbody = document.getElementById('sales-table');
+            const isAdmin = currentUserRole === 'admin';
+            const searchTerm = document.getElementById('filter-search').value.trim();
+
+            // Results count with revenue
+            const countEl = document.getElementById('results-count');
+            const filteredRevenue = sales.reduce((s, sale) => s + sale.total_amount, 0);
+            const isFiltered = sales.length !== allSales.length;
+            if (isFiltered) {
+                countEl.textContent = `Showing ${sales.length} of ${allSales.length} · ${currencySymbol}${filteredRevenue.toFixed(2)}`;
+            } else {
+                countEl.textContent = `${sales.length} sale${sales.length !== 1 ? 's' : ''} · ${currencySymbol}${filteredRevenue.toFixed(2)}`;
+            }
+
+            if (sales.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-0" style="padding:0; border:none;">
+                    <div class="sales-empty-state">
+                        <div class="empty-icon">🧾</div>
+                        <p>No sales found</p>
+                        <small>Try adjusting your filters or date range</small>
+                    </div>
+                </td></tr>`;
+                return;
+            }
+
+            // Feature 12: Group by date
+            let lastDate = '';
+            let daySubtotal = 0;
+            let dayProfit = 0;
+            let dayCount = 0;
+
+            let html = '';
+            sales.forEach((sale, idx) => {
+                const saleDate = new Date(sale.sale_date).toLocaleDateString();
+                const isNewDay = saleDate !== lastDate;
+
+                // Insert day subtotal for previous day
+                if (isNewDay && lastDate !== '') {
+                    html += renderDaySubtotal(lastDate, dayCount, daySubtotal, dayProfit, isAdmin);
+                    daySubtotal = 0; dayProfit = 0; dayCount = 0;
+                }
+
+                if (isNewDay) {
+                    html += `<tr style="background:#edf2f7;"><td colspan="6" style="font-weight:bold; font-size:0.85rem; color:#4a5568; padding:0.5rem 0.75rem;">📅 ${saleDate}</td></tr>`;
+                    lastDate = saleDate;
+                }
+
+                daySubtotal += sale.total_amount;
+                dayProfit += (sale.profit || 0);
+                dayCount++;
+
+                const discountAmount = sale.discount_amount || 0;
+                const payMethod = sale.payment_method || 'cash';
+                const customerName = sale.customer_name || '';
+
+                // Payment badge
+                const payBadge = payMethod === 'cash' ? '<span style="display:inline-block;padding:0.1rem 0.4rem;border-radius:3px;font-size:0.7rem;font-weight:bold;background:#d4edda;color:#155724;">💵 Cash</span>'
+                    : payMethod === 'card' ? '<span style="display:inline-block;padding:0.1rem 0.4rem;border-radius:3px;font-size:0.7rem;font-weight:bold;background:#cce5ff;color:#004085;">💳 Card</span>'
+                    : '<span style="display:inline-block;padding:0.1rem 0.4rem;border-radius:3px;font-size:0.7rem;font-weight:bold;background:#e2e3e5;color:#383d41;">🏦 Transfer</span>';
+
+                // Status badge — uses getSaleStatus() for consistency
+                let statusBadge = '';
+                const saleStatus = getSaleStatus(sale);
+                if (saleStatus === 'refunded') {
+                    statusBadge = '<span style="display:inline-block;padding:0.1rem 0.4rem;border-radius:3px;font-size:0.7rem;font-weight:bold;background:#e74c3c;color:white;">Refunded</span>';
+                } else if (saleStatus === 'partial_refund') {
+                    statusBadge = '<span style="display:inline-block;padding:0.1rem 0.4rem;border-radius:3px;font-size:0.7rem;font-weight:bold;background:#e67e22;color:white;">Partial Refund</span>';
+                } else if (saleStatus === 'unpaid') {
+                    statusBadge = '<span style="display:inline-block;padding:0.1rem 0.4rem;border-radius:3px;font-size:0.7rem;font-weight:bold;background:#e74c3c;color:white;">Unpaid</span>';
+                } else if (saleStatus === 'partially_paid') {
+                    statusBadge = '<span style="display:inline-block;padding:0.1rem 0.4rem;border-radius:3px;font-size:0.7rem;font-weight:bold;background:#f39c12;color:white;">Partially Paid</span>';
+                } else {
+                    statusBadge = '<span style="display:inline-block;padding:0.1rem 0.4rem;border-radius:3px;font-size:0.7rem;font-weight:bold;background:#27ae60;color:white;">Completed</span>';
+                }
+
+                const saleDateTime = new Date(sale.sale_date);
+                const datePart = saleDateTime.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
+                const timePart = saleDateTime.toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
+                const itemCount = (sale.items || []).reduce((s, i) => s + i.quantity, 0);
+                const itemLabel = `${itemCount} item${itemCount !== 1 ? 's' : ''}`;
+
+                // Print icon in status cell — stop propagation so row click (drawer) isn't triggered
+                const printBtn = `<button title="Print receipt" onclick="event.stopPropagation(); reprintReceipt(${sale.id})" style="margin-left:0.4rem; background:none; border:none; cursor:pointer; color:#adb5bd; font-size:0.85rem; padding:0; line-height:1; vertical-align:middle;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#adb5bd'">🖨</button>`;
+                const refundBtn = sale.refund_count > 0 ? `<button title="View refunds" onclick="event.stopPropagation(); viewRefundDetails(${sale.id})" style="margin-left:0.2rem; background:none; border:none; cursor:pointer; color:#f39c12; font-size:0.8rem; padding:0; line-height:1; vertical-align:middle;">↩</button>` : '';
+
+                html += `<tr class="sale-row" style="cursor:pointer;" onclick="openDrawer(${sale.id})">
+                    <td style="font-size:0.8rem; color:#6c757d;">#${sale.id}</td>
+                    <td style="font-size:0.8rem; white-space:nowrap;" title="${saleDateTime.toLocaleString()}">${datePart}<br><span style="color:#adb5bd;">${timePart}</span></td>
+                    <td style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.85rem;" title="${customerName}">${customerName || '<span style="color:#d1d5db; font-style:italic;">Walk-in</span>'}</td>
+                    <td style="text-align:center; font-size:0.82rem; color:#6c757d;">${itemLabel}</td>
+                    <td style="font-weight:700; font-size:0.9rem;">${currencySymbol}${sale.total_amount.toFixed(2)}</td>
+                    <td>${statusBadge}${printBtn}${refundBtn}</td>
+                </tr>`;
+
+                // Insert final day subtotal
+                if (idx === sales.length - 1) {
+                    html += renderDaySubtotal(saleDate, dayCount, daySubtotal, dayProfit, isAdmin);
+                }
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function renderDaySubtotal(date, count, subtotal, profit, isAdmin) {
+            let html = `<tr class="day-subtotal-row"><td colspan="6">`;
+            html += `📅 <strong>${date}</strong> &nbsp;·&nbsp; ${count} sale${count !== 1 ? 's' : ''} &nbsp;·&nbsp; Total: <strong style="color:#2c3e50;">${currencySymbol}${subtotal.toFixed(2)}</strong>`;
+            if (isAdmin && profit) html += ` &nbsp;·&nbsp; Profit: <strong style="color:#27ae60;">${currencySymbol}${profit.toFixed(2)}</strong>`;
+            html += `</td></tr>`;
+            return html;
+        }
+
+        // ── Detail Drawer ──────────────────────────────────────────────
+        function openDrawer(saleId) {
+            const sale = sales.find(s => s.id === saleId);
+            if (!sale) return;
+            const isAdmin = isAdminRole(currentUserRole);
+            const payMethod = (sale.payment_method || 'cash').charAt(0).toUpperCase() + (sale.payment_method || 'cash').slice(1);
+            const discountAmount = sale.discount_amount || 0;
+            const subtotal = sale.total_amount + discountAmount;
+
+            document.getElementById('drawer-title').textContent = `Sale #${sale.id}`;
+
+            // Meta grid
+            let body = `<div class="drawer-meta-grid">`;
+            body += `<div><div class="dm-label">Date</div><div class="dm-val">${new Date(sale.sale_date).toLocaleString()}</div></div>`;
+            body += `<div><div class="dm-label">Customer</div><div class="dm-val">${sale.customer_name || 'Walk-in'}</div></div>`;
+            body += `<div><div class="dm-label">Payment</div><div class="dm-val">${payMethod}</div></div>`;
+            if (isAdmin) {
+                body += `<div><div class="dm-label">Processed By</div><div class="dm-val" style="color:#6c757d;">${sale.full_name || sale.username || 'N/A'}</div></div>`;
+            }
+            if (sale.payment_method === 'cash' && sale.cash_tendered > 0) {
+                body += `<div><div class="dm-label">Received</div><div class="dm-val">${currencySymbol}${sale.cash_tendered.toFixed(2)}</div></div>`;
+                body += `<div><div class="dm-label">Change</div><div class="dm-val">${currencySymbol}${(sale.cash_tendered - sale.total_amount).toFixed(2)}</div></div>`;
+            }
+            body += `</div>`;
+
+            // Items
+            body += `<div class="drawer-section-title">Items</div>`;
+            body += `<table style="border-collapse:collapse; width:100%; font-size:0.85rem;">`;
+            body += `<thead><tr style="background:#f8f9fa;"><th style="padding:0.4rem 0.5rem; text-align:left;">Product</th><th style="padding:0.4rem 0.5rem; text-align:center;">Qty</th><th style="padding:0.4rem 0.5rem; text-align:right;">Price</th><th style="padding:0.4rem 0.5rem; text-align:right;">Total</th></tr></thead><tbody>`;
+            sale.items.forEach(item => {
+                const lineTotal = item.price * item.quantity;
+                body += `<tr style="border-bottom:1px solid #f1f3f5;"><td style="padding:0.4rem 0.5rem;">${item.name}</td><td style="padding:0.4rem 0.5rem; text-align:center; color:#6c757d;">${item.quantity}</td><td style="padding:0.4rem 0.5rem; text-align:right; color:#6c757d;">${currencySymbol}${item.price.toFixed(2)}</td><td style="padding:0.4rem 0.5rem; text-align:right; font-weight:600;">${currencySymbol}${lineTotal.toFixed(2)}</td></tr>`;
+            });
+            body += `</tbody></table>`;
+
+            // Totals
+            body += `<div class="drawer-section-title">Totals</div>`;
+            body += `<div style="font-size:0.9rem;">`;
+            if (discountAmount > 0) {
+                body += `<div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;"><span style="color:#6c757d;">Subtotal</span><span>${currencySymbol}${subtotal.toFixed(2)}</span></div>`;
+                body += `<div style="display:flex; justify-content:space-between; margin-bottom:0.3rem; color:#27ae60;"><span>Discount</span><span>-${currencySymbol}${discountAmount.toFixed(2)}</span></div>`;
+            }
+            body += `<div style="display:flex; justify-content:space-between; font-size:1.1rem; font-weight:700; border-top:2px solid #e9ecef; padding-top:0.4rem; margin-top:0.3rem;"><span>Total</span><span>${currencySymbol}${sale.total_amount.toFixed(2)}</span></div>`;
+            if (isAdmin) {
+                body += `<div style="display:flex; justify-content:space-between; margin-top:0.3rem; color:#6c757d; font-size:0.85rem;"><span>Cost</span><span>${currencySymbol}${(sale.total_cost || 0).toFixed(2)}</span></div>`;
+                body += `<div style="display:flex; justify-content:space-between; color:#27ae60; font-weight:600;"><span>Profit</span><span>${currencySymbol}${(sale.profit || 0).toFixed(2)}</span></div>`;
+            }
+            if (sale.refund_total > 0) {
+                body += `<div style="display:flex; justify-content:space-between; margin-top:0.3rem; color:#e74c3c;"><span>Refunded</span><span>-${currencySymbol}${sale.refund_total.toFixed(2)}</span></div>`;
+                body += `<div style="display:flex; justify-content:space-between; font-weight:600;"><span>Net</span><span>${currencySymbol}${(sale.total_amount - sale.refund_total).toFixed(2)}</span></div>`;
+            }
+            body += `</div>`;
+
+            document.getElementById('drawer-body').innerHTML = body;
+
+            // Action buttons
+            let actions = `<button class="btn btn-secondary" style="flex:1;" onclick="reprintReceipt(${sale.id})">🖨 Print Receipt</button>`;
+            if (sale.refund_count > 0) {
+                actions += `<button class="btn btn-danger" style="flex:1;" onclick="viewRefundDetails(${sale.id})">↩ Refunds (${sale.refund_count})</button>`;
+            }
+            document.getElementById('drawer-actions').innerHTML = actions;
+
+            document.getElementById('sale-drawer').classList.add('open');
+            document.getElementById('drawer-overlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDrawer() {
+            document.getElementById('sale-drawer').classList.remove('open');
+            document.getElementById('drawer-overlay').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // Keep stub so any old references don't throw
+        function viewSaleDetails(saleId) { openDrawer(saleId); }
+        function closeDetailsModal() {}
+        function reprintReceipt(saleId) {
+            const sale = sales.find(s => s.id === saleId);
+            if (!sale) return;
+
+            const payMethod = (sale.payment_method || 'cash').charAt(0).toUpperCase() + (sale.payment_method || 'cash').slice(1);
+            const discountAmount = sale.discount_amount || 0;
+            const subtotal = sale.total_amount + discountAmount;
+            const shopName = document.getElementById('shop-name-title').textContent;
+
+            let receiptHtml = `
+                <div style="font-family:monospace; max-width:350px; margin:0 auto; padding:1rem; border:1px dashed #ccc;">
+                    <h3 style="text-align:center; margin:0 0 0.5rem;">${shopName}</h3>
+                    <p style="text-align:center; font-size:0.8rem; margin:0 0 1rem;">Sale #${sale.id} — ${new Date(sale.sale_date).toLocaleString()}</p>
+                    ${sale.customer_name ? `<p style="font-size:0.8rem; margin:0 0 0.5rem;">Customer: ${sale.customer_name}</p>` : ''}
+                    <hr style="border:none; border-top:1px dashed #999;">`;
+
+            sale.items.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                receiptHtml += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; margin:0.2rem 0;">
+                    <span>${item.name} x${item.quantity}</span><span>${currencySymbol}${itemTotal.toFixed(2)}</span></div>`;
+            });
+
+            receiptHtml += `<hr style="border:none; border-top:1px dashed #999;">`;
+            if (discountAmount > 0) {
+                receiptHtml += `<div style="display:flex; justify-content:space-between; font-size:0.85rem;"><span>Subtotal</span><span>${currencySymbol}${subtotal.toFixed(2)}</span></div>`;
+                receiptHtml += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#27ae60;"><span>Discount</span><span>-${currencySymbol}${discountAmount.toFixed(2)}</span></div>`;
+            }
+            receiptHtml += `<div style="display:flex; justify-content:space-between; font-size:1rem; font-weight:bold; margin:0.3rem 0;"><span>TOTAL</span><span>${currencySymbol}${sale.total_amount.toFixed(2)}</span></div>`;
+            receiptHtml += `<div style="font-size:0.8rem; margin:0.3rem 0;">Payment: ${payMethod}</div>`;
+            if (sale.payment_method === 'cash' && sale.cash_tendered > 0) {
+                receiptHtml += `<div style="font-size:0.8rem;">Received: ${currencySymbol}${sale.cash_tendered.toFixed(2)}</div>`;
+                receiptHtml += `<div style="font-size:0.8rem;">Change: ${currencySymbol}${(sale.cash_tendered - sale.total_amount).toFixed(2)}</div>`;
+            }
+            if (sale.refund_total > 0) {
+                receiptHtml += `<div style="font-size:0.8rem; color:#e74c3c; margin-top:0.3rem;">Refunded: ${currencySymbol}${sale.refund_total.toFixed(2)}</div>`;
+            }
+            receiptHtml += `<p style="text-align:center; font-size:0.75rem; margin:1rem 0 0;">Thank you!</p></div>`;
+
+            const win = window.open('', '_blank', 'width=400,height=600');
+            win.document.write(`<html><head><title>Receipt #${sale.id}</title></head><body>${receiptHtml}<script>window.print();<\/script>    </div><!-- /main-wrapper -->
+</body></html>`);
+        }
+
+        // (viewSaleDetails and closeDetailsModal replaced by openDrawer/closeDrawer above)
+
+        // Feature 7: View refund details
+        async function viewRefundDetails(saleId) {
+            document.getElementById('refund-sale-id').textContent = saleId;
+            document.getElementById('refund-details-modal').classList.add('active');
+            document.getElementById('refund-details-content').innerHTML = '<p style="text-align:center; padding:2rem;">Loading...</p>';
+
+            try {
+                const response = await fetch(`/api/sales/${saleId}/refunds`);
+                const refunds = await response.json();
+
+                if (refunds.length === 0) {
+                    document.getElementById('refund-details-content').innerHTML = '<p style="text-align:center; padding:2rem; color:#888;">No refunds found.</p>';
+                    return;
+                }
+
+                let html = '';
+                refunds.forEach((r, idx) => {
+                    html += `<div style="border:1px solid #e9ecef; border-radius:6px; padding:1rem; margin-bottom:0.75rem;">`;
+                    html += `<div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">`;
+                    html += `<strong>Refund #${idx + 1}</strong>`;
+                    html += `<span style="color:#e74c3c; font-weight:bold;">${currencySymbol}${r.refund_amount.toFixed(2)}</span>`;
+                    html += `</div>`;
+                    html += `<div style="font-size:0.85rem; color:#666; margin-bottom:0.5rem;">`;
+                    html += `By: ${r.full_name || r.username || 'N/A'} · ${new Date(r.return_date).toLocaleString()}`;
+                    if (r.reason) html += ` · Reason: <em>${r.reason}</em>`;
+                    html += `</div>`;
+                    html += `<table style="font-size:0.85rem; margin:0;"><thead><tr><th>Product</th><th>Qty Returned</th></tr></thead><tbody>`;
+                    r.items.forEach(item => {
+                        html += `<tr><td>${item.name || `Product #${item.product_id}`}</td><td style="text-align:center;">${item.quantity}</td></tr>`;
+                    });
+                    html += `</tbody></table></div>`;
+                });
+
+                document.getElementById('refund-details-content').innerHTML = html;
+            } catch (e) {
+                document.getElementById('refund-details-content').innerHTML = '<p style="text-align:center; color:#e74c3c; padding:2rem;">Error loading refund details.</p>';
+            }
+        }
+        function closeRefundDetailsModal() { document.getElementById('refund-details-modal').classList.remove('active'); }
+
+        // Feature 8: Export filtered sales CSV
+        function exportSalesCSV() {
+            showLoading();
+            try {
+                const startDate = document.getElementById('filter-start-date').value;
+                const endDate = document.getElementById('filter-end-date').value;
+                let url = '/api/sales/export-csv?';
+                if (startDate) url += `start_date=${startDate}&`;
+                if (endDate) url += `end_date=${endDate}&`;
+                window.location.href = url;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Load user info
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/current-user');
+                const user = await response.json();
+                if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
+                if (user.shop_icon) { const bi = document.querySelector('.navbar-brand-icon'); if (bi) bi.textContent = user.shop_icon; }
+                currentUserRole = user.role;
+                if (user.currency) currencySymbol = user.currency;
+
+                const initial = (user.full_name || user.username).charAt(0).toUpperCase();
+                document.getElementById('user-icon').textContent = initial;
+                document.getElementById('user-name').textContent = user.full_name || user.username;
+
+                const roleBadge = document.getElementById('role-badge');
+                roleBadge.textContent = getRoleLabel(user.role);
+                roleBadge.className = getRoleBadgeClass(user.role);
+
+                const adminElements = document.querySelectorAll('.admin-only');
+                if (isAdminRole(user.role)) {
+                    adminElements.forEach(el => el.style.display = '');
+                } else {
+                    adminElements.forEach(el => el.style.display = 'none');
+                }
+                if (user.role === 'super_admin') {
+                    document.querySelectorAll('.super-admin-only').forEach(el => el.style.display = '');
+                    loadShopSwitcher(user.active_shop_id);
+                } else if (user.role === 'shop_owner') {
+                    loadShopSwitcher(user.active_shop_id);
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+            }
+        }
+
+        // User dropdown
+        document.getElementById('user-profile-toggle').addEventListener('click', function(e) {
+            e.stopPropagation();
+            this.classList.toggle('active');
+            document.getElementById('user-dropdown').classList.toggle('active');
+        });
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('user-dropdown');
+            const toggle = document.getElementById('user-profile-toggle');
+            if (!toggle.contains(e.target) && !dropdown.contains(e.target)) {
+                toggle.classList.remove('active');
+                dropdown.classList.remove('active');
+            }
+        });
+
+        async function loadShopSwitcher(activeShopId) {
+            try {
+                const resp = await fetch('/api/shops');
+                const shops = await resp.json();
+                const switcher = document.getElementById('shop-switcher');
+                const sel = document.getElementById('shop-select');
+                sel.innerHTML = '<option value="">All Shops</option>';
+                shops.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = (s.icon || '🛒') + ' ' + s.name;
+                    if (activeShopId && String(s.id) === String(activeShopId)) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+                if (!activeShopId) sel.value = '';
+                switcher.style.display = '';
+            } catch (e) { console.error('Failed to load shops', e); }
+        }
+
+        async function switchShop(shopId) {
+            try {
+                await fetch('/api/shops/switch', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({shop_id: shopId || null})
+                });
+                window.location.reload();
+            } catch (e) { console.error('Failed to switch shop', e); }
+        }
+
+        // Change password
+        function openChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.add('active');
+            document.getElementById('user-dropdown').classList.remove('active');
+            document.getElementById('user-profile-toggle').classList.remove('active');
+        }
+        function closeChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.remove('active');
+            document.getElementById('change-password-form').reset();
+        }
+        document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            if (newPassword !== confirmPassword) { showToast('New passwords do not match!', 'warning'); return; }
+            if (newPassword.length < 6) { showToast('New password must be at least 6 characters!', 'warning'); return; }
+            try {
+                const response = await fetch('/api/change-password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
+                });
+                const result = await response.json();
+                if (response.ok) { showToast('Password changed successfully!', 'success'); closeChangePasswordModal(); }
+                else { showToast(result.error || 'Error changing password', 'error'); }
+            } catch (error) { showToast('Error changing password', 'error'); }
+        });
+
+        // Load users for filter
+        async function loadUsersFilter() {
+            try {
+                const response = await fetch('/api/sales/users');
+                const users = await response.json();
+                const userSelect = document.getElementById('filter-user');
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.full_name || user.username;
+                    userSelect.appendChild(option);
+                });
+                // Restore user filter from URL
+                const urlUser = new URLSearchParams(window.location.search).get('user');
+                if (urlUser) userSelect.value = urlUser;
+            } catch (error) { console.error('Error loading users:', error); }
+        }
+
+        // Date filter quick buttons
+        function setDateFilter(period) {
+            const today = new Date();
+            const startDateInput = document.getElementById('filter-start-date');
+            const endDateInput = document.getElementById('filter-end-date');
+            // Highlight active chip
+            document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('active'));
+            const chipEl = document.getElementById(`chip-${period}`);
+            if (chipEl) chipEl.classList.add('active');
+
+            if (period === 'all') {
+                startDateInput.value = '';
+                endDateInput.value = '';
+                loadSales();
+                return;
+            }
+            endDateInput.value = today.toISOString().split('T')[0];
+            switch(period) {
+                case 'today':
+                    startDateInput.value = today.toISOString().split('T')[0]; break;
+                case 'yesterday':
+                    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+                    startDateInput.value = yesterday.toISOString().split('T')[0];
+                    endDateInput.value = yesterday.toISOString().split('T')[0]; break;
+                case 'week':
+                    const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 6);
+                    startDateInput.value = weekAgo.toISOString().split('T')[0]; break;
+                case 'month':
+                    const monthAgo = new Date(today); monthAgo.setMonth(monthAgo.getMonth() - 1);
+                    startDateInput.value = monthAgo.toISOString().split('T')[0]; break;
+            }
+            loadSales();
+        }
+
+        function clearFilters() {
+            document.getElementById('filter-start-date').value = '';
+            document.getElementById('filter-end-date').value = '';
+            document.getElementById('filter-user').value = 'all';
+            document.getElementById('filter-payment').value = 'all';
+            document.getElementById('filter-search').value = '';
+            // Reset date chips
+            document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('active'));
+            // Reset status pills
+            document.getElementById('filter-status').value = 'all';
+            document.querySelectorAll('.status-pill').forEach(btn => {
+                const isAll = btn.dataset.status === 'all';
+                btn.style.background = isAll ? STATUS_COLORS.all : 'white';
+                btn.style.color = isAll ? 'white' : '#374151';
+                btn.style.borderColor = isAll ? STATUS_COLORS.all : '#ddd';
+            });
+            // Close advanced panel
+            if (advancedOpen) toggleAdvanced();
+            loadSales();
+        }
+
+        // Event listeners
+        document.getElementById('filter-start-date').addEventListener('change', loadSales);
+        document.getElementById('filter-end-date').addEventListener('change', loadSales);
+        document.getElementById('filter-user').addEventListener('change', loadSales);
+        document.getElementById('filter-payment').addEventListener('change', applyClientSideFilters);
+        document.getElementById('filter-search').addEventListener('input', applyClientSideFilters);
+
+        // Close drawer on Escape
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+        // Initialize — restore tab after data loads
+        loadUserInfo();
+        loadUsersFilter();
+        loadSales().then(() => {
+            const tabParam = new URLSearchParams(window.location.search).get('tab');
+            if (tabParam === 'summary') switchTab('summary');
+        });
+    </script>
+    <script src="/static/js/session.js"></script>
+    </div><!-- /main-wrapper -->
+</body>
+</html>

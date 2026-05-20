@@ -1,0 +1,1107 @@
+# Clothing Shop POS System
+
+A full-featured Point of Sale (POS) web application for managing one or multiple retail and wholesale shops with comprehensive inventory management, sales tracking, profit analysis, wholesale customer credit management, and automated alerts.
+
+## Key Features
+
+- ✅ **Multi-shop / multi-tenant** architecture — full data isolation per shop
+- ✅ **Four-tier role system** — Super Admin, Shop Owner, Admin, Sales Staff
+- ✅ **Multi-user with role-based access** (Super Admin, Shop Owner, Admin & Sales Staff)
+- ✅ **Profit tracking** (cost vs. sell price)
+- ✅ **Automated email alerts** for low stock with **configurable schedule**
+- ✅ **Advanced reports** with PDF/Excel export
+- ✅ **Sales filters** (date range, search, staff, payment method, customer)
+- ✅ **Advanced sales history** with expandable rows, daily grouping, refund tracking, CSV export
+- ✅ **Discount management** at point of sale
+- ✅ **Receipt printing** with custom branding
+- ✅ **Session timeout** for security
+- ✅ **Per-shop name, icon & currency**
+- ✅ **Dashboard with charts** and analytics
+- ✅ **Background scheduler** for automated tasks
+- ✅ **Advanced POS** with category tabs, held carts, refunds, keyboard shortcuts
+- ✅ **Product management toolbar** with row selection, inline editing, bulk operations
+- ✅ **CSV import/export** for products
+- ✅ **Audit log** tracking all product changes
+- ✅ **Per-product reorder levels** with stock movement charts
+- ✅ **Supplier management** with contact details and order tracking
+- ✅ **Purchase orders** with partial receiving and auto stock updates
+- ✅ **Wholesale customer management** with credit limits and balance tracking
+- ✅ **Credit & partial payment** support at POS with invoice tracking
+- ✅ **Cash flow tracking** dashboard and reports with aging analysis
+- ✅ **Receivables reporting** with PDF/Excel export
+
+## Tech Stack
+
+- **Backend**: Python 3.8+ with Flask 3.0.0
+- **Database**: MySQL 9.x (via `mysql-connector-python`) — with full multi-shop/multi-tenant support
+- **Frontend**: HTML, CSS, JavaScript, Chart.js
+- **Reports**: ReportLab (PDF), OpenPyXL (Excel)
+- **Alerts**: SMTP email integration with APScheduler for automation
+- **Scheduler**: APScheduler 3.10.4 for background tasks
+
+## Features
+
+### 🔐 User Authentication & Roles
+
+The system has **four roles**, each with distinct permissions:
+
+| Role | Access |
+|------|--------|
+| **Super Admin** | Manages all shops, creates/switches between shops, sees cross-shop reports, manages backup & restore. No shop assignment — operates across all shops or switches into a specific one. |
+| **Shop Owner** | Admin-level access across multiple assigned shops. Can switch between assigned shops, manage products, stock, settings, and create admin/sales staff users. Cannot create or delete shops. |
+| **Admin** | Full access within their assigned shop — products, sales, reports, suppliers, customers, users, settings. Can see cost prices and profit margins. |
+| **User (Sales Staff)** | Access to POS only within their assigned shop. Cannot see cost prices or profits. |
+
+- **Login System**: Secure authentication with role-based permissions
+- **Session Timeout**: Automatic logout after configurable inactivity period (default: 30 minutes)
+- **Password Management**: Self-service password change for all users
+- **Shop switcher**: Super Admin and Shop Owner see a dropdown in the topbar to switch between shops (Super Admin: all shops; Shop Owner: assigned shops only)
+
+### 🏪 Multi-Shop Management (Super Admin Only)
+- **Create & manage shops**: Add shops with name, icon (emoji picker), currency, low stock threshold, address, and phone
+- **Shop switcher**: Dropdown in the topbar — switch to a specific shop or "All Shops" mode for cross-shop reporting
+- **Shop Owner role**: Assign multiple shops to a Shop Owner during user creation; they get admin-level access scoped to those shops
+- **Data isolation**: Every table is scoped by `shop_id` — products, sales, customers, suppliers, and all history are fully isolated per shop
+- **Per-shop branding**: Each shop has its own icon (shown in the sidebar), name, and currency symbol
+- **SKU uniqueness per shop**: Same SKU can exist in multiple shops independently
+- **User assignment**: Each admin and sales-staff user belongs to exactly one shop; Shop Owners can be assigned multiple shops
+- **Backup & restore**: Database backup/restore is restricted to Super Admin only
+
+
+- **Cost Price vs Sell Price**: Track buying and selling prices separately
+- **Profit Margins**: Automatic calculation of profit per product and per sale
+- **Profit Dashboard**: Real-time profit metrics visible to admins only
+- **Sales Attribution**: Track which user made each sale
+
+### 📦 Product Management (Admin Only)
+- **Toolbar-based actions**: Click a row to select, then use toolbar buttons (Edit, Stock, Delete, History, Audit, Duplicate, Reorder Level)
+- **Double-click to edit**: Opens edit modal directly on any row
+- **Inline quick-edit**: Double-click a cell (Name, Price, Cost Price, Stock) to edit in-place
+- **Keyboard navigation**: Arrow keys to move selection, Enter to edit, Delete to remove
+- Add, edit, and delete products with cost price and sell price
+- **Auto-generated SKU**: Leave blank to auto-generate (e.g., SHR-001)
+- **CSV Export**: Download all products as a CSV file
+- **CSV Import**: Upload a CSV to bulk-add or update products (matches by SKU)
+- **Bulk stock update**: Select multiple products and update stock in one operation
+- **Duplicate product**: Clone a product with one click (creates copy with 0 stock)
+- **Per-product reorder level**: Set custom low stock threshold per product (overrides global default)
+- **Audit log**: Track who changed what, when, and see old vs new values
+- **Sortable columns**: Click any column header to sort ascending/descending
+- **Search & filter**: Search by name, SKU, or category with category filter tabs
+- **Pagination**: Choose 25/50/100/All products per page with Prev/Next navigation
+- **Stock status badges**: In Stock (green), Low Stock (orange), Out of Stock (red)
+- **Row highlighting**: Red for out-of-stock, yellow for low stock, blue for selected
+- **Product count summary**: Shows total, low stock, and out-of-stock counts
+- **Stock history with chart**: SVG line chart showing stock level over time
+- **Custom Categories**: Create your own product categories
+
+### 📊 Inventory Control
+- Import and export stock with history tracking
+- **Automatic Email Alerts**: Scheduled low stock notifications with **configurable check times** (admin sets custom schedule)
+- **Manual Check**: Trigger low stock check anytime from Settings
+- **Configurable Thresholds**: Set global low stock threshold (products inherit this value)
+- Complete stock history with user attribution
+- **Inventory Reports**: Comprehensive stock movement reports with PDF/Excel export
+
+### 📦 Suppliers & Purchase Orders (Admin Only)
+- **Supplier Management**: Add, edit, delete suppliers with contact details (name, email, phone, address, notes)
+- **Supplier Search**: Real-time search across supplier name, contact, email, and phone
+- **Create Purchase Orders**: Select supplier → add products with quantity and unit cost → submit
+- **Auto-fill Cost**: Product cost price auto-populates when adding items to a PO
+- **Receive Stock**: Full or partial receiving with quantity tracking per item
+- **Partial Receiving**: Receive part of an order now, come back later for the rest (ordered → partial → received)
+- **Auto Stock Update**: Receiving a PO automatically increases product inventory and logs to stock history
+- **Cost Price Tracking**: Receiving uses **weighted average cost** — `(old_qty × old_cost + new_qty × new_cost) / total_qty` — for accurate profit tracking
+- **Quick PO from Supplier**: One-click "+ PO" button on each supplier row
+- **PO Status Tracking**: Visual badges for Ordered (blue), Partial (orange), Received (green)
+- **Status Filtering**: Filter purchase orders by status
+- **PO Detail View**: See ordered vs received quantities with completion percentages
+- **Delete Protection**: Cannot delete suppliers with existing purchase orders, or received POs
+
+### � Wholesale Customer Management (Admin Only)
+- **Customer CRUD**: Add, edit, delete wholesale customers with name, phone, email, address
+- **Credit limits**: Set credit limit per customer with balance tracking
+- **Customer search**: Real-time search by name, phone, or email
+- **Customer ledger**: View all invoices and payment history per customer
+- **Record payments**: Accept payments against outstanding invoices (auto-applies to oldest first)
+- **Aging report**: View overdue receivables broken down by 0-30, 31-60, 61-90, 90+ days
+- **Summary cards**: Total customers, total credit given, total outstanding, customers with balance
+
+### 🛒 Point of Sale (All Users)
+- **Customer type toggle**: Walk-in (cash only) or Wholesale (credit/partial)
+- **Searchable customer selector**: Autocomplete search for wholesale customers by name, phone, or email
+- **Credit info display**: Shows customer credit limit, current balance, and available credit on selection
+- **Payment methods**: Cash, Card, Transfer for walk-in; plus On Credit and Partial Payment for wholesale
+- **Due date field**: Set payment due date for credit/partial sales
+- **Credit limit validation**: Prevents exceeding customer's available credit
+- **Invoice auto-creation**: Credit/partial sales automatically create invoices and update customer balance
+- **Receipt shows credit info**: Amount paid, balance due, and due date displayed on credit sale receipts
+- **Category filter tabs** with product counts and dedicated "Out of Stock" tab
+- **Product search** by name, SKU, or category with keyboard shortcut (`/`)
+- Cart management with **inline quantity input**, Discount, and Remove buttons per item
+- **Cart count badge** on the cart header
+- **Cart-level discount**: Apply percentage or fixed amount discount to entire cart
+- **Payment modal**: Choose Cash, Card, or Transfer with quick cash buttons and change calculator
+- **Customer name** field on transactions
+- **Hold/resume cart**: Save cart to localStorage and resume later
+- **Cart persistence**: Cart survives page refresh
+- **Refund/return flow**: Look up sale by ID, see remaining quantities, process partial refunds
+- **Reprint last receipt**: Reprint the most recent transaction receipt
+- **Low stock warning**: Alert before checkout if items have low stock
+- **Keyboard shortcuts**: `/` to focus search, `Escape` to close modals, `Enter` to confirm sale
+- **Receipt generation** with payment method, amount received, change, customer name, shop branding
+- Out-of-stock products greyed out with badge in a separate tab
+- Automatic stock deduction on sale
+- Sales staff cannot see cost prices
+
+### 📈 Sales & Reporting
+- **Sales History with Filters**:
+  - Filter by date range (Today, Yesterday, This Week, This Month, Custom)
+  - Search by sale ID, product name, or **customer name**
+  - Filter by staff member
+  - **Filter by payment method** (Cash, Card, Transfer)
+  - Real-time search results
+- **Sales Summary Bar**: Transaction count, total revenue, average sale, discounts, profit (admin), refunds, payment breakdown
+- **Daily Grouping**: Sales grouped by date with per-day subtotals (count, total, profit)
+- **Expandable Sale Rows**: Click any row to expand inline item details, amount received/change, and refund info
+- **Sale Timeline**: Mini timeline in expanded view showing sale creation and linked refund events
+- **Sale Status Badge**: Completed (green), Partially Paid (yellow), Unpaid/credit (red), Partial Refund (orange), Refunded (red) per sale
+- **View Refund Details**: Dedicated modal showing each refund's items, quantities, reason, and amount
+- **Receipt Reprint**: Reprint any past sale receipt with full details (payment, customer, items, discounts)
+- **Customer Name Column**: See which customer made each purchase
+- **Payment Method Column**: Payment type badge (Cash, Card, Transfer) per sale
+- **Discount Column**: Highlighted discount amounts on sales with discounts applied
+- **Profit per Sale**: Admin-only column showing profit on each transaction
+- **Export Sales CSV**: Download filtered sales data as CSV file
+- **Advanced Reports & Analytics**:
+  - **Sales trend chart**: Line chart of daily revenue and profit over time
+  - **Payment method breakdown**: Doughnut chart showing Cash/Card/Transfer split
+  - **Revenue by category**: Pie chart of sales per product category
+  - **Hourly sales heatmap**: Bar chart showing busiest hours of the day
+  - **Profit margin trend**: Daily margin % line chart (admin only)
+  - **Discount summary**: Total discounts, discounted sale count, average discount
+  - **Refund summary**: Total refunded, refund count, refund rate, top refunded products
+  - **Staff performance**: Revenue, transactions, avg sale per staff with % of revenue bars
+  - **Customer insights**: Top customers by spend, repeat customer count
+  - **Period comparison**: Current vs previous period with % change indicators
+  - **Slow-moving stock**: Products with 0-1 sales in period (dead inventory detection)
+  - **Auto-load on page open**: Report generates automatically for last 7 days
+  - Quick range buttons: Today, This Week, This Month, This Quarter, This Year
+  - Daily sales breakdown with margin % column
+  - Top selling products and full product performance tables
+  - **PDF/Excel Export**: Download reports in both formats
+  - **Inventory reports**: Current stock, movements, most active products, low stock alerts
+- **Cash Flow Reports** (Admin Only):
+  - **Cash flow summary**: Total cash in, credit given, net cash flow, outstanding, overdue
+  - **Cash flow breakdown**: Walk-in cash, credit payments received, invoice count
+  - **Cash flow trend chart**: Daily cash collected vs credit given (bar chart)
+  - **Collection methods chart**: Payment method breakdown for credit collections (doughnut)
+  - **Receivables aging**: Visual cards + horizontal bar chart (0-30, 31-60, 61-90, 90+ days)
+  - **Outstanding by customer table**: Balance, invoices, earliest due date, credit utilization bar
+  - Quick ranges: Today, This Week, This Month, This Quarter
+  - **Export to PDF or Excel**
+- **Enhanced Dashboard**:
+  - Sales trend charts (last 7 days)
+  - Today vs Yesterday comparison
+  - Best sellers widget
+  - Recent sales activity
+  - **Cash Flow Overview** (Admin): Cash collected today, credit sales today, total outstanding, overdue amount
+- **UI/UX Enhancements**:
+  - **Left sidebar navigation** with collapsible icon-only mode and grouped sections (Overview, Sales, Inventory, Customers, Administration)
+  - Sticky topbar with shop switcher (Super Admin), user profile dropdown, and sidebar toggle button
+  - Customizable shop icon picker (40 emoji options) in Settings — icon appears in the sidebar across all pages
+  - CSS variables for consistent theming and easy customization
+  - Toast notifications replacing browser alerts (success, error, warning, info)
+  - Mobile-responsive sidebar (slides in/out with overlay at ≤900px)
+  - Full-screen loading overlay for long-running operations
+  - Smooth animations and transitions throughout
+
+## Installation
+
+### 🚀 Quick Start (Recommended)
+
+**Prerequisites:**
+- Python 3.8 or higher
+- MySQL 8.x or 9.x server
+
+> **macOS users** — MySQL is not installed by default. See [MySQL Setup](#mysql-setup) below.
+
+**For macOS/Linux:**
+
+```bash
+# Make the script executable (first time only)
+chmod +x start.sh
+
+# Run the application
+./start.sh
+```
+
+**For Windows:**
+
+```cmd
+start.bat
+```
+
+**If you get "python/pip not found" errors:**
+```bash
+# Ubuntu/Debian
+sudo apt update && sudo apt install python3 python3-pip python3-venv
+
+# Fedora/RHEL
+sudo dnf install python3 python3-pip
+
+# macOS (requires Homebrew)
+brew install python3
+```
+
+The start script will automatically:
+- ✓ Check Python installation
+- ✓ Create virtual environment
+- ✓ Install all dependencies (including MySQL drivers)
+- ✓ Initialize MySQL database
+- ✓ Start the application
+
+Then open your browser to: **http://localhost:5001**
+
+**Default Login Credentials:**
+
+| Role | Username | Password | Notes |
+|------|----------|----------|-------|
+| Super Admin | `superadmin` | `superadmin123` | Manages all shops |
+| Admin | `admin` | `admin123` | Assigned to default shop |
+
+**⚠️ IMPORTANT**: Change all default passwords immediately after first login!
+
+---
+
+### Manual Installation (All Platforms)
+
+#### Prerequisites
+
+**Install Python 3 (3.8 or higher) and required packages:**
+
+- **Ubuntu/Debian:**
+  ```bash
+  sudo apt update
+  sudo apt install python3 python3-pip python3-venv
+  ```
+
+- **Fedora/RHEL/CentOS:**
+  ```bash
+  sudo dnf install python3 python3-pip
+  ```
+
+- **macOS:**
+  ```bash
+  brew install python3
+  ```
+
+- **Windows:**
+  - Download from [python.org](https://www.python.org/downloads/)
+  - Make sure to check "Add Python to PATH" during installation
+
+#### Installation Steps
+
+1. **Create a virtual environment**:
+  ```bash
+  python3 -m venv venv
+  ```
+
+2. **Activate the virtual environment**:
+  - On macOS/Linux:
+    ```bash
+    source venv/bin/activate
+    ```
+  - On Windows:
+    ```bash
+    venv\Scripts\activate
+    ```
+
+3. **Install dependencies**:
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+  This will install:
+  - Flask 3.0.0 - Web framework
+  - Flask-CORS 4.0.0 - Cross-origin resource sharing
+  - ReportLab 4.0.7 - PDF generation
+  - OpenPyXL 3.1.2 - Excel file generation
+  - APScheduler 3.10.4 - Background task scheduling
+  - mysql-connector-python 8.2.0 - MySQL driver
+  - PyMySQL 1.1.0 - MySQL compatibility layer
+
+4. **Configure MySQL credentials** via environment variables:
+  ```bash
+  export DB_HOST=localhost
+  export DB_USER=root
+  export DB_PASSWORD=''          # Your MySQL root password
+  export DB_NAME=pos_mysql_app
+  export DB_PORT=3306
+  ```
+  Or create a `.env` file in the project root with the same keys (loaded automatically on startup).
+
+5. **Create the MySQL database**:
+  ```bash
+  mysql -u root -p -e "CREATE DATABASE pos_mysql_app CHARACTER SET utf8mb4;"
+  ```
+
+6. **Initialize the database schema**:
+  ```bash
+  ./venv/bin/python database.py
+  ```
+
+7. **Run the application**:
+  ```bash
+  python app.py
+  ```
+
+8. **Open your browser** and go to:
+  ```
+  http://localhost:5001
+  ```
+
+**Note**: Make sure to activate the virtual environment (step 3) each time you want to run the application.
+
+---
+
+### MySQL Setup
+
+#### macOS (Homebrew)
+```bash
+# Install MySQL
+brew install mysql
+
+# Start MySQL service (auto-starts on login)
+brew services start mysql
+
+# Secure the installation (optional but recommended)
+mysql_secure_installation
+
+# Connect to MySQL
+mysql -u root
+```
+
+#### Ubuntu / Debian
+```bash
+sudo apt update
+sudo apt install mysql-server
+sudo systemctl start mysql
+sudo systemctl enable mysql
+mysql -u root -p
+```
+
+#### Windows
+1. Download MySQL Installer from [mysql.com/downloads](https://dev.mysql.com/downloads/installer/)
+2. Run installer and choose **MySQL Server** + **MySQL Shell**
+3. Set a root password during setup
+4. MySQL service starts automatically
+
+---
+
+### Changing the MySQL Server Endpoint
+
+By default the app connects to MySQL on `localhost` using the `root` account with no password.  
+To point the app at a **remote MySQL server** (or change any credential), set environment variables **before** starting the app:
+
+#### macOS / Linux
+```bash
+export DB_HOST=myserver.example.com
+export DB_PORT=3306
+export DB_USER=posuser
+export DB_PASSWORD=secret
+export DB_NAME=pos_mysql_app
+
+./start.sh
+```
+
+#### Windows (Command Prompt)
+```cmd
+set DB_HOST=myserver.example.com
+set DB_PORT=3306
+set DB_USER=posuser
+set DB_PASSWORD=secret
+set DB_NAME=pos_mysql_app
+
+start.bat
+```
+
+#### Using a `.env` file (recommended for production)
+Copy `.env.example` to `.env` and fill in your values:
+```
+DB_HOST=myserver.example.com
+DB_PORT=3306
+DB_USER=posuser
+DB_PASSWORD=secret
+DB_NAME=pos_mysql_app
+```
+> `.env` is loaded automatically when the app starts. Never commit it to version control.
+
+#### Available environment variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DB_HOST` | `localhost` | MySQL server hostname or IP |
+| `DB_PORT` | `3306` | MySQL port |
+| `DB_USER` | `root` | MySQL username |
+| `DB_PASSWORD` | *(empty)* | MySQL password |
+| `DB_NAME` | `pos_mysql_app` | Database name |
+
+---
+
+### Multi-Shop / Multi-Tenant Support
+
+The system has full **multi-shop isolation** built into every table:
+
+- Every table (`products`, `sales`, `customers`, `suppliers`, `stock_history`, `purchase_orders`, `invoices`, `payments`, `product_audit_log`, `sale_returns`) has a `shop_id` column
+- Data from different shops **never mixes** in any query
+- Each admin/user is assigned to exactly one shop at creation time
+- SKUs are unique **per shop** (same SKU can exist across shops independently)
+- Super Admin can view all shops together or switch into a single shop for scoped views
+- Connection pooling handles concurrent shops efficiently
+
+**Managing shops via the web UI (Super Admin):**
+1. Log in as `superadmin`
+2. Go to **Shops** in the sidebar
+3. Click **+ Add New Shop** — choose name, icon (emoji dropdown), currency (26+ options or custom), low stock threshold, address, phone
+4. Assign users to shops when creating them in the **Users** page
+
+**Adding a shop via SQL (alternative):**
+```sql
+INSERT INTO shops (name, icon, currency_symbol, low_stock_threshold)
+VALUES ('Branch 2', '🏪', '€', 5);
+
+INSERT INTO users (shop_id, username, password, role, full_name)
+VALUES (2, 'branch2admin', SHA2('password', 256), 'admin', 'Branch 2 Admin');
+```
+
+---
+
+### Running After First Installation
+
+**With script:**
+```bash
+./start.sh          # macOS/Linux
+```
+```cmd
+start.bat           # Windows
+```
+
+**Manually:**
+```bash
+# Activate virtual environment first
+source venv/bin/activate    # macOS/Linux
+# OR
+venv\Scripts\activate       # Windows
+
+# Then start the app
+python app.py
+```
+
+**Stopping the server:**
+- Press `Ctrl+C` in the terminal where the app is running
+
+## Default Login
+
+When you first start the application, two accounts are created:
+
+| Role | Username | Password |
+|------|----------|----------|
+| Super Admin | `superadmin` | `superadmin123` |
+| Admin | `admin` | `admin123` |
+
+**⚠️ IMPORTANT**: Change all default passwords immediately after first login!
+
+> **MySQL Note**: The default installation has no root password. Run `mysql_secure_installation` to set one before deploying to production.
+
+## Usage
+
+### First-Time Setup
+
+1. **Login** as `superadmin` / `superadmin123`
+2. Go to **Shops** → edit the default shop: set its name, icon, currency, and address
+3. Create additional shops if needed (**+ Add New Shop**)
+4. Login as `admin` / `admin123` (or create new admin accounts per shop in **Users**)
+5. **Add Products** with cost and sell prices in the Products page
+6. **Add Sales Staff** from the Users page — assign each to a shop
+
+### For Admin
+
+#### Dashboard
+- View today's sales revenue and **profit**
+- **Sales trend chart** (last 7 days)
+- **Today vs Yesterday** comparison
+- **Best sellers** - Top 5 products
+- Monitor low stock alerts
+- See recent stock activity
+
+#### Products Page
+- **Toolbar workflow**: Click a row to select → use toolbar buttons for actions
+- Add products with **cost price** and **sell price** (auto-generates SKU)
+- View **profit margins** per product
+- **Create custom categories**
+- **Inline quick-edit**: Double-click a cell to edit name, price, cost, or stock in-place
+- **CSV Import/Export**: Bulk manage products via spreadsheet
+- **Bulk stock update**: Update stock for multiple products at once
+- **Duplicate products**: Clone similar products quickly
+- **Per-product reorder levels**: Override global threshold per product
+- **Audit log**: View full change history per product
+- **Stock history with chart**: Visual stock-over-time graph
+- **Pagination & sort**: 25/50/100/All per page, sort by any column
+- Delete products with confirmation
+
+#### Sales History
+- View all transactions with **profit details** (admin-only profit column)
+- **Filter by date range** (Today, Yesterday, Week, Month, Custom)
+- **Search by sale ID, product name, or customer name** (real-time)
+- **Filter by staff member** and **payment method** (Cash/Card/Transfer)
+- **Sales summary bar**: Revenue, avg sale, discounts, profit, refunds, payment breakdown
+- **Daily grouping**: Sales organized by date with per-day subtotals
+- **Expandable rows**: Click a sale to see inline items, amount received/change, timeline
+- **Sale status badges**: See at a glance if a sale is completed, unpaid (credit), partially paid, or refunded
+- **View refund details**: Full breakdown of each refund (items, quantities, reason)
+- **Reprint receipts**: Print any past sale receipt from history
+- **Export to CSV**: Download filtered sales data
+- See **who made each sale** and **customer name**
+- Track sales performance by staff member
+
+#### Reports & Analytics
+- **Sales Reports** (auto-loads last 7 days on page open):
+  - **Sales trend chart**: Daily revenue + profit line chart (Chart.js)
+  - **Payment method doughnut chart**: Visual Cash/Card/Transfer breakdown
+  - **Category revenue pie chart**: Sales by product category
+  - **Hourly sales bar chart**: Transaction heatmap by hour of day
+  - **Profit margin trend**: Daily margin % over time (admin only)
+  - **Discount summary**: Total discounts, discounted count, average discount
+  - **Refund summary**: Total refunded, count, rate, top refunded products
+  - **Staff performance table**: Revenue, transactions, avg sale, profit, % of revenue bar
+  - **Customer insights**: Top customers, repeat customer count, named sale %
+  - **Period comparison**: Current vs previous period with % change arrows
+  - Daily breakdown, top products, product performance tables
+  - Quick ranges: Today, This Week, This Month, This Quarter, This Year
+  - **Export to PDF or Excel**
+- **Inventory Reports**:
+  - Current stock levels, stock movements, most active products
+  - **Slow-moving stock**: Products with 0-1 sales (dead inventory)
+  - Low stock alerts
+  - **Export to PDF or Excel**
+- **Cash Flow Reports** (Admin Only):
+  - Cash flow summary: Total collected, credit given, net flow, outstanding, overdue
+  - Daily cash flow trend chart (collected vs credit)
+  - Collection methods breakdown chart
+  - Receivables aging analysis (0-30, 31-60, 61-90, 90+ days)
+  - Outstanding by customer with credit utilization
+  - **Export to PDF or Excel**
+
+#### Settings
+- **Shop Name**: Customize shop name (appears everywhere including receipts)
+- **Currency**: Choose from 20+ currencies or set custom symbol
+- **Session Timeout**: Configure auto-logout time (5 min - 24 hours)
+- **Email Configuration**:
+  - Configure SMTP settings (server, port, credentials)
+  - Test email functionality
+- **Low Stock Alerts & Scheduler**:
+  - Set global low stock threshold
+  - Configure automatic alert schedule (customizable check times)
+  - Manual low stock check trigger
+
+#### Customers
+- **Add wholesale customers** with name, phone, email, address, credit limit
+- **Customer ledger**: Click any customer to view their invoices and payment history
+- **Record payment**: Accept payments against outstanding invoices (applies to oldest first)
+- **Aging report**: View all overdue receivables across customers (0-30, 31-60, 61-90, 90+ days)
+- **Summary dashboard**: Total customers, credit given, outstanding balance, customers with balances
+- **Search**: Find customers by name, phone, or email
+
+### For Sales Staff (User Role)
+
+#### Point of Sale (Only Page Available)
+- Login takes you directly to POS
+- Search and select products (see sell prices only)
+- Add to cart and adjust quantities
+- Complete sales
+- **Cannot see cost prices or profits**
+
+## Adding Users
+
+**From the web interface (Recommended):**
+
+1. Login as **super admin** or **admin**
+2. Go to **Users** page
+3. Click **Add New User**
+4. Fill in username, password, and select role:
+   - **Admin**: Full access within their shop, sees profits and costs
+   - **User (Sales Staff)**: POS access only, cannot see costs or profits
+   > **Note**: The `super_admin` role cannot be created via the web interface — it is intentionally restricted to prevent privilege escalation. Super Admin accounts can only be created directly in the database (seeded on first install, or via SQL).
+5. **Super Admin** sees a "Assign to Shop" dropdown — select which shop to assign the user to
+6. Click **Create User**
+
+## Configuring Email Alerts
+
+To receive automatic low stock notifications:
+
+### Step 1: Configure Email Settings
+
+1. Login as admin
+2. Go to **Settings** → **Email Configuration**
+3. Configure SMTP settings:
+   - **SMTP Server**: Your email provider's server (e.g., `smtp.gmail.com`)
+   - **SMTP Port**: Usually `587` (TLS) or `465` (SSL)
+   - **Username**: Your email address
+   - **Password**: Your email password (without spaces)
+     - **For Gmail**: Use an [App Password](https://support.google.com/accounts/answer/185833), not your regular password
+   - **Alert Email**: Where to send notifications
+4. Click **Send Test Email** to verify configuration
+
+### Step 2: Configure Low Stock Alerts & Schedule
+
+1. Go to **Settings** → **Low Stock Alerts & Scheduler**
+2. Set **Low Stock Threshold**: Alert when stock falls below this number (default: 10)
+3. **Configure Schedule**: Add/remove/modify check times
+   - Default times: 09:00, 12:00, 18:00
+   - Click **+ Add Check Time** to add more
+   - Use time pickers to set custom times (24-hour format)
+   - Remove unwanted times (minimum 1 required)
+4. Click **Save Schedule** to update automatic alerts
+5. Click **Check Low Stock Now** to manually trigger an alert immediately
+
+### Automatic Scheduled Alerts
+
+Once configured, the system will **automatically** check for low stock at your **custom scheduled times**.
+
+**Default Schedule** (can be customized):
+- **09:00 AM** - Morning check
+- **12:00 PM** - Noon check
+- **06:00 PM** - Evening check
+
+**Customizable Schedule:**
+- Add as many check times as you need
+- Remove or modify existing times
+- Set times in 24-hour format (HH:MM)
+- Changes take effect immediately (no restart needed)
+- View next scheduled run times in the Settings page
+
+**How it works:**
+- Background scheduler runs inside the Flask app
+- Checks all products at your configured times
+- Sends email only if low stock items are found
+- Scheduler automatically updates when you save new times
+- No manual intervention needed after setup
+
+**Requirements:**
+- Flask app must be running (`./start.sh`)
+- VPN must be disconnected (SMTP ports are often blocked by VPNs)
+- Email settings must be configured properly
+
+### Popular Email Providers
+
+**Gmail:**
+- SMTP Server: `smtp.gmail.com`
+- Port: `587`
+- Note: Must use App Password (2FA required)
+
+**Outlook/Hotmail:**
+- SMTP Server: `smtp-mail.outlook.com`
+- Port: `587`
+
+**Yahoo:**
+- SMTP Server: `smtp.mail.yahoo.com`
+- Port: `587`
+
+**Custom/Office 365:**
+- Check with your email administrator for SMTP settings
+
+## Database
+
+The application uses **MySQL** with the following main tables:
+
+- **users**: User accounts, roles, and shop assignment (`shop_id` NULL for super_admin)
+- **shops**: Shop registry — name, icon, currency_symbol, low_stock_threshold, address, phone
+- **products**: Product information, stock levels, cost/sell prices, per-product reorder levels (scoped by shop_id)
+- **sales**: All sales transactions with items, payment method, amount received (cash_tendered column), customer name, customer_id (scoped by shop_id)
+- **sale_returns**: Refund/return records linked to original sales (scoped by shop_id)
+- **stock_history**: Complete inventory change log (scoped by shop_id)
+- **product_audit_log**: Tracks all product edits — who, what field, old value → new value (scoped by shop_id)
+- **customers**: Wholesale customer profiles with credit limits and outstanding balances (scoped by shop_id)
+- **invoices**: Credit/partial payment invoices linked to sales and customers (scoped by shop_id)
+- **payments**: Payment records against invoices (scoped by shop_id)
+- **settings**: Global system configuration (SMTP, session timeout, scheduler times — shared across all shops)
+- **suppliers**: Supplier contact records (scoped by shop_id)
+- **purchase_orders**: Purchase order headers and line items (scoped by shop_id)
+
+Database: MySQL — configured via environment variables or `database.py`.
+Default database name: `pos_mysql_app`
+
+## Monitoring Automatic Email Alerts
+
+**Check Scheduler Status:**
+1. Go to Settings → Low Stock Alerts & Scheduler
+2. Look for the status box at the top
+3. Should show: "✅ Automatic Email Alerts Enabled"
+4. Displays your configured schedule and next scheduled run times
+
+**View Scheduler Logs:**
+```bash
+# Watch scheduler activity in real-time
+tail -f /tmp/flask_output.log | grep SCHEDULER
+```
+
+**Expected log output:**
+```
+[SCHEDULER] Background scheduler started
+[SCHEDULER] Loaded 3 scheduled low stock checks
+[SCHEDULER] Added job: 09:00
+[SCHEDULER] Added job: 12:00
+[SCHEDULER] Added job: 18:00
+[SCHEDULER 2026-03-30 09:00:00] Running scheduled low stock check...
+[SCHEDULER] ✓ Alert sent successfully for 2 low stock items
+```
+
+**If scheduler is not running:**
+- Check if Flask app is running: `curl http://localhost:5001`
+- Restart Flask: `./start.sh`
+- Look for APScheduler errors in: `tail -30 /tmp/flask_output.log`
+
+## Product Categories
+
+The system starts with common categories, but you can create custom categories:
+- Default categories: Shirts, Pants, Dresses, Jackets, Shoes, Accessories, Other
+- **Add Custom Categories**: Simply type a new category name when adding/editing products
+- Categories automatically populate from existing products
+
+## Tips
+
+1. **Stock Management**: Import stock when receiving new inventory, export for manual adjustments
+2. **Low Stock Alerts**:
+   - Configure custom check times in Settings → Low Stock Alerts & Scheduler
+   - Default schedule: 09:00, 12:00, 18:00 (fully customizable)
+   - Add/remove check times as needed (minimum 1 required)
+   - **Important**: Disconnect VPN before scheduled times for emails to send
+   - Products below global threshold show in reports and dashboard
+   - Manual trigger available anytime in Settings
+3. **Backup**: Regularly dump your MySQL database: `mysqldump -u root -p --set-gtid-purged=OFF --single-transaction pos_mysql_app > ./backups/backup_$(date +%Y%m%d).sql`
+4. **SKU**: Use SKU codes to uniquely identify products (optional)
+5. **Session Security**: Adjust session timeout in Settings based on your security needs
+6. **Reports**: Use PDF export for printing, Excel for further analysis
+7. **Search**: Use real-time search in Sales History to quickly find transactions
+8. **Discounts**: Apply discounts at POS for promotions or special customers
+9. **Password Security**: Change default password immediately and use strong passwords
+10. **Scheduler**: Keep Flask running for automatic low stock alerts to work (use `./start.sh` on startup)
+
+## System Requirements
+
+- Python 3.8+
+- Modern web browser (Chrome, Firefox, Safari, Edge)
+- 50MB free disk space
+- SMTP server access (for email alerts - optional)
+- Internet connection (for email alerts and Chart.js CDN - optional)
+- Flask app running continuously (for automatic scheduled email alerts)
+
+## Support
+
+For issues or questions, please check the application logs in the terminal where you ran `python app.py`.
+
+## Documentation
+
+- **README.md**: Overview and installation guide (this file)
+- **USER_GUIDE.md**: Detailed guide on user roles, permissions, and workflows
+- **QUICKSTART.md**: Quick reference for getting started
+
+## Scripts
+
+- **start.sh**: Easy startup script for macOS/Linux (checks dependencies, creates venv, installs packages, runs app)
+- **start.bat**: Easy startup script for Windows (auto-setup and run)
+- **add_user.py**: Add new users via command line (admin or sales staff)
+- **database.py**: Initialize or reset MySQL database schema
+- **check_low_stock.sh**: Manual low stock checker (backup option, not needed with built-in scheduler)
+- **test_smtp_direct.py**: Test email configuration without starting Flask
+- **test_gmail_simple.py**: Test Gmail SMTP with different port configurations
+
+## Security Notes
+
+1. **Change default passwords** immediately after first login (`superadmin` and `admin`)
+2. **Create individual accounts** for each staff member
+3. **Use "user" role** for sales staff to hide sensitive pricing data
+4. **Backup regularly** (Super Admin only): use Settings → Backup, or: `mysqldump -u root -p --set-gtid-purged=OFF --single-transaction pos_mysql_app > backups/backup_$(date +%Y%m%d).sql`
+5. **Never share admin or super admin credentials** with sales staff
+6. **Session timeout**: Adjust based on your security needs (shorter = more secure)
+7. **Email credentials**: Stored in database — use app passwords, not regular passwords
+8. **Super Admin account**: Keep this credential very secure — it has access to all shops and backup/restore
+
+## Troubleshooting
+
+### Installation Issues
+
+**"python: command not found" or "pip: command not found":**
+- Install Python 3:
+  - Ubuntu/Debian: `sudo apt install python3 python3-pip python3-venv`
+  - Fedora/RHEL: `sudo dnf install python3 python3-pip`
+  - macOS: `brew install python3`
+- Use `python3` and `pip3` commands instead of `python` and `pip`
+
+**"python3-venv not found" error:**
+```bash
+# Ubuntu/Debian
+sudo apt install python3-venv
+
+# Fedora/RHEL
+sudo dnf install python3-venv
+```
+
+**Virtual environment activation fails:**
+- On Linux/macOS, make sure start.sh is executable:
+  ```bash
+  chmod +x start.sh
+  ```
+- The updated start.sh now uses direct venv paths and doesn't require activation
+
+**"Permission denied" when running start.sh:**
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+**Dependencies fail to install:**
+- Make sure you have internet connection
+- Try upgrading pip first:
+  ```bash
+  ./venv/bin/pip install --upgrade pip
+  ./venv/bin/pip install -r requirements.txt
+  ```
+- On some systems you may need build tools:
+  - Ubuntu/Debian: `sudo apt install build-essential python3-dev`
+  - Fedora/RHEL: `sudo dnf install gcc python3-devel`
+
+**Port 5001 already in use:**
+- Another application is using port 5001
+- Find and stop it: `lsof -ti:5001 | xargs kill -9` (macOS/Linux)
+- Or change the port in app.py (last line): `app.run(debug=True, host='0.0.0.0', port=5001)`
+
+### Email Alerts Not Working
+
+**Gmail users:**
+- Must enable 2-Factor Authentication
+- Create an [App Password](https://support.google.com/accounts/answer/185833)
+- Use App Password instead of regular password
+- Server: `smtp.gmail.com`, Port: `587`
+
+**"Authentication failed" error:**
+- Verify username and password are correct
+- Check if your email provider requires app-specific passwords
+- Ensure SMTP settings match your provider's requirements
+
+**"Connection refused" error:**
+- Check SMTP server address and port
+- Verify firewall isn't blocking outgoing SMTP connections
+- Try port 465 (SSL) if 587 (TLS) doesn't work
+
+**Test Email button:**
+- Use this to verify configuration before relying on automatic alerts
+- Check spam/junk folder if test email doesn't arrive
+
+**VPN Blocking SMTP:**
+- Most VPNs and corporate networks block SMTP ports (587, 465)
+- **Solution**: Disconnect VPN before sending emails
+- Automatic scheduler will fail silently if VPN is connected at scheduled times
+- Check logs: `tail -f /tmp/flask_output.log | grep SCHEDULER`
+
+**Automatic alerts not sending:**
+- Verify Flask app is running (`./start.sh`)
+- Check scheduler status in Settings → "Low Stock Alerts & Scheduler"
+- Look for green checkmark: "✅ Automatic Email Alerts Enabled"
+- Verify next scheduled run times are showing
+- Make sure VPN is disconnected at your configured scheduled times
+- Review your custom schedule in Settings to confirm check times
+
+### Session Timeout Issues
+
+**Getting logged out too frequently:**
+- Go to Settings → Session Timeout
+- Increase timeout duration (e.g., 1-2 hours for active use)
+
+**Not logging out automatically:**
+- Clear browser cache and cookies
+- Check if browser is preventing JavaScript from running
+
+### Database Issues
+
+**MySQL connection refused:**
+- Make sure MySQL is running:
+  - macOS: `brew services start mysql`
+  - Ubuntu/Debian: `sudo systemctl start mysql`
+  - Windows: Start **MySQL80** service from Services panel
+- Check host/port in `database.py` or your environment variables
+
+**Access denied error:**
+- Verify DB_USER and DB_PASSWORD are correct
+- Test manually: `mysql -u root -p -h localhost`
+
+**Need to reset the database:**
+```bash
+# Drop and recreate the active database
+mysql -u root -p -e "DROP DATABASE pos_mysql_app; CREATE DATABASE pos_mysql_app CHARACTER SET utf8mb4;"
+# Reinitialize schema
+./venv/bin/python database.py
+```
+
+> If you have an old `pos_system_db` database left over from a previous installation, you can safely remove it:
+> ```bash
+> mysql -u root -p -e "DROP DATABASE IF EXISTS pos_system_db;"
+> ```
+
+**Restore from a backup:**
+```bash
+# Stop the Flask application first (Ctrl+C)
+
+# Restore from SQL dump
+mysql -u root -p pos_mysql_app < backup_20260417.sql
+
+# Restart
+python app.py
+```
+
+## Recently Added Features ✨
+
+### Point of Sale Enhancements
+- ✅ **Category filter tabs** with Out of Stock tab
+- ✅ **Cart quantity input** with inline controls (quantity, discount, remove)
+- ✅ **Payment modal** with Cash/Card/Transfer, quick cash buttons, change calculator
+- ✅ **Customer name** on transactions
+- ✅ **Hold/resume cart** (localStorage based)
+- ✅ **Cart persistence** across page refresh
+- ✅ **Refund/return flow** with partial refund support and remaining quantities
+- ✅ **Reprint last receipt**
+- ✅ **Low stock warning** before checkout
+- ✅ **Keyboard shortcuts** (`/` search, `Escape` close, `Enter` confirm)
+- ✅ **Out-of-stock badge** and greyed-out products
+
+### Product Management Enhancements
+- ✅ **Toolbar-based actions** (select row → use toolbar) replacing per-row buttons
+- ✅ **Double-click to edit** product or individual cell (inline quick-edit)
+- ✅ **Keyboard navigation** (Arrow keys, Enter, Delete)
+- ✅ **CSV Export** for all products
+- ✅ **CSV Import** with case-insensitive headers, BOM handling, SKU matching
+- ✅ **Bulk stock update** for multiple products at once
+- ✅ **Duplicate product** (clone with 0 stock)
+- ✅ **Per-product reorder level** (custom low stock threshold)
+- ✅ **Audit log** tracking all product edits (who, what, when)
+- ✅ **Stock movement chart** (SVG line chart in history modal)
+- ✅ **Pagination** (25/50/100/All per page)
+- ✅ **Sortable columns** with sort arrows
+- ✅ **Search bar + category filter tabs**
+- ✅ **Stock status badges** and row highlighting
+- ✅ **Product count summary** (total, low stock, out of stock)
+- ✅ **Auto-generated SKU** (e.g., SHR-001)
+
+### Sales History Enhancements
+- ✅ **Payment method column + filter** (Cash/Card/Transfer)
+- ✅ **Customer name column + search**
+- ✅ **Sale status badges** (Completed / Partially Paid / Unpaid / Partial Refund / Refunded)
+- ✅ **Receipt reprint** from history
+- ✅ **Sales summary bar** with payment breakdown
+- ✅ **Expandable rows** with inline items, timeline, amount received
+- ✅ **Refund details modal** per sale
+- ✅ **Export filtered sales CSV**
+- ✅ **Daily grouping** with per-day subtotals
+- ✅ **Profit per sale** (admin only)
+
+### Reports & Analytics Enhancements
+- ✅ **Sales trend chart** (daily revenue + profit line chart)
+- ✅ **Payment method doughnut chart**
+- ✅ **Category revenue pie chart**
+- ✅ **Hourly sales bar chart** (transaction heatmap)
+- ✅ **Profit margin trend chart** (admin only)
+- ✅ **Discount summary** (total, count, average)
+- ✅ **Refund summary** with top refunded products
+- ✅ **Staff performance comparison** with % of revenue bars
+- ✅ **Customer insights** (top customers, repeat count)
+- ✅ **Period comparison** (current vs previous period with % change)
+- ✅ **Slow-moving stock detection** (dead inventory)
+- ✅ **Auto-load report on page open** (last 7 days)
+- ✅ Quick range buttons (Today/Week/Month/Quarter/Year)
+
+### Previous Features
+- ✅ **Configurable automatic email alerts** (admin can set custom check times)
+- ✅ **Split email and alert settings** (separate configuration sections)
+- ✅ Receipt generation and printing
+- ✅ Discount management (percentage and fixed amount)
+- ✅ Advanced sales reports and analytics
+- ✅ PDF/Excel export for reports
+- ✅ Sales history filters (date, search, user)
+- ✅ Session timeout configuration
+- ✅ Custom shop name and currency
+- ✅ Password change functionality
+- ✅ Enhanced dashboard with charts
+- ✅ Background scheduler for automated tasks
+
+### Supplier & Purchase Order System
+- ✅ **Suppliers page** with CRUD, search, and direct PO creation
+- ✅ **Purchase Orders page** with create, view, receive, and delete flows
+- ✅ **Partial receiving** support (ordered → partial → received status)
+- ✅ **Auto stock increment** on receive with stock history logging
+- ✅ **Cost price auto-update** using weighted average cost on receive
+- ✅ **PO status badges** and status filtering
+- ✅ **PO detail modal** with ordered vs received percentages
+- ✅ **Delete protection** for suppliers with orders and received POs
+- ✅ **Navigation** added to all pages (admin-only)
+
+### Dashboard Enhancements
+- ✅ **Clickable stat cards** (Total Products, Low Stock, Out of Stock link to filtered products)
+- ✅ **Out of Stock count** card
+- ✅ **Average Transaction** and **Discounts Today** cards
+- ✅ **Today vs Yesterday comparison** with both values shown
+- ✅ **Time-based greeting** (Good morning/afternoon/evening)
+- ✅ **Scrollable stock activity** table
+
+## Future Enhancements
+
+Possible features to add:
+- Barcode/QR code scanning and printing from SKU
+- Product images (thumbnail in table and POS)
+- Customer management (customer database, purchase history)
+- Email receipts to customers
+- Tax calculations and compliance
+- Mobile app (iOS/Android)
+- Loyalty program management
+- Multi-currency transactions
+
+### Multi-Shop / Multi-Tenant Support
+
+The database foundation for multi-shop support is **complete** following the SQLite → MySQL migration. What's already done and what remains to build a full hosted multi-tenant platform:
+
+**✅ Database & Data Isolation (Done)**
+- ✅ MySQL server in use — supports concurrent connections and multi-shop access
+- ✅ `shops` table exists with `name`, `currency_symbol`
+- ✅ `shop_id` foreign key on all data tables (products, sales, returns, stock_history, settings, audit_log, customers, invoices, payments, purchase_orders, suppliers)
+- ✅ All queries scoped by `shop_id` — data from different shops never mixes
+- ✅ Per-shop settings (currency, SMTP config, session timeout, thresholds)
+- ✅ Per-shop scheduler for automated alerts
+- ✅ SKUs unique per shop (same SKU can exist across shops)
+- ✅ Environment variables for credentials (`.env` support via python-dotenv)
+
+**🔲 Authentication & Authorization (To Do)**
+- Shop registration / onboarding flow
+- Shop selection screen for users belonging to multiple shops
+- Super-admin role for platform-level management (vs shop-level admin)
+- Invitation system for shop admins to invite staff by email
+
+**🔲 Frontend (To Do)**
+- Shop switcher in the topbar
+- Shop onboarding wizard for first-time setup
+- Landing page / marketing site separate from the app
+
+**🔲 Infrastructure (To Do)**
+- Hosted database (MySQL on RDS, PlanetScale, etc.)
+- Production deployment (Gunicorn + Nginx, or Railway/Render)
+- HTTPS mandatory for multi-tenant
+- File/image storage partitioned by shop (S3 or similar)
+
+**🔲 Billing & Limits — if commercial (To Do)**
+- Subscription plans (free tier with limits, paid tiers)
+- Usage limits per plan (max products, users, sales)
+- Payment integration (Stripe)
+
+**🔲 Data Privacy & Security (To Do)**
+- Per-shop backup and restore (from Settings UI)
+- GDPR/data deletion support per shop
+- Audit trail scoped per shop

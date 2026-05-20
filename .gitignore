@@ -1,0 +1,33 @@
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs & runtime
+logs/
+*.log
+*.pid
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
