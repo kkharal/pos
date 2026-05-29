@@ -319,6 +319,24 @@
         </div>
     </div>
 
+    <!-- Reassign Shop Modal (super_admin only, for admin/user roles) -->
+    <div id="reassign-shop-modal" class="modal">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h2>Reassign Shop — <span id="reassign-username"></span></h2>
+                <button class="close-btn" onclick="closeReassignShopModal()">&times;</button>
+            </div>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;">Select which shop this user should be assigned to:</p>
+            <select id="reassign-shop-select" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;font-size:0.95rem;margin-bottom:1rem;">
+                <option value="">Loading shops...</option>
+            </select>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-primary" onclick="saveReassignShop()">Save</button>
+                <button class="btn btn-secondary" onclick="closeReassignShopModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let users = [];
         let activeShopId = null;
@@ -384,6 +402,7 @@
                     <td>
                         <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
                             ${user.role === 'shop_owner' && isSuperAdmin ? '<button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="openShopAssignModal(' + user.id + ', \'' + user.username + '\')">🏪 Shops</button>' : ''}
+                            ${(user.role === 'admin' || user.role === 'user') && isSuperAdmin ? '<button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="openReassignShopModal(' + user.id + ', \'' + user.username + '\', ' + (user.shop_id || 'null') + ')">🏪 Shop</button>' : ''}
                             <button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="openChangePasswordModal(${user.id}, '${user.username}')">🔑 Password</button>
                             <button class="btn btn-danger" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="deleteUser(${user.id}, '${user.username}')">🗑️ Delete</button>
                         </div>
@@ -804,6 +823,54 @@
                 }
             } catch (e) {
                 showToast('Error saving assignment', 'error');
+            }
+        }
+
+        let _reassignUserId = null;
+
+        async function openReassignShopModal(userId, username, currentShopId) {
+            _reassignUserId = userId;
+            document.getElementById('reassign-username').textContent = username;
+            document.getElementById('reassign-shop-modal').classList.add('active');
+            const sel = document.getElementById('reassign-shop-select');
+            sel.innerHTML = '<option value="">Loading...</option>';
+
+            try {
+                const resp = await fetch('/api/shops');
+                const shops = await resp.json();
+                sel.innerHTML = '<option value="">Select shop...</option>' +
+                    shops.map(s => `<option value="${s.id}" ${s.id === currentShopId ? 'selected' : ''}>${s.icon || '🛒'} ${s.name}</option>`).join('');
+            } catch (e) {
+                sel.innerHTML = '<option value="">Error loading shops</option>';
+            }
+        }
+
+        function closeReassignShopModal() {
+            document.getElementById('reassign-shop-modal').classList.remove('active');
+            _reassignUserId = null;
+        }
+
+        async function saveReassignShop() {
+            if (!_reassignUserId) return;
+            const shopId = document.getElementById('reassign-shop-select').value;
+            if (!shopId) { showToast('Please select a shop', 'warning'); return; }
+
+            try {
+                const resp = await fetch(`/api/users/${_reassignUserId}/shop`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ shop_id: parseInt(shopId) })
+                });
+                const result = await resp.json();
+                if (resp.ok) {
+                    showToast('Shop reassigned successfully!', 'success');
+                    closeReassignShopModal();
+                    loadUsers();
+                } else {
+                    showToast('Error: ' + (result.error || 'Failed'), 'error');
+                }
+            } catch (e) {
+                showToast('Error reassigning shop', 'error');
             }
         }
 
