@@ -524,7 +524,7 @@
             }
 
             container.innerHTML = recentSales.map(sale => {
-                const date = new Date(sale.sale_date);
+                const date = parseUTC(sale.sale_date);
                 const timeAgo = getTimeAgo(date);
                 const hasDiscount = sale.discount_amount > 0;
                 const pm = (sale.payment_method || '').toLowerCase();
@@ -672,7 +672,7 @@
                         <td><span style="text-transform: capitalize;">${item.action_type}</span></td>
                         <td>${item.quantity_change > 0 ? '+' : ''}${item.quantity_change}</td>
                         <td>${item.note || '-'}</td>
-                        <td>${new Date(item.created_at).toLocaleString()}</td>
+                        <td>${parseUTC(item.created_at).toLocaleString()}</td>
                     </tr>
                 `).join('');
             } catch (error) {

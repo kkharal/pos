@@ -539,7 +539,7 @@
             sales.sort((a, b) => {
                 let va, vb;
                 if (field === 'id') { va = a.id; vb = b.id; }
-                else if (field === 'date') { va = new Date(a.sale_date); vb = new Date(b.sale_date); }
+                else if (field === 'date') { va = parseUTC(a.sale_date); vb = parseUTC(b.sale_date); }
                 else if (field === 'total') { va = a.total_amount; vb = b.total_amount; }
                 if (va < vb) return sortAsc ? -1 : 1;
                 if (va > vb) return sortAsc ? 1 : -1;
@@ -629,7 +629,7 @@
                 sales.sort((a, b) => {
                     let va, vb;
                     if (sortField === 'id') { va = a.id; vb = b.id; }
-                    else if (sortField === 'date') { va = new Date(a.sale_date); vb = new Date(b.sale_date); }
+                    else if (sortField === 'date') { va = parseUTC(a.sale_date); vb = parseUTC(b.sale_date); }
                     else if (sortField === 'total') { va = a.total_amount; vb = b.total_amount; }
                     if (va < vb) return sortAsc ? -1 : 1;
                     if (va > vb) return sortAsc ? 1 : -1;
@@ -766,7 +766,7 @@
             // Group by date
             const byDate = {};
             sales.forEach(s => {
-                const d = new Date(s.sale_date).toLocaleDateString(undefined, {month:'short', day:'numeric'});
+                const d = parseUTC(s.sale_date).toLocaleDateString(undefined, {month:'short', day:'numeric'});
                 byDate[d] = (byDate[d] || 0) + s.total_amount;
             });
             const labels = Object.keys(byDate);
@@ -848,7 +848,7 @@
 
             let html = '';
             sales.forEach((sale, idx) => {
-                const saleDate = new Date(sale.sale_date).toLocaleDateString();
+                const saleDate = parseUTC(sale.sale_date).toLocaleDateString();
                 const isNewDay = saleDate !== lastDate;
 
                 // Insert day subtotal for previous day
@@ -890,7 +890,7 @@
                     statusBadge = '<span style="display:inline-block;padding:0.1rem 0.4rem;border-radius:3px;font-size:0.7rem;font-weight:bold;background:#27ae60;color:white;">Completed</span>';
                 }
 
-                const saleDateTime = new Date(sale.sale_date);
+                const saleDateTime = parseUTC(sale.sale_date);
                 const datePart = saleDateTime.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
                 const timePart = saleDateTime.toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
                 const itemCount = (sale.items || []).reduce((s, i) => s + i.quantity, 0);
@@ -939,7 +939,7 @@
 
             // Meta grid
             let body = `<div class="drawer-meta-grid">`;
-            body += `<div><div class="dm-label">Date</div><div class="dm-val">${new Date(sale.sale_date).toLocaleString()}</div></div>`;
+            body += `<div><div class="dm-label">Date</div><div class="dm-val">${parseUTC(sale.sale_date).toLocaleString()}</div></div>`;
             body += `<div><div class="dm-label">Customer</div><div class="dm-val">${sale.customer_name || 'Walk-in'}</div></div>`;
             body += `<div><div class="dm-label">Payment</div><div class="dm-val">${payMethod}</div></div>`;
             if (isAdmin) {
@@ -1014,7 +1014,7 @@
             let receiptHtml = `
                 <div style="font-family:monospace; max-width:350px; margin:0 auto; padding:1rem; border:1px dashed #ccc;">
                     <h3 style="text-align:center; margin:0 0 0.5rem;">${shopName}</h3>
-                    <p style="text-align:center; font-size:0.8rem; margin:0 0 1rem;">Sale #${sale.id} — ${new Date(sale.sale_date).toLocaleString()}</p>
+                    <p style="text-align:center; font-size:0.8rem; margin:0 0 1rem;">Sale #${sale.id} — ${parseUTC(sale.sale_date).toLocaleString()}</p>
                     ${sale.customer_name ? `<p style="font-size:0.8rem; margin:0 0 0.5rem;">Customer: ${sale.customer_name}</p>` : ''}
                     <hr style="border:none; border-top:1px dashed #999;">`;
 
@@ -1070,7 +1070,7 @@
                     html += `<span style="color:#e74c3c; font-weight:bold;">${currencySymbol}${r.refund_amount.toFixed(2)}</span>`;
                     html += `</div>`;
                     html += `<div style="font-size:0.85rem; color:#666; margin-bottom:0.5rem;">`;
-                    html += `By: ${r.full_name || r.username || 'N/A'} · ${new Date(r.return_date).toLocaleString()}`;
+                    html += `By: ${r.full_name || r.username || 'N/A'} · ${parseUTC(r.return_date).toLocaleString()}`;
                     if (r.reason) html += ` · Reason: <em>${r.reason}</em>`;
                     html += `</div>`;
                     html += `<table style="font-size:0.85rem; margin:0;"><thead><tr><th>Product</th><th>Qty Returned</th></tr></thead><tbody>`;

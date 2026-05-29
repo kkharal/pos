@@ -531,8 +531,8 @@
             const filtered = purchaseOrders.filter(po => {
                 if (statusFilter && po.status !== statusFilter) return false;
                 if (supplierFilter && String(po.supplier_id) !== String(supplierFilter)) return false;
-                if (dateFrom && new Date(po.created_at) < new Date(dateFrom)) return false;
-                if (dateTo && new Date(po.created_at) > new Date(dateTo + 'T23:59:59')) return false;
+                if (dateFrom && parseUTC(po.created_at) < new Date(dateFrom)) return false;
+                if (dateTo && parseUTC(po.created_at) > new Date(dateTo + 'T23:59:59')) return false;
                 return true;
             });
 
@@ -543,7 +543,7 @@
             }
             tbody.innerHTML = filtered.map(po => {
                 const itemCount = po.items ? po.items.length : 0;
-                const date = new Date(po.created_at).toLocaleDateString();
+                const date = parseUTC(po.created_at).toLocaleDateString();
                 return `
                     <tr>
                         <td><strong>#${po.id}</strong></td>
@@ -583,8 +583,8 @@
             let html = `<div style="margin-bottom:1rem;">
                 <strong>Supplier:</strong> ${po.supplier_name}<br>
                 <strong>Status:</strong> ${getStatusBadge(po.status)}<br>
-                <strong>Created:</strong> ${new Date(po.created_at).toLocaleString()} by ${po.created_by_name || 'N/A'}<br>
-                ${po.received_at ? `<strong>Received:</strong> ${new Date(po.received_at).toLocaleString()}<br>` : ''}
+                <strong>Created:</strong> ${parseUTC(po.created_at).toLocaleString()} by ${po.created_by_name || 'N/A'}<br>
+                ${po.received_at ? `<strong>Received:</strong> ${parseUTC(po.received_at).toLocaleString()}<br>` : ''}
                 ${po.notes ? `<strong>Notes:</strong> ${po.notes}<br>` : ''}
             </div>
             <table><thead><tr>

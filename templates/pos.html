@@ -1541,7 +1541,7 @@
                 document.getElementById('refund-items-container').innerHTML = `
                     <div style="margin-bottom:0.75rem; padding:0.75rem; background:#f8f9fa; border-radius:4px; font-size:0.9rem;">
                         <strong>Sale #${sale.id}</strong> &bull;
-                        ${new Date(sale.sale_date).toLocaleDateString()} &bull;
+                        ${parseUTC(sale.sale_date).toLocaleDateString()} &bull;
                         Total: ${currencySymbol}${parseFloat(sale.total_amount).toFixed(2)}
                     </div>
                     <div style="text-align:center; padding:1.5rem; color:#e74c3c; font-weight:bold;">
@@ -1554,7 +1554,7 @@
             document.getElementById('refund-items-container').innerHTML = `
                 <div style="margin-bottom:0.75rem; padding:0.75rem; background:#f8f9fa; border-radius:4px; font-size:0.9rem;">
                     <strong>Sale #${sale.id}</strong> &bull;
-                    ${new Date(sale.sale_date).toLocaleDateString()} &bull;
+                    ${parseUTC(sale.sale_date).toLocaleDateString()} &bull;
                     Total: ${currencySymbol}${parseFloat(sale.total_amount).toFixed(2)}
                 </div>
                 ${refundableItems.map(item => `

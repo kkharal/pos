@@ -1020,7 +1020,7 @@
                     <th>Date</th><th>User</th><th>Action</th><th>Field</th><th>Old Value</th><th>New Value</th>
                 </tr></thead><tbody>`;
                 logs.forEach(log => {
-                    const date = new Date(log.created_at).toLocaleString();
+                    const date = parseUTC(log.created_at).toLocaleString();
                     html += `<tr>
                         <td>${date}</td>
                         <td>${log.username || '-'}</td>
@@ -1361,7 +1361,7 @@
             const chartPoints = [{ date: historyAsc[0] ? new Date(historyAsc[0].created_at) : new Date(), stock: runningStock }];
             for (const entry of historyAsc) {
                 runningStock += entry.quantity_change;
-                chartPoints.push({ date: new Date(entry.created_at), stock: runningStock });
+                chartPoints.push({ date: parseUTC(entry.created_at), stock: runningStock });
             }
 
             // Draw SVG chart
@@ -1409,7 +1409,7 @@
                     </tr></thead><tbody>`;
 
             data.history.forEach(entry => {
-                const date = new Date(entry.created_at).toLocaleString();
+                const date = parseUTC(entry.created_at).toLocaleString();
                 const actionLabel = entry.action_type.charAt(0).toUpperCase() + entry.action_type.slice(1);
                 const changeColor = entry.quantity_change > 0 ? '#27ae60' : '#e74c3c';
                 const changeSymbol = entry.quantity_change > 0 ? '+' : '';

@@ -621,7 +621,7 @@
                             <td>${currencySymbol}${inv.paid_amount.toFixed(2)}</td>
                             <td style="color:${remaining > 0 ? '#e74c3c' : '#27ae60'}; font-weight:bold;">${currencySymbol}${remaining.toFixed(2)}</td>
                             <td>${statusBadge}</td>
-                            <td>${new Date(inv.created_at).toLocaleDateString()}</td>
+                            <td>${parseUTC(inv.created_at).toLocaleDateString()}</td>
                         </tr>`;
                     });
                     html += '</tbody></table></div>';

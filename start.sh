@@ -17,56 +17,110 @@ fi
 
 echo "✓ Python 3 found: $(python3 --version)"
 
+# Detect OS
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    OS="macos"
+elif [[ -f /etc/debian_version ]]; then
+    OS="debian"
+elif [[ -f /etc/redhat-release ]]; then
+    OS="redhat"
+else
+    OS="linux"
+fi
+
 # Check if MySQL is installed
 if ! command -v mysql &> /dev/null; then
     echo "MySQL not found."
 
-    if command -v brew &> /dev/null; then
-        echo "Installing MySQL using Homebrew..."
-        brew install mysql
-
-        if [ $? -ne 0 ]; then
-            echo "❌ Error: Failed to install MySQL!"
+    if [[ "$OS" == "macos" ]]; then
+        if command -v brew &> /dev/null; then
+            echo "Installing MySQL using Homebrew..."
+            brew install mysql
+        else
+            echo "❌ Error: Homebrew not found!"
+            echo ""
+            echo "Please install Homebrew first:"
+            echo "  https://brew.sh"
+            echo ""
             exit 1
         fi
-
-        echo "✓ MySQL installed successfully"
+    elif [[ "$OS" == "debian" ]]; then
+        echo "Installing MySQL using apt..."
+        sudo apt update && sudo apt install -y mysql-server mysql-client
+    elif [[ "$OS" == "redhat" ]]; then
+        echo "Installing MySQL using dnf..."
+        sudo dnf install -y mysql-server mysql
     else
-        echo "❌ Error: Homebrew not found!"
+        echo "❌ Error: Could not detect package manager to install MySQL."
         echo ""
-        echo "Please install Homebrew first:"
-        echo "  https://brew.sh"
+        echo "Please install MySQL manually:"
+        echo "  Ubuntu/Debian: sudo apt install mysql-server mysql-client"
+        echo "  Fedora/RHEL:   sudo dnf install mysql-server"
+        echo "  macOS:         brew install mysql"
         echo ""
         exit 1
     fi
+
+    if [ $? -ne 0 ]; then
+        echo "❌ Error: Failed to install MySQL!"
+        exit 1
+    fi
+
+    echo "✓ MySQL installed successfully"
 else
     echo "✓ MySQL already installed"
 fi
 
-# Start MySQL service (macOS Homebrew)
-if command -v brew &> /dev/null; then
-    MYSQL_STATUS=$(brew services list | grep mysql | awk '{print $2}')
+# Start MySQL service
+if [[ "$OS" == "macos" ]]; then
+    if command -v brew &> /dev/null; then
+        MYSQL_STATUS=$(brew services list | grep mysql | awk '{print $2}')
 
-    if [ "$MYSQL_STATUS" != "started" ]; then
+        if [ "$MYSQL_STATUS" != "started" ]; then
+            echo "Starting MySQL service..."
+            brew services start mysql
+        else
+            echo "✓ MySQL already running"
+        fi
+    fi
+elif [[ "$OS" == "debian" || "$OS" == "redhat" || "$OS" == "linux" ]]; then
+    if ! mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then
         echo "Starting MySQL service..."
-        brew services start mysql
-
-        # Wait until MySQL is actually accepting connections (up to 30s)
-        echo "Waiting for MySQL to be ready..."
-
-        for i in $(seq 1 30); do
-            if mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then
-                break
-            fi
-            sleep 1
-        done
-
-        echo "✓ MySQL service started"
+        sudo systemctl start mysql 2>/dev/null || sudo systemctl start mysqld 2>/dev/null || sudo service mysql start 2>/dev/null
     else
         echo "✓ MySQL already running"
     fi
+fi
+
+# Wait until MySQL is actually accepting connections (up to 30s)
+echo "Waiting for MySQL to be ready..."
+for i in $(seq 1 30); do
+    if mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then
+        break
+    fi
+    sleep 1
+done
+
+if mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then
+    echo "✓ MySQL service started"
 else
-    echo "⚠ Homebrew not found — skipping MySQL auto-start. Ensure MySQL is running."
+    echo "❌ Error: MySQL failed to start within 30 seconds"
+    exit 1
+fi
+
+# Configure MySQL root user for TCP access (Ubuntu uses auth_socket by default)
+if [[ "$OS" == "debian" || "$OS" == "redhat" || "$OS" == "linux" ]]; then
+    # Check if root can connect via TCP without password
+    if ! mysql -h 127.0.0.1 -u root -e "SELECT 1" &>/dev/null; then
+        echo "Configuring MySQL root user for TCP access..."
+        # Connect via unix socket (auth_socket) and switch to mysql_native_password
+        sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY ''; FLUSH PRIVILEGES;" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo "✓ MySQL root configured for TCP access"
+        else
+            echo "⚠ Could not configure MySQL root user. You may need to set DB credentials in .env"
+        fi
+    fi
 fi
 
 # Check if virtual environment exists
@@ -142,7 +196,7 @@ echo "=========================================="
 echo "  Starting Clothing Shop POS System"
 echo "=========================================="
 echo ""
-echo "  🌐 Access at: http://localhost:5001"
+echo "  🌐 Access at: http://localhost:443"
 echo ""
 echo "  Default Login:"
 echo "    Username: admin"

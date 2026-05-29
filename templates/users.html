@@ -353,11 +353,11 @@
                 const roleColor = user.role === 'super_admin' ? '#8e44ad' : user.role === 'shop_owner' ? '#e67e22' : user.role === 'admin' ? '#2980b9' : '#636e72';
                 const roleBg = user.role === 'super_admin' ? '#f4ecf7' : user.role === 'shop_owner' ? '#fef5e7' : user.role === 'admin' ? '#eaf4fd' : '#f1f2f6';
                 const roleLabel = getRoleLabel(user.role);
-                const created = new Date(user.created_at);
+                const created = parseUTC(user.created_at);
                 const createdStr = created.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
                 const lastActiveStr = (() => {
                     if (!user.last_login) return '<span style="color:#ccc;">Never</span>';
-                    const d = new Date(user.last_login);
+                    const d = parseUTC(user.last_login);
                     const diffMs = Date.now() - d.getTime();
                     const diffMins = Math.floor(diffMs / 60000);
                     if (diffMins < 2) return '<span style="color:#27ae60;font-weight:600;">Just now</span>';
