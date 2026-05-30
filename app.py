@@ -1498,6 +1498,35 @@ def set_user_shops(user_id):
     finally:
         conn.close()
 
+@app.route('/api/users/<int:user_id>/shop', methods=['PUT'])
+@login_required
+@super_admin_required
+def reassign_user_shop(user_id):
+    """Reassign an admin or sales staff user to a different shop."""
+    data = request.json
+    shop_id = data.get('shop_id')
+    if not shop_id:
+        return jsonify({'success': False, 'error': 'shop_id is required'}), 400
+
+    conn = get_db_connection()
+    user = conn.execute('SELECT role FROM users WHERE id = ?', (user_id,)).fetchone()
+    if not user:
+        conn.close()
+        return jsonify({'success': False, 'error': 'User not found'}), 404
+    if user['role'] not in ('admin', 'user'):
+        conn.close()
+        return jsonify({'success': False, 'error': 'Only admin and sales staff can be reassigned'}), 400
+
+    try:
+        conn.execute('UPDATE users SET shop_id = ? WHERE id = ?', (int(shop_id), user_id))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
 @app.route('/api/reports/sales', methods=['GET'])
 @login_required
 def get_sales_report():
@@ -4876,4 +4905,4 @@ def restore_database():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True, host='0.0.0.0', port=443)

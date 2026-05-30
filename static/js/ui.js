@@ -1,3 +1,13 @@
+// ===== UTC Date Helper =====
+// Server always returns UTC datetimes. Append 'Z' so JS treats them as UTC.
+function parseUTC(dtStr) {
+    if (!dtStr) return null;
+    // Already has timezone info
+    if (dtStr.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(dtStr)) return new Date(dtStr);
+    // Bare datetime from MySQL — treat as UTC
+    return new Date(dtStr.replace(' ', 'T') + 'Z');
+}
+
 // ===== Toast Notification System =====
 function _ensureToastContainer() {
     let c = document.getElementById('toast-container');

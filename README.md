@@ -261,7 +261,7 @@ The start script will automatically:
 - ✓ Initialize MySQL database
 - ✓ Start the application
 
-Then open your browser to: **http://localhost:5001**
+Then open your browser to: **http://localhost:443**
 
 **Default Login Credentials:**
 
@@ -358,7 +358,7 @@ Then open your browser to: **http://localhost:5001**
 
 8. **Open your browser** and go to:
   ```
-  http://localhost:5001
+  http://localhost:443
   ```
 
 **Note**: Make sure to activate the virtual environment (step 3) each time you want to run the application.
@@ -758,7 +758,7 @@ tail -f /tmp/flask_output.log | grep SCHEDULER
 ```
 
 **If scheduler is not running:**
-- Check if Flask app is running: `curl http://localhost:5001`
+- Check if Flask app is running: `curl http://localhost:443`
 - Restart Flask: `./start.sh`
 - Look for APScheduler errors in: `tail -30 /tmp/flask_output.log`
 
@@ -874,7 +874,7 @@ chmod +x start.sh
 
 **Port 5001 already in use:**
 - Another application is using port 5001
-- Find and stop it: `lsof -ti:5001 | xargs kill -9` (macOS/Linux)
+- Find and stop it: `lsof -ti:443 | xargs kill -9` (macOS/Linux)
 - Or change the port in app.py (last line): `app.run(debug=True, host='0.0.0.0', port=5001)`
 
 ### Email Alerts Not Working

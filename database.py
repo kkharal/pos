@@ -14,7 +14,7 @@ load_dotenv()
 
 DB_NAME = os.getenv("DB_NAME", "pos_mysql_app")
 DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "localhost"),
+    "host": os.getenv("DB_HOST", "127.0.0.1"),
     "user": os.getenv("DB_USER", "root"),
     "password": os.getenv("DB_PASSWORD", ""),
     "database": DB_NAME,
@@ -596,6 +596,8 @@ def init_db():
 def get_db_connection():
     """Get a MySQL connection wrapped with SQLite-compatible helpers."""
     conn = mysql.connector.connect(**DB_CONFIG)
+    # Force UTC so all datetime values are timezone-consistent regardless of server location
+    conn.cursor().execute("SET time_zone = '+00:00'")
     return ConnectionCompat(conn)
 
 if __name__ == '__main__':

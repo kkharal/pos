@@ -18,14 +18,16 @@ else
     echo "⚠ Process $PID not running. Cleaned up stale PID file."
 fi
 
-# Stop MySQL service (macOS Homebrew)
-if command -v brew &> /dev/null; then
-    echo ""
-    read -p "Stop MySQL service too? [y/N]: " STOP_MYSQL
-    if [[ "$STOP_MYSQL" =~ ^[Yy]$ ]]; then
+# Stop MySQL service
+echo ""
+read -p "Stop MySQL service too? [y/N]: " STOP_MYSQL
+if [[ "$STOP_MYSQL" =~ ^[Yy]$ ]]; then
+    if [[ "$OSTYPE" == "darwin"* ]] && command -v brew &> /dev/null; then
         brew services stop mysql
-        echo "✓ MySQL service stopped"
     else
-        echo "  MySQL is still running (use 'brew services stop mysql' to stop it manually)"
+        sudo systemctl stop mysql 2>/dev/null || sudo systemctl stop mysqld 2>/dev/null || sudo service mysql stop 2>/dev/null
     fi
+    echo "✓ MySQL service stopped"
+else
+    echo "  MySQL is still running."
 fi

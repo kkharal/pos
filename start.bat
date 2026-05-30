@@ -76,7 +76,7 @@ echo ==========================================
 echo   Starting Clothing Shop POS System
 echo ==========================================
 echo.
-echo   Access at: http://localhost:5001
+echo   Access at: http://localhost:443
 echo.
 echo   Default Login:
 echo     Username: admin
