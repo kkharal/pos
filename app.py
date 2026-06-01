@@ -23,8 +23,11 @@ import atexit
 import logging
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'fallback-dev-key-change-in-production')
-CORS(app)
+_secret = os.environ.get('SECRET_KEY')
+if not _secret:
+    raise RuntimeError("SECRET_KEY environment variable is required. Generate one with: python3 -c \"import secrets; print(secrets.token_hex(32))\"")
+app.secret_key = _secret
+CORS(app, origins=os.environ.get('ALLOWED_ORIGINS', 'http://localhost:5000').split(','))
 
 # Initialize database on startup
 init_db()
@@ -316,17 +319,16 @@ def get_settings_shop_id():
 # Authentication routes
 @app.route('/api/public/shop-name', methods=['GET'])
 def get_public_shop_name():
-    """Public endpoint for shop name (no auth required for login page)"""
+    """Public endpoint for brand name (no auth required for login page)"""
     conn = get_db_connection()
     cursor = conn.cursor()
-    # Return the first shop's name for the login page
-    shop = cursor.execute(
-        'SELECT name, icon FROM shops ORDER BY id LIMIT 1'
+    # Return the global brand_name setting for the login page
+    brand = cursor.execute(
+        "SELECT value FROM settings WHERE `key` = 'brand_name' AND shop_id IS NULL"
     ).fetchone()
     conn.close()
-    if shop:
-        return jsonify({'shop_name': shop['name'], 'shop_icon': shop['icon']})
-    return jsonify({'shop_name': 'POS System', 'shop_icon': '🛒'})
+    brand_name = brand['value'] if brand and brand['value'] else 'POS System'
+    return jsonify({'shop_name': brand_name, 'shop_icon': '🛒'})
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -637,10 +639,11 @@ def add_product():
 
     try:
         cursor.execute('''
-            INSERT INTO products (shop_id, name, category, cost_price, price, stock_quantity, sku, description)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO products (shop_id, name, category, cost_price, price, stock_quantity, sku, description, size, color)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (shop_id, data['name'], data['category'], data.get('cost_price', 0), data['price'],
-              data.get('stock_quantity', 0), sku, data.get('description', '')))
+              data.get('stock_quantity', 0), sku, data.get('description', ''),
+              data.get('size', '').strip() or None, data.get('color', '').strip() or None))
 
         product_id = cursor.lastrowid
 
@@ -671,7 +674,7 @@ def update_product(product_id):
 
     try:
         # Fetch old product for audit log
-        old = cursor.execute('SELECT name, category, cost_price, price, sku, description, low_stock_threshold FROM products WHERE id=? AND shop_id=?', (product_id, get_current_shop_id())).fetchone()
+        old = cursor.execute('SELECT name, category, cost_price, price, sku, description, low_stock_threshold, size, color FROM products WHERE id=? AND shop_id=?', (product_id, get_current_shop_id())).fetchone()
         if not old:
             return jsonify({'success': False, 'error': 'Product not found'}), 404
 
@@ -684,6 +687,8 @@ def update_product(product_id):
             'sku': ('sku', str),
             'description': ('description', str),
             'low_stock_threshold': ('low_stock_threshold', lambda v: int(v) if v is not None and v != '' else None),
+            'size': ('size', lambda v: v.strip() if v else None),
+            'color': ('color', lambda v: v.strip() if v else None),
         }
         for field, (db_col, conv) in field_map.items():
             if field in data:
@@ -694,11 +699,12 @@ def update_product(product_id):
 
         cursor.execute('''
             UPDATE products
-            SET name=?, category=?, cost_price=?, price=?, description=?, sku=?, low_stock_threshold=?
+            SET name=?, category=?, cost_price=?, price=?, description=?, sku=?, low_stock_threshold=?, size=?, color=?
             WHERE id=? AND shop_id=?
         ''', (data['name'], data['category'], data.get('cost_price', 0), data['price'],
               data.get('description', ''), data.get('sku', ''),
               int(data['low_stock_threshold']) if data.get('low_stock_threshold') not in (None, '', 'null') else None,
+              data.get('size', '').strip() or None, data.get('color', '').strip() or None,
               product_id, get_current_shop_id()))
 
         # Write audit log entries
@@ -1045,7 +1051,7 @@ def get_sales():
 
         # Only show profit to admins
         if session.get('role') in ('admin', 'super_admin', 'shop_owner'):
-            sale_dict['profit'] = sale_dict['total_amount'] - sale_dict['total_cost']
+            sale_dict['profit'] = sale_dict['total_amount'] - (sale_dict['total_cost'] or 0)
         else:
             # Hide cost and profit from regular users
             sale_dict.pop('total_cost', None)
@@ -1555,7 +1561,7 @@ def get_sales_report():
                 AVG(total_amount) as avg_transaction
         '''
         if is_admin:
-            summary_query += ', SUM(total_amount - total_cost) as total_profit'
+            summary_query += ', SUM(total_amount - COALESCE(total_cost, 0)) as total_profit'
 
         summary_query += f'''
             FROM sales s
@@ -1572,7 +1578,7 @@ def get_sales_report():
                 SUM(total_amount) as daily_sales
         '''
         if is_admin:
-            daily_query += ', SUM(total_amount - total_cost) as daily_profit'
+            daily_query += ', SUM(total_amount - COALESCE(total_cost, 0)) as daily_profit'
 
         daily_query += f'''
             FROM sales s
@@ -1699,7 +1705,7 @@ def get_sales_report():
                    AVG(s.total_amount) as avg_sale
         '''
         if is_admin:
-            staff_query += ', SUM(s.total_amount - s.total_cost) as total_profit'
+            staff_query += ', SUM(s.total_amount - COALESCE(s.total_cost, 0)) as total_profit'
         staff_query += f'''
             FROM sales s JOIN users u ON s.user_id = u.id
             WHERE s.sale_date BETWEEN ? AND ? {flt_sql}
@@ -1778,7 +1784,7 @@ def get_sales_report():
                    COALESCE(AVG(total_amount), 0) as avg_transaction
         '''
         if is_admin:
-            prev_summary_query += ', COALESCE(SUM(total_amount - total_cost), 0) as total_profit'
+            prev_summary_query += ', COALESCE(SUM(total_amount - COALESCE(total_cost, 0)), 0) as total_profit'
         prev_summary_query += f' FROM sales s WHERE sale_date BETWEEN ? AND ? {flt_sql}'
         prev_summary = cursor.execute(prev_summary_query, [prev_start_str, prev_end_str] + flt_params).fetchone()
 
@@ -1905,6 +1911,56 @@ def manage_shop_name():
         conn.rollback()
         conn.close()
         return jsonify({'success': False, 'error': str(e)}), 400
+
+
+@app.route('/api/settings/brand', methods=['GET', 'PUT'])
+@login_required
+def manage_brand_name():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if request.method == 'GET':
+        row = cursor.execute(
+            "SELECT value FROM settings WHERE `key` = 'brand_name' AND shop_id IS NULL"
+        ).fetchone()
+        conn.close()
+        return jsonify({'brand_name': row['value'] if row else 'POS System'})
+
+    # PUT - Update brand name (admin only)
+    if session.get('role') not in ('admin', 'super_admin', 'shop_owner'):
+        conn.close()
+        return jsonify({'success': False, 'error': 'Admin access required'}), 403
+
+    data = request.json
+    brand_name = data.get('brand_name', '').strip()
+
+    if not brand_name:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Brand name cannot be empty'}), 400
+
+    try:
+        # Check if brand_name setting already exists
+        existing = cursor.execute(
+            "SELECT value FROM settings WHERE `key` = 'brand_name' AND shop_id IS NULL"
+        ).fetchone()
+        if existing:
+            cursor.execute(
+                "UPDATE settings SET value = ? WHERE `key` = 'brand_name' AND shop_id IS NULL",
+                (brand_name,)
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO settings (`key`, value, shop_id) VALUES ('brand_name', ?, NULL)",
+                (brand_name,)
+            )
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'brand_name': brand_name})
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return jsonify({'success': False, 'error': str(e)}), 400
+
 
 @app.route('/api/settings/session-timeout', methods=['GET', 'PUT'])
 @login_required
@@ -2833,7 +2889,7 @@ def export_sales_report(format):
                 AVG(total_amount) as avg_transaction
         '''
         if is_admin:
-            summary_query += ', SUM(total_amount - total_cost) as total_profit'
+            summary_query += ', SUM(total_amount - COALESCE(total_cost, 0)) as total_profit'
 
         summary_query += f'''
             FROM sales s
@@ -2850,7 +2906,7 @@ def export_sales_report(format):
                 SUM(total_amount) as daily_sales
         '''
         if is_admin:
-            daily_query += ', SUM(total_amount - total_cost) as daily_profit'
+            daily_query += ', SUM(total_amount - COALESCE(total_cost, 0)) as daily_profit'
 
         daily_query += f'''
             FROM sales s
@@ -3829,14 +3885,16 @@ def export_products_csv():
     is_admin = session.get('role') in ('admin', 'super_admin', 'shop_owner')
 
     if is_admin:
-        writer.writerow(['SKU', 'Name', 'Category', 'Cost Price', 'Sell Price', 'Stock', 'Low Stock Threshold', 'Description'])
+        writer.writerow(['SKU', 'Name', 'Category', 'Size', 'Color', 'Cost Price', 'Sell Price', 'Stock', 'Low Stock Threshold', 'Description'])
         for p in products:
-            writer.writerow([p['sku'] or '', p['name'], p['category'], p['cost_price'], p['price'],
-                             p['stock_quantity'], p['low_stock_threshold'] or '', p['description'] or ''])
+            writer.writerow([p['sku'] or '', p['name'], p['category'], p['size'] or '', p['color'] or '',
+                             p['cost_price'], p['price'], p['stock_quantity'],
+                             p['low_stock_threshold'] or '', p['description'] or ''])
     else:
-        writer.writerow(['SKU', 'Name', 'Category', 'Sell Price', 'Stock'])
+        writer.writerow(['SKU', 'Name', 'Category', 'Size', 'Color', 'Sell Price', 'Stock'])
         for p in products:
-            writer.writerow([p['sku'] or '', p['name'], p['category'], p['price'], p['stock_quantity']])
+            writer.writerow([p['sku'] or '', p['name'], p['category'], p['size'] or '', p['color'] or '',
+                             p['price'], p['stock_quantity']])
 
     csv_bytes = output.getvalue().encode('utf-8')
     return send_file(BytesIO(csv_bytes), mimetype='text/csv', as_attachment=True,
@@ -3896,6 +3954,8 @@ def import_products_csv():
                 sku = get_col(row, 'SKU', 'sku', 'Sku')
                 description = get_col(row, 'Description', 'description')
                 threshold_str = get_col(row, 'Low Stock Threshold', 'low_stock_threshold', 'Threshold')
+                size = get_col(row, 'Size', 'size')
+                color = get_col(row, 'Color', 'color')
 
                 price = float(price_str) if price_str else 0
                 cost_price = float(cost_str) if cost_str else 0
@@ -3914,8 +3974,9 @@ def import_products_csv():
                     if existing:
                         cursor.execute(f'''
                             UPDATE products SET name=?, category=?, cost_price=?, price=?,
-                            stock_quantity=?, description=?, low_stock_threshold=? WHERE sku=? {flt_sql}
-                        ''', [name, category, cost_price, price, stock, description, threshold, sku] + flt_params)
+                            stock_quantity=?, description=?, low_stock_threshold=?, size=?, color=? WHERE sku=? {flt_sql}
+                        ''', [name, category, cost_price, price, stock, description, threshold,
+                              size or None, color or None, sku] + flt_params)
                         updated += 1
                         continue
 
@@ -3933,9 +3994,10 @@ def import_products_csv():
                         sku = f'{prefix}-{existing_count + 1:03d}'
 
                 cursor.execute('''
-                    INSERT INTO products (shop_id, name, category, cost_price, price, stock_quantity, sku, description, low_stock_threshold)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (get_current_shop_id(), name, category, cost_price, price, stock, sku, description, threshold))
+                    INSERT INTO products (shop_id, name, category, cost_price, price, stock_quantity, sku, description, low_stock_threshold, size, color)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (get_current_shop_id(), name, category, cost_price, price, stock, sku, description, threshold,
+                      size or None, color or None))
                 added += 1
 
             except Exception as e:
@@ -3981,10 +4043,11 @@ def duplicate_product(product_id):
 
     try:
         cursor.execute('''
-            INSERT INTO products (shop_id, name, category, cost_price, price, stock_quantity, sku, description, low_stock_threshold)
-            VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)
+            INSERT INTO products (shop_id, name, category, cost_price, price, stock_quantity, sku, description, low_stock_threshold, size, color)
+            VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)
         ''', (shop_id, product['name'] + ' (Copy)', product['category'], product['cost_price'],
-              product['price'], new_sku, product['description'], product['low_stock_threshold']))
+              product['price'], new_sku, product['description'], product['low_stock_threshold'],
+              product['size'], product['color']))
 
         new_id = cursor.lastrowid
 
@@ -4000,6 +4063,109 @@ def duplicate_product(product_id):
         return jsonify({'success': False, 'error': str(e)}), 400
     finally:
         conn.close()
+
+
+# --- Products: Create Variants ---
+@app.route('/api/products/create-variants', methods=['POST'])
+@login_required
+@admin_required
+def create_product_variants():
+    """Bulk-create product variants for all size/color combinations."""
+    data = request.json
+    name = data.get('name', '').strip()
+    category = data.get('category', '').strip()
+    cost_price = float(data.get('cost_price', 0))
+    price = float(data.get('price', 0))
+    stock_per_variant = int(data.get('stock_quantity', 0))  # fallback uniform stock
+    description = data.get('description', '').strip()
+    sizes = data.get('sizes', [])
+    colors = data.get('colors', [])
+    stock_map = data.get('stock_map', [])  # [{size, color, stock}, ...]
+
+    if not name or not category:
+        return jsonify({'success': False, 'error': 'Name and Category are required'}), 400
+    if not sizes and not colors:
+        return jsonify({'success': False, 'error': 'At least one size or color is required'}), 400
+
+    # Build combinations
+    combos = []
+    if sizes and colors:
+        for size in sizes:
+            for color in colors:
+                combos.append((size.strip(), color.strip()))
+    elif sizes:
+        for size in sizes:
+            combos.append((size.strip(), None))
+    else:
+        for color in colors:
+            combos.append((None, color.strip()))
+
+    if len(combos) > 100:
+        return jsonify({'success': False, 'error': 'Too many variants (max 100)'}), 400
+
+    # Build stock lookup from stock_map (matches by index)
+    stock_values = []
+    if stock_map and len(stock_map) == len(combos):
+        stock_values = [max(0, int(entry.get('stock', 0))) for entry in stock_map]
+    else:
+        stock_values = [stock_per_variant] * len(combos)
+
+    # Generate variant group identifier
+    import uuid
+    variant_group = f"{name[:20].lower().replace(' ', '-')}-{uuid.uuid4().hex[:8]}"
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    shop_id = get_current_shop_id()
+    flt_sql, flt_params = shop_filter()
+
+    try:
+        created_ids = []
+        for idx, (size, color) in enumerate(combos):
+            variant_stock = stock_values[idx]
+            # Skip variants with 0 stock — don't create them
+            if variant_stock <= 0:
+                continue
+            # Auto-generate SKU
+            prefix = category[:3].upper()
+            existing_count = cursor.execute(
+                f"SELECT COUNT(*) FROM products WHERE sku LIKE ? {flt_sql}", [f'{prefix}-%'] + flt_params
+            ).fetchone()[0]
+            sku = f'{prefix}-{existing_count + 1:03d}'
+            while cursor.execute(
+                f"SELECT COUNT(*) FROM products WHERE sku=? {flt_sql}", [sku] + flt_params
+            ).fetchone()[0] > 0:
+                existing_count += 1
+                sku = f'{prefix}-{existing_count + 1:03d}'
+
+            cursor.execute('''
+                INSERT INTO products (shop_id, name, category, cost_price, price, stock_quantity, sku, description, size, color, variant_group)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (shop_id, name, category, cost_price, price, variant_stock, sku, description,
+                  size, color, variant_group))
+
+            product_id = cursor.lastrowid
+            created_ids.append(product_id)
+
+            if variant_stock > 0:
+                cursor.execute('''
+                    INSERT INTO stock_history (shop_id, product_id, quantity_change, action_type, note)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (shop_id, product_id, variant_stock, 'initial', f'Initial stock | Variant: {size or ""} {color or ""}'))
+
+        conn.commit()
+        return jsonify({
+            'success': True,
+            'created': len(created_ids),
+            'variant_group': variant_group,
+            'ids': created_ids
+        }), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
 
 # --- Products: Bulk stock update ---
 @app.route('/api/products/bulk-stock', methods=['POST'])
@@ -4905,4 +5071,7 @@ def restore_database():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=443)
+    debug = os.environ.get('FLASK_DEBUG', '0').lower() in ('1', 'true')
+    port = int(os.environ.get('PORT', '5000'))
+    host = os.environ.get('HOST', '127.0.0.1')
+    app.run(debug=debug, host=host, port=port)

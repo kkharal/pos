@@ -426,8 +426,9 @@
             } else {
                 productDropdown.innerHTML = filtered.map((p, i) => {
                     const stockClass = p.stock_quantity <= 0 ? 'low' : '';
+                    const sizeColor = [p.size, p.color].filter(Boolean).join(' / ');
                     return `<div class="product-option" data-id="${p.id}" data-cost="${p.cost_price}" data-index="${i}">
-                        <div class="product-name">${escapeHtml(p.name)}</div>
+                        <div class="product-name">${escapeHtml(p.name)}${sizeColor ? ` <span style="color:#777; font-size:0.85em;">(${escapeHtml(sizeColor)})</span>` : ''}</div>
                         <div class="product-meta">
                             <span class="sku">${escapeHtml(p.sku || 'N/A')}</span>
                             <span class="stock ${stockClass}">Stock: ${p.stock_quantity}</span>

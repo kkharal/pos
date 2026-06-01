@@ -444,9 +444,39 @@ def init_db():
 
     # ── Migration: add columns to existing tables ────────────────────────────
 
+    # Sales: total_cost column (profit tracking)
+    if not _column_exists(cursor, "sales", "total_cost"):
+        cursor.execute("ALTER TABLE sales ADD COLUMN total_cost DECIMAL(12,2) NOT NULL DEFAULT 0")
+
+    # Backfill total_cost for sales that have 0 (from before column existed)
+    zero_cost_sales = cursor.execute(
+        "SELECT id, items_json FROM sales WHERE total_cost = 0"
+    ).fetchall()
+    for sale in zero_cost_sales:
+        try:
+            items = json.loads(sale['items_json']) if isinstance(sale['items_json'], str) else sale['items_json']
+            cost = 0
+            for item in items:
+                pid = item.get('product_id') or item.get('id')
+                qty = item.get('quantity', 1)
+                if pid:
+                    prod = cursor.execute("SELECT cost_price FROM products WHERE id=?", (pid,)).fetchone()
+                    if prod and prod['cost_price']:
+                        cost += float(prod['cost_price']) * qty
+            if cost > 0:
+                cursor.execute("UPDATE sales SET total_cost=? WHERE id=?", (cost, sale['id']))
+        except Exception:
+            pass
+
     # Products extras
     if not _column_exists(cursor, "products", "low_stock_threshold"):
         cursor.execute("ALTER TABLE products ADD COLUMN low_stock_threshold INT NULL")
+    if not _column_exists(cursor, "products", "size"):
+        cursor.execute("ALTER TABLE products ADD COLUMN size VARCHAR(50) NULL")
+    if not _column_exists(cursor, "products", "color"):
+        cursor.execute("ALTER TABLE products ADD COLUMN color VARCHAR(50) NULL")
+    if not _column_exists(cursor, "products", "variant_group"):
+        cursor.execute("ALTER TABLE products ADD COLUMN variant_group VARCHAR(100) NULL")
 
     # Users extras
     if not _column_exists(cursor, "users", "last_login"):
@@ -503,11 +533,37 @@ def init_db():
         ).fetchone()["id"]
 
     # ── Migrate existing rows to default shop ────────────────────────────────
-    for tbl in ["products", "sales", "sale_returns", "stock_history", "customers",
+    for tbl in ["sales", "sale_returns", "stock_history", "customers",
                 "suppliers", "purchase_orders", "invoices", "payments", "product_audit_log"]:
         cursor.execute(
             f"UPDATE {tbl} SET shop_id = ? WHERE shop_id IS NULL", (default_shop_id,)
         )
+
+    # Products: fix duplicate SKUs before assigning shop_id (to avoid unique constraint violation)
+    null_shop_products = cursor.execute(
+        "SELECT id, sku FROM products WHERE shop_id IS NULL ORDER BY id"
+    ).fetchall()
+    seen_skus = set()
+    # Also gather SKUs already assigned to this shop
+    existing_skus = cursor.execute(
+        "SELECT sku FROM products WHERE shop_id = ?", (default_shop_id,)
+    ).fetchall()
+    for row in existing_skus:
+        seen_skus.add(row['sku'])
+    for prod in null_shop_products:
+        sku = prod['sku']
+        if sku in seen_skus:
+            # Append suffix to make it unique
+            suffix = 2
+            new_sku = f"{sku}-{suffix}"
+            while new_sku in seen_skus:
+                suffix += 1
+                new_sku = f"{sku}-{suffix}"
+            cursor.execute("UPDATE products SET sku = ?, shop_id = ? WHERE id = ?", (new_sku, default_shop_id, prod['id']))
+            seen_skus.add(new_sku)
+        else:
+            cursor.execute("UPDATE products SET shop_id = ? WHERE id = ?", (default_shop_id, prod['id']))
+            seen_skus.add(sku)
     # Users: only non-super_admin users are assigned to the default shop
     cursor.execute(
         "UPDATE users SET shop_id = ? WHERE shop_id IS NULL AND role != 'super_admin'",
@@ -531,6 +587,7 @@ def init_db():
 
     # ── Global settings (shop_id = NULL, non-shop-specific) ──────────────────
     global_settings = [
+        ("brand_name", "POS System"),
         ("session_timeout", "1800"),
         ("smtp_server", ""),
         ("smtp_port", "587"),
@@ -541,14 +598,14 @@ def init_db():
         ("scheduler_times", json.dumps(["09:00", "12:00", "18:00"])),
     ]
     for key, value in global_settings:
-        cursor.execute(
-            """
-            INSERT INTO settings (`key`, value, shop_id)
-            VALUES (%s, %s, NULL)
-            ON DUPLICATE KEY UPDATE value = value
-            """,
-            (key, value),
-        )
+        existing = cursor.execute(
+            "SELECT id FROM settings WHERE `key` = %s AND shop_id IS NULL", (key,)
+        ).fetchone()
+        if not existing:
+            cursor.execute(
+                "INSERT INTO settings (`key`, value, shop_id) VALUES (%s, %s, NULL)",
+                (key, value),
+            )
 
     # ── Per-shop email settings: seed empty rows for each shop ───────────────
     per_shop_email_keys = [

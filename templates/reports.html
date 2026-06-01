@@ -724,7 +724,7 @@
                 const initial = (user.full_name || user.username).charAt(0).toUpperCase();
                 document.getElementById('user-icon').textContent = initial;
                 document.getElementById('user-name').textContent = user.full_name || user.username;
-                const isAdmin = isAdminRole(user.role);
+                isAdmin = isAdminRole(user.role);
                 const roleBadge = document.getElementById('role-badge');
                 roleBadge.textContent = getRoleLabel(user.role);
                 roleBadge.className = getRoleBadgeClass(user.role);

@@ -185,32 +185,110 @@ fi
 
 echo "✓ Database initialized"
 
+# ── Environment & Security Setup ─────────────────────────────────────────────
+
+# Load .env file if present
+if [ -f ".env" ]; then
+    echo "✓ Loading .env file"
+    set -a
+    source .env
+    set +a
+else
+    echo "⚠ No .env file found. Creating from .env.example..."
+    if [ -f ".env.example" ]; then
+        cp .env.example .env
+        echo "  Please edit .env and set SECRET_KEY before running in production."
+    fi
+fi
+
+# Ensure SECRET_KEY is set
+if [ -z "$SECRET_KEY" ]; then
+    echo ""
+    echo "⚠ SECRET_KEY not set. Generating a secure one..."
+    GENERATED_KEY=$($PYTHON -c "import secrets; print(secrets.token_hex(32))")
+    if [ -f ".env" ]; then
+        # Replace empty SECRET_KEY= line or append
+        if grep -q "^SECRET_KEY=" .env; then
+            sed -i.bak "s|^SECRET_KEY=.*|SECRET_KEY=${GENERATED_KEY}|" .env
+            rm -f .env.bak
+        else
+            echo "SECRET_KEY=${GENERATED_KEY}" >> .env
+        fi
+    else
+        echo "SECRET_KEY=${GENERATED_KEY}" > .env
+    fi
+    export SECRET_KEY="$GENERATED_KEY"
+    echo "✓ SECRET_KEY generated and saved to .env"
+fi
+
+# Determine run mode
+MODE="${RUN_MODE:-production}"
+HOST="${HOST:-127.0.0.1}"
+PORT="${PORT:-5000}"
+WORKERS="${GUNICORN_WORKERS:-4}"
+
 # Create logs directory if it doesn't exist
 mkdir -p logs
 
 LOG_FILE="logs/app.log"
 
-# Start the application in background
+# Start the application
 echo ""
 echo "=========================================="
 echo "  Starting Clothing Shop POS System"
 echo "=========================================="
 echo ""
-echo "  🌐 Access at: http://localhost:443"
-echo ""
-echo "  Default Login:"
-echo "    Username: admin"
-echo "    Password: admin123"
-echo ""
-echo "  Logs: $LOG_FILE"
-echo "  Stop: kill \$(cat logs/app.pid)"
-echo ""
-echo "=========================================="
-echo ""
 
-nohup $PYTHON app.py >> "$LOG_FILE" 2>&1 &
+if [ "$MODE" = "development" ]; then
+    echo "  ⚠ Mode: DEVELOPMENT (debug enabled)"
+    echo "  🌐 Access at: http://${HOST}:${PORT}"
+    echo ""
+    echo "  Default Login:"
+    echo "    Username: admin"
+    echo "    Password: admin123"
+    echo ""
+    echo "  Logs: $LOG_FILE"
+    echo "  Stop: kill \$(cat logs/app.pid)"
+    echo ""
+    echo "=========================================="
+    echo ""
 
-echo $! > logs/app.pid
+    export FLASK_DEBUG=1
+    nohup $PYTHON app.py >> "$LOG_FILE" 2>&1 &
+    echo $! > logs/app.pid
+    echo "✓ Development server started (PID: $!)"
+else
+    echo "  🔒 Mode: PRODUCTION (gunicorn)"
+    echo "  🌐 Listening on: http://${HOST}:${PORT}"
+    echo "  👷 Workers: ${WORKERS}"
+    echo ""
+    echo "  ⚡ Use Nginx as reverse proxy for HTTPS on port 443"
+    echo ""
+    echo "  Default Login:"
+    echo "    Username: admin"
+    echo "    Password: admin123"
+    echo ""
+    echo "  Logs: $LOG_FILE"
+    echo "  Stop: kill \$(cat logs/app.pid)"
+    echo ""
+    echo "=========================================="
+    echo ""
 
-echo "✓ Application started in background (PID: $!)"
+    # Ensure gunicorn is installed
+    if ! ./venv/bin/gunicorn --version &>/dev/null; then
+        echo "Installing gunicorn..."
+        $PIP install gunicorn
+    fi
+
+    nohup ./venv/bin/gunicorn \
+        --workers "$WORKERS" \
+        --bind "${HOST}:${PORT}" \
+        --access-logfile logs/access.log \
+        --error-logfile logs/error.log \
+        --timeout 120 \
+        app:app >> "$LOG_FILE" 2>&1 &
+    echo $! > logs/app.pid
+    echo "✓ Gunicorn started (PID: $!)"
+fi
+
 echo "  View logs: tail -f $LOG_FILE"

@@ -109,6 +109,32 @@
             <span>🏬</span> Store
         </div>
 
+        <!-- Brand Name Settings -->
+        <div class="settings-card collapsed" id="brand-name-card">
+            <div class="settings-card-header" onclick="toggleSettingsCard('brand-name-card')">
+                <div class="settings-card-title">
+                    <span class="settings-card-icon">🏷️</span>
+                    <h3>Brand Name</h3>
+                </div>
+                <div class="settings-card-status">
+                    <span class="settings-card-status-text" id="brand-name-status">Not loaded</span>
+                    <span class="settings-card-toggle">▼</span>
+                </div>
+            </div>
+            <div class="settings-card-body">
+                <p style="color: #7f8c8d; margin-bottom: 1.5rem;">
+                    Your business brand name. This is shown on the login page and represents your overall business (across all shops).
+                </p>
+                <form id="brand-name-form">
+                    <div class="form-group">
+                        <label>Brand Name *</label>
+                        <input type="text" id="brand-name-input" required placeholder="e.g. Kharal Fashion, ABC Clothing" maxlength="100">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Brand Name</button>
+                </form>
+            </div>
+        </div>
+
         <!-- Shop Name Settings -->
         <div class="settings-card collapsed" id="shop-name-card">
             <div class="settings-card-header" onclick="toggleSettingsCard('shop-name-card')">
@@ -603,6 +629,41 @@
 
         document.getElementById('shop-name-input').addEventListener('input', function() {
             document.getElementById('name-preview').textContent = this.value || 'Shop Name';
+        });
+
+        // ── Brand Name ─────────────────────────────────────────────────
+        async function loadBrandName() {
+            try {
+                const response = await fetch('/api/settings/brand');
+                const data = await response.json();
+                document.getElementById('brand-name-input').value = data.brand_name || '';
+                document.getElementById('brand-name-status').textContent = data.brand_name || 'Not set';
+            } catch (error) {
+                console.error('Error loading brand name:', error);
+                document.getElementById('brand-name-status').textContent = 'Error loading';
+            }
+        }
+
+        document.getElementById('brand-name-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const brandName = document.getElementById('brand-name-input').value.trim();
+            if (!brandName) { showMessage('Brand name cannot be empty', 'error'); return; }
+            try {
+                const response = await fetch('/api/settings/brand', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ brand_name: brandName })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showMessage('Brand name updated successfully!', 'success');
+                    document.getElementById('brand-name-status').textContent = brandName;
+                } else {
+                    showMessage(data.error || 'Error saving brand name', 'error');
+                }
+            } catch (error) {
+                showMessage('Error saving brand name', 'error');
+            }
         });
 
         async function loadShopName() {
@@ -1169,6 +1230,7 @@
 
         // Initialize
         loadUserInfo();
+        loadBrandName();
         loadShopName();
         loadCurrency();
         loadSessionTimeout();
