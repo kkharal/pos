@@ -458,7 +458,9 @@
             const filtered = products.filter(p => {
                 const matchesSearch = p.name.toLowerCase().includes(filter.toLowerCase()) ||
                     p.category.toLowerCase().includes(filter.toLowerCase()) ||
-                    (p.sku && p.sku.toLowerCase().includes(filter.toLowerCase()));
+                    (p.sku && p.sku.toLowerCase().includes(filter.toLowerCase())) ||
+                    (p.size && p.size.toLowerCase().includes(filter.toLowerCase())) ||
+                    (p.color && p.color.toLowerCase().includes(filter.toLowerCase()));
                 if (activeCategory === 'Out of Stock') {
                     return matchesSearch && p.stock_quantity <= 0;
                 }
@@ -474,11 +476,13 @@
 
             container.innerHTML = filtered.map(product => {
                 const outOfStock = product.stock_quantity <= 0;
+                const sizeColor = [product.size, product.color].filter(Boolean).join(' / ');
                 return `
                 <div class="product-item"
                      onclick="${outOfStock ? '' : `addToCart(${product.id})`}"
                      style="${outOfStock ? 'opacity:0.5; cursor:not-allowed; pointer-events:none;' : ''}">
                     <h4>${product.name}</h4>
+                    ${sizeColor ? `<p style="color: #555; font-size: 0.8rem; margin: 0.1rem 0;">${sizeColor}</p>` : ''}
                     ${outOfStock
                         ? '<span style="display:inline-block; background:#e74c3c; color:white; font-size:0.72rem; padding:0.15rem 0.5rem; border-radius:3px; font-weight:bold; margin-bottom:0.3rem;">OUT OF STOCK</span>'
                         : ''}
@@ -543,6 +547,8 @@
                     product_id: productId,
                     name: product.name,
                     sku: product.sku || 'N/A',
+                    size: product.size || '',
+                    color: product.color || '',
                     price: product.price,
                     cost_price: product.cost_price || 0,
                     quantity: 1,
@@ -1232,6 +1238,7 @@
                 }
 
                 const itemTotal = itemSubtotal - itemDiscount;
+                const itemDetails = [item.size, item.color].filter(Boolean).join(' / ');
 
                 receiptHtml += `
                     <div style="margin-bottom: 0.75rem;">
@@ -1239,6 +1246,7 @@
                             <strong>${item.name}</strong>
                             <span>${currencySymbol}${itemSubtotal.toFixed(2)}</span>
                         </div>
+                        ${itemDetails ? `<div style="font-size: 0.8rem; color: #555; margin-left: 0.5rem;">${itemDetails}</div>` : ''}
                         <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-left: 0.5rem;">
                             <span>${currencySymbol}${item.price.toFixed(2)} × ${item.quantity}</span>
                         </div>
