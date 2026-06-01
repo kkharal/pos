@@ -139,6 +139,7 @@
                     <button class="btn btn-secondary" id="import-csv-btn" onclick="document.getElementById('csv-file-input').click()" style="font-size:0.8rem; padding:0.35rem 0.7rem; display:none;">⬆ Import CSV</button>
                     <input type="file" id="csv-file-input" accept=".csv" style="display:none;" onchange="importCSV(this)">
                     <button class="btn btn-primary" id="add-product-btn" onclick="openAddProductModal()" style="display: none;">Add New Product</button>
+                    <button class="btn btn-secondary" id="add-variants-btn" onclick="openVariantModal()" style="display: none; font-size:0.8rem; padding:0.35rem 0.7rem;">🎨 Create Variants</button>
                 </div>
             </div>
 
@@ -185,6 +186,8 @@
                         <th style="cursor:pointer; min-width:120px;" onclick="sortProducts('sku')">SKU <span id="sort-sku"></span></th>
                         <th style="cursor:pointer; min-width:180px;" onclick="sortProducts('name')">Name <span id="sort-name"></span></th>
                         <th style="cursor:pointer;" onclick="sortProducts('category')">Category <span id="sort-category"></span></th>
+                        <th style="cursor:pointer;" onclick="sortProducts('size')">Size <span id="sort-size"></span></th>
+                        <th style="cursor:pointer;" onclick="sortProducts('color')">Color <span id="sort-color"></span></th>
                         <th class="admin-only" style="cursor:pointer;" onclick="sortProducts('cost_price')">Cost Price <span id="sort-cost_price"></span></th>
                         <th style="cursor:pointer;" onclick="sortProducts('price')">Sell Price <span id="sort-price"></span></th>
                         <th class="admin-only" style="cursor:pointer;" onclick="sortProducts('profit')">Profit/Unit <span id="sort-profit"></span></th>
@@ -194,7 +197,7 @@
                 </thead>
                 <tbody id="products-table">
                     <tr>
-                        <td colspan="10" style="text-align: center;">Loading...</td>
+                        <td colspan="12" style="text-align: center;">Loading...</td>
                     </tr>
                 </tbody>
             </table>
@@ -248,6 +251,28 @@
                     <label>SKU <span style="color:#999; font-weight:normal;">(leave blank to auto-generate)</span></label>
                     <input type="text" name="sku" placeholder="e.g. SHR-001 (auto if empty)">
                 </div>
+                <div style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex:1;">
+                        <label>Size</label>
+                        <select id="add-size-select" name="size" onchange="if(this.value==='__custom__'){document.getElementById('add-custom-size').style.display='block';this.style.display='none';}">
+                            <option value="">Select size</option>
+                            <option value="XS">XS</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="XXL">XXL</option>
+                            <option value="XXXL">XXXL</option>
+                            <option value="Free Size">Free Size</option>
+                            <option value="__custom__">Custom (type your own)...</option>
+                        </select>
+                        <input type="text" id="add-custom-size" name="custom_size" style="display:none; margin-top:0.4rem;" placeholder="e.g. 42, 10.5, 28W">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Color</label>
+                        <input type="text" name="color" placeholder="e.g. Red, Blue, Black">
+                    </div>
+                </div>
                 <div class="form-group">
                     <label>Description</label>
                     <textarea name="description"></textarea>
@@ -296,8 +321,122 @@
                     <input type="number" id="edit-product-threshold" min="1" placeholder="e.g. 5">
                 </div>
                 <div style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex:1;">
+                        <label>Size</label>
+                        <select id="edit-product-size" onchange="if(this.value==='__custom__'){document.getElementById('edit-custom-size').style.display='block';this.style.display='none';}">
+                            <option value="">Select size</option>
+                            <option value="XS">XS</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="XXL">XXL</option>
+                            <option value="XXXL">XXXL</option>
+                            <option value="Free Size">Free Size</option>
+                            <option value="__custom__">Custom (type your own)...</option>
+                        </select>
+                        <input type="text" id="edit-custom-size" style="display:none; margin-top:0.4rem;" placeholder="e.g. 42, 10.5, 28W">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Color</label>
+                        <input type="text" id="edit-product-color" placeholder="e.g. Red, Blue, Black">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                     <button type="button" class="btn btn-secondary" onclick="closeEditProductModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Variants Modal -->
+    <div id="variant-modal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Create Product Variants</h2>
+                <button class="close-btn" onclick="closeVariantModal()">&times;</button>
+            </div>
+            <form id="variant-form">
+                <div class="form-group">
+                    <label>Product Name *</label>
+                    <input type="text" id="variant-name" required placeholder="e.g. Basic T-Shirt">
+                </div>
+                <div class="form-group">
+                    <label>Category *</label>
+                    <select id="variant-category" required>
+                        <option value="">Select category</option>
+                        <option value="Shirts">Shirts</option>
+                        <option value="Pants">Pants</option>
+                        <option value="Dresses">Dresses</option>
+                        <option value="Jackets">Jackets</option>
+                        <option value="Shoes">Shoes</option>
+                        <option value="Accessories">Accessories</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex:1;">
+                        <label>Cost Price *</label>
+                        <input type="number" id="variant-cost-price" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Sell Price *</label>
+                        <input type="number" id="variant-price" step="0.01" min="0" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="variant-description" placeholder="Shared description for all variants"></textarea>
+                </div>
+
+                <hr style="margin: 1rem 0; border: none; border-top: 2px dashed #ddd;">
+                <h3 style="margin-bottom: 0.75rem; font-size: 1rem; color: #2c3e50;">Select Sizes & Colors</h3>
+
+                <div class="form-group">
+                    <label>Sizes <span style="color:#999; font-weight:normal;">(check all that apply)</span></label>
+                    <div id="variant-sizes" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.3rem;">
+                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;">
+                            <input type="checkbox" name="sizes" value="XS"> XS</label>
+                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;">
+                            <input type="checkbox" name="sizes" value="S"> S</label>
+                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;">
+                            <input type="checkbox" name="sizes" value="M"> M</label>
+                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;">
+                            <input type="checkbox" name="sizes" value="L"> L</label>
+                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;">
+                            <input type="checkbox" name="sizes" value="XL"> XL</label>
+                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;">
+                            <input type="checkbox" name="sizes" value="XXL"> XXL</label>
+                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;">
+                            <input type="checkbox" name="sizes" value="XXXL"> XXXL</label>
+                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;">
+                            <input type="checkbox" name="sizes" value="Free Size"> Free</label>
+                    </div>
+                    <div style="margin-top: 0.4rem;">
+                        <input type="text" id="variant-custom-sizes" placeholder="Custom sizes (comma-separated): e.g. 28, 30, 32, 34" style="font-size:0.85rem;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Colors <span style="color:#999; font-weight:normal;">(comma-separated)</span></label>
+                    <input type="text" id="variant-colors" placeholder="e.g. Red, Blue, Black, White, Green">
+                </div>
+
+                <div id="variant-preview" style="margin: 1rem 0; padding: 0.75rem; background: #f8f9fa; border-radius: 6px; display: none;">
+                    <strong style="font-size: 0.85rem;">Stock per Variant:</strong>
+                    <p style="margin: 0.3rem 0 0.5rem; font-size: 0.8rem; color: #888;">Set individual stock for each variant. Use "Apply to All" to fill all at once.</p>
+                    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                        <input type="number" id="variant-stock-all" min="0" value="0" style="width:80px; font-size:0.85rem; padding:0.3rem;">
+                        <button type="button" class="btn btn-secondary" onclick="applyStockToAll()" style="font-size:0.75rem; padding:0.25rem 0.6rem;">Apply to All</button>
+                        <span id="variant-total-stock" style="margin-left:auto; font-size:0.8rem; color:#666; font-weight:600;"></span>
+                    </div>
+                    <div id="variant-stock-table" style="max-height: 200px; overflow-y: auto; border: 1px solid #e9ecef; border-radius: 4px;"></div>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary">Create All Variants</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeVariantModal()">Cancel</button>
                 </div>
             </form>
         </div>
@@ -513,6 +652,7 @@
                 const response = await fetch('/api/products');
                 products = await response.json();
                 renderCategoryTabs();
+                renderProducts();
             } catch (error) {
                 console.error('Error loading products:', error);
             } finally {
@@ -552,7 +692,9 @@
             let filtered = products.filter(p => {
                 const matchSearch = p.name.toLowerCase().includes(search) ||
                     (p.sku && p.sku.toLowerCase().includes(search)) ||
-                    p.category.toLowerCase().includes(search);
+                    p.category.toLowerCase().includes(search) ||
+                    (p.size && p.size.toLowerCase().includes(search)) ||
+                    (p.color && p.color.toLowerCase().includes(search));
                 const matchCat = activeCategory === 'All' || p.category === activeCategory;
                 let matchStock = true;
                 if (stockFilter === 'low') matchStock = p.stock_quantity > 0 && p.stock_quantity < getThreshold(p);
@@ -560,6 +702,16 @@
                 return matchSearch && matchCat && matchStock;
             });
             filtered.sort((a, b) => {
+                // Keep variant groups together
+                if (a.variant_group && b.variant_group && a.variant_group === b.variant_group) {
+                    // Within same group, sort by size then color
+                    const sizeOrder = ['XS','S','M','L','XL','XXL','XXXL','Free Size'];
+                    const sa = sizeOrder.indexOf(a.size) >= 0 ? sizeOrder.indexOf(a.size) : 99;
+                    const sb = sizeOrder.indexOf(b.size) >= 0 ? sizeOrder.indexOf(b.size) : 99;
+                    if (sa !== sb) return sa - sb;
+                    return (a.color || '').localeCompare(b.color || '');
+                }
+
                 let va, vb;
                 if (sortField === 'profit') {
                     va = a.price - (a.cost_price || 0);
@@ -578,7 +730,7 @@
         }
 
         function renderSortArrows() {
-            ['sku','name','category','cost_price','price','profit','stock_quantity'].forEach(f => {
+            ['sku','name','category','size','color','cost_price','price','profit','stock_quantity'].forEach(f => {
                 const el = document.getElementById('sort-' + f);
                 if (el) el.textContent = sortField === f ? (sortAsc ? '▲' : '▼') : '';
             });
@@ -684,7 +836,7 @@
             }
 
             if (filtered.length === 0) {
-                const colspan = isAdmin ? 8 : 5;
+                const colspan = isAdmin ? 10 : 7;
                 tbody.innerHTML = `<tr><td colspan="${colspan}" style="padding:0; border:none;">
                     <div class="prod-empty-state">
                         <div class="empty-icon">🔍</div>
@@ -699,7 +851,28 @@
             const pageSize = perPage === Infinity ? filtered.length : perPage;
             const paged = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-            tbody.innerHTML = paged.map(product => {
+            // Track variant groups for group headers
+            const seenGroups = new Set();
+            let rows = [];
+
+            paged.forEach(product => {
+                // Insert variant group header if this is the first product of a group
+                if (product.variant_group && !seenGroups.has(product.variant_group)) {
+                    seenGroups.add(product.variant_group);
+                    const groupProducts = paged.filter(p => p.variant_group === product.variant_group);
+                    const totalStock = groupProducts.reduce((sum, p) => sum + p.stock_quantity, 0);
+                    const colspan = isAdmin ? 10 : 7;
+                    rows.push(`<tr class="variant-group-header" style="background:#eef2ff; border-left:3px solid #6366f1;">
+                        <td colspan="${colspan}" style="padding:0.4rem 0.75rem; font-size:0.82rem;">
+                            <span style="font-weight:600; color:#4338ca;">🎨 ${product.name}</span>
+                            <span style="color:#666; margin-left:0.75rem;">${groupProducts.length} variants · Total stock: ${totalStock}</span>
+                            <button onclick="toggleVariantGroup('${product.variant_group}')" style="float:right; background:none; border:none; cursor:pointer; font-size:0.8rem; color:#6366f1;">
+                                <span id="vg-toggle-${product.variant_group.replace(/[^a-z0-9]/g, '')}">▼</span>
+                            </button>
+                        </td>
+                    </tr>`);
+                }
+
                 const isSelected = product.id === selectedProductId;
                 const threshold = getThreshold(product);
                 // Row highlight
@@ -708,10 +881,14 @@
                 else if (product.stock_quantity <= 0) rowBg = 'background:#fde8e8;';
                 else if (product.stock_quantity < threshold) rowBg = 'background:#fff8e6;';
 
-                let row = `<tr data-id="${product.id}" style="${rowBg} cursor:pointer;" onclick="selectProduct(${product.id})" ondblclick="openEditProductModal(${product.id})">
+                const variantClass = product.variant_group ? `variant-row-${product.variant_group.replace(/[^a-z0-9]/g, '')}` : '';
+
+                let row = `<tr data-id="${product.id}" class="${variantClass}" style="${rowBg} cursor:pointer;" onclick="selectProduct(${product.id})" ondblclick="openEditProductModal(${product.id})">
                     <td>${product.sku || '-'}</td>
                     <td class="editable-cell" data-field="name" data-id="${product.id}">${product.name}</td>
-                    <td>${product.category}</td>`;
+                    <td>${product.category}</td>
+                    <td>${product.size || '-'}</td>
+                    <td>${product.color || '-'}</td>`;
 
                 if (isAdmin) {
                     row += `<td class="editable-cell" data-field="cost_price" data-id="${product.id}">${currencySymbol}${(product.cost_price || 0).toFixed(2)}</td>`;
@@ -736,8 +913,20 @@
                 row += `<td>${badge}</td>`;
 
                 row += `</tr>`;
-                return row;
-            }).join('');
+                rows.push(row);
+            });
+
+            tbody.innerHTML = rows.join('');
+        }
+
+        // Toggle variant group visibility
+        function toggleVariantGroup(group) {
+            const safeGroup = group.replace(/[^a-z0-9]/g, '');
+            const rows = document.querySelectorAll(`.variant-row-${safeGroup}`);
+            const toggle = document.getElementById(`vg-toggle-${safeGroup}`);
+            const hidden = rows[0] && rows[0].style.display === 'none';
+            rows.forEach(r => r.style.display = hidden ? '' : 'none');
+            if (toggle) toggle.textContent = hidden ? '▼' : '▶';
         }
 
         // --- Inline Quick-Edit (Feature 6) ---
@@ -1055,12 +1244,176 @@
             document.getElementById('add-product-form').reset();
             document.getElementById('custom-category-group').style.display = 'none';
             document.getElementById('custom-category-input').required = false;
+            // Reset custom size field
+            document.getElementById('add-size-select').style.display = '';
+            document.getElementById('add-custom-size').style.display = 'none';
+            document.getElementById('add-custom-size').value = '';
             // Remove action=add from URL
             const p = new URLSearchParams(window.location.search);
             p.delete('action');
             const qs = p.toString();
             history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
         }
+
+        // ── Variant Modal ────────────────────────────────────────────────────
+        function openVariantModal() {
+            // Populate category dropdown with existing categories
+            const select = document.getElementById('variant-category');
+            const existingCats = [...new Set(products.map(p => p.category))].sort();
+            const defaultOpts = ['', 'Shirts', 'Pants', 'Dresses', 'Jackets', 'Shoes', 'Accessories', 'Other'];
+            const allCats = [...new Set([...defaultOpts, ...existingCats])];
+            select.innerHTML = allCats.map(c => c === '' ? '<option value="">Select category</option>' : `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('variant-modal').classList.add('active');
+        }
+
+        function closeVariantModal() {
+            document.getElementById('variant-modal').classList.remove('active');
+            document.getElementById('variant-form').reset();
+            document.getElementById('variant-preview').style.display = 'none';
+        }
+
+        function getVariantCombos() {
+            const checkedSizes = [...document.querySelectorAll('#variant-sizes input[name="sizes"]:checked')].map(c => c.value);
+            const customSizes = document.getElementById('variant-custom-sizes').value.split(',').map(s => s.trim()).filter(Boolean);
+            const sizes = [...new Set([...checkedSizes, ...customSizes])];
+            const colors = document.getElementById('variant-colors').value.split(',').map(c => c.trim()).filter(Boolean);
+            return { sizes, colors };
+        }
+
+        function updateVariantPreview() {
+            const { sizes, colors } = getVariantCombos();
+            const preview = document.getElementById('variant-preview');
+            const tableDiv = document.getElementById('variant-stock-table');
+            const totalSpan = document.getElementById('variant-total-stock');
+
+            // Build combos
+            let combos = [];
+            if (sizes.length && colors.length) {
+                for (const size of sizes) {
+                    for (const color of colors) {
+                        combos.push({ size, color, label: `${size} / ${color}` });
+                    }
+                }
+            } else if (sizes.length) {
+                for (const size of sizes) {
+                    combos.push({ size, color: null, label: size });
+                }
+            } else if (colors.length) {
+                for (const color of colors) {
+                    combos.push({ size: null, color, label: color });
+                }
+            }
+
+            if (combos.length > 0) {
+                let html = '<table style="width:100%; border-collapse:collapse; font-size:0.82rem;">';
+                html += '<thead><tr style="background:#e9ecef;"><th style="padding:0.4rem 0.6rem; text-align:left;">Variant</th><th style="padding:0.4rem 0.6rem; text-align:center; width:90px;">Stock</th></tr></thead>';
+                html += '<tbody>';
+                combos.forEach((c, i) => {
+                    const bg = i % 2 === 0 ? '#fff' : '#f8f9fa';
+                    html += `<tr style="background:${bg};">`;
+                    html += `<td style="padding:0.35rem 0.6rem;">${c.label}</td>`;
+                    html += `<td style="padding:0.35rem 0.6rem; text-align:center;"><input type="number" class="variant-stock-input" data-index="${i}" min="0" value="0" style="width:70px; text-align:center; padding:0.2rem; font-size:0.85rem; border:1px solid #ccc; border-radius:3px;" oninput="updateVariantTotalStock()"></td>`;
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+                tableDiv.innerHTML = html;
+                updateVariantTotalStock();
+                preview.style.display = 'block';
+            } else {
+                tableDiv.innerHTML = '';
+                totalSpan.textContent = '';
+                preview.style.display = 'none';
+            }
+        }
+
+        function applyStockToAll() {
+            const val = parseInt(document.getElementById('variant-stock-all').value) || 0;
+            document.querySelectorAll('.variant-stock-input').forEach(inp => { inp.value = val; });
+            updateVariantTotalStock();
+        }
+
+        function updateVariantTotalStock() {
+            const inputs = document.querySelectorAll('.variant-stock-input');
+            let total = 0;
+            inputs.forEach(inp => { total += parseInt(inp.value) || 0; });
+            const span = document.getElementById('variant-total-stock');
+            span.textContent = `Total: ${total} unit${total !== 1 ? 's' : ''}`;
+        }
+
+        // Live preview on change
+        document.getElementById('variant-sizes').addEventListener('change', updateVariantPreview);
+        document.getElementById('variant-custom-sizes').addEventListener('input', updateVariantPreview);
+        document.getElementById('variant-colors').addEventListener('input', updateVariantPreview);
+
+        document.getElementById('variant-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { sizes, colors } = getVariantCombos();
+
+            if (!sizes.length && !colors.length) {
+                showToast('Select at least one size or enter at least one color', 'warning');
+                return;
+            }
+
+            // Build per-variant stock map from the editable table
+            const stockInputs = document.querySelectorAll('.variant-stock-input');
+            let combos = [];
+            if (sizes.length && colors.length) {
+                for (const size of sizes) {
+                    for (const color of colors) {
+                        combos.push({ size, color });
+                    }
+                }
+            } else if (sizes.length) {
+                for (const size of sizes) {
+                    combos.push({ size, color: null });
+                }
+            } else {
+                for (const color of colors) {
+                    combos.push({ size: null, color });
+                }
+            }
+
+            // Map each combo to its stock value
+            const stock_map = combos.map((c, i) => ({
+                size: c.size,
+                color: c.color,
+                stock: parseInt(stockInputs[i]?.value) || 0
+            }));
+
+            const data = {
+                name: document.getElementById('variant-name').value.trim(),
+                category: document.getElementById('variant-category').value,
+                cost_price: parseFloat(document.getElementById('variant-cost-price').value) || 0,
+                price: parseFloat(document.getElementById('variant-price').value) || 0,
+                description: document.getElementById('variant-description').value.trim(),
+                sizes,
+                colors,
+                stock_map
+            };
+
+            if (!data.name || !data.category) {
+                showToast('Name and Category are required', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/products/create-variants', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    showToast(`✓ Created ${result.created} variant(s) successfully!`, 'success');
+                    closeVariantModal();
+                    loadProducts();
+                } else {
+                    showToast('Error: ' + (result.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                showToast('Error creating variants', 'error');
+            }
+        });
 
         function updateCategoryDropdown() {
             const select = document.getElementById('category-select');
@@ -1111,6 +1464,14 @@
             data.price = parseFloat(data.price);
             data.stock_quantity = parseInt(data.stock_quantity) || 0;
 
+            // Resolve custom size
+            const addSizeSelect = document.getElementById('add-size-select');
+            const addCustomSize = document.getElementById('add-custom-size').value.trim();
+            if (addSizeSelect.value === '__custom__' || addSizeSelect.style.display === 'none') {
+                data.size = addCustomSize;
+            }
+            delete data.custom_size;
+
             try {
                 const response = await fetch('/api/products', {
                     method: 'POST',
@@ -1145,6 +1506,24 @@
             document.getElementById('edit-product-price').value = product.price;
             document.getElementById('edit-product-threshold').value = product.low_stock_threshold || '';
 
+            // Handle size — check if it's a standard option or custom
+            const editSizeSelect = document.getElementById('edit-product-size');
+            const editCustomSize = document.getElementById('edit-custom-size');
+            const standardSizes = ['', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'Free Size'];
+            if (product.size && !standardSizes.includes(product.size)) {
+                editSizeSelect.value = '__custom__';
+                editSizeSelect.style.display = 'none';
+                editCustomSize.style.display = 'block';
+                editCustomSize.value = product.size;
+            } else {
+                editSizeSelect.value = product.size || '';
+                editSizeSelect.style.display = '';
+                editCustomSize.style.display = 'none';
+                editCustomSize.value = '';
+            }
+
+            document.getElementById('edit-product-color').value = product.color || '';
+
             const select = document.getElementById('edit-category-select');
             const cats = [...new Set(products.map(p => p.category))].sort();
             select.innerHTML = cats.map(c => `<option value="${c}" ${c === product.category ? 'selected' : ''}>${c}</option>`).join('');
@@ -1155,12 +1534,23 @@
         function closeEditProductModal() {
             document.getElementById('edit-product-modal').classList.remove('active');
             document.getElementById('edit-product-form').reset();
+            // Reset custom size field
+            document.getElementById('edit-product-size').style.display = '';
+            document.getElementById('edit-custom-size').style.display = 'none';
+            document.getElementById('edit-custom-size').value = '';
         }
 
         document.getElementById('edit-product-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const productId = document.getElementById('edit-product-id').value;
             const product = products.find(p => p.id === parseInt(productId));
+
+            const editSizeVal = document.getElementById('edit-product-size');
+            const editCustomSizeVal = document.getElementById('edit-custom-size').value.trim();
+            let sizeValue = editSizeVal.value;
+            if (sizeValue === '__custom__' || editSizeVal.style.display === 'none') {
+                sizeValue = editCustomSizeVal;
+            }
 
             const data = {
                 name: document.getElementById('edit-product-name').value,
@@ -1169,6 +1559,8 @@
                 cost_price: parseFloat(document.getElementById('edit-product-cost-price').value) || 0,
                 price: parseFloat(document.getElementById('edit-product-price').value),
                 low_stock_threshold: document.getElementById('edit-product-threshold').value || null,
+                size: sizeValue || '',
+                color: document.getElementById('edit-product-color').value || '',
                 description: product ? (product.description || '') : ''
             };
 
@@ -1265,6 +1657,7 @@
 
                 const adminElements = document.querySelectorAll('.admin-only');
                 const addProductBtn = document.getElementById('add-product-btn');
+                const addVariantsBtn = document.getElementById('add-variants-btn');
                 const adminToolbarBtns = ['toolbar-edit-btn','toolbar-stock-btn','toolbar-delete-btn',
                     'toolbar-duplicate-btn','toolbar-reorder-btn','toolbar-audit-btn','toolbar-bulk-stock-btn','import-csv-btn'];
                 const adminSeps = document.querySelectorAll('.admin-only-sep');
@@ -1272,11 +1665,13 @@
                 if (isAdminRole(user.role)) {
                     adminElements.forEach(el => el.style.display = '');
                     if (addProductBtn) addProductBtn.style.display = 'inline-block';
+                    if (addVariantsBtn) addVariantsBtn.style.display = 'inline-block';
                     adminToolbarBtns.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ''; });
                     adminSeps.forEach(el => el.style.display = '');
                 } else {
                     adminElements.forEach(el => el.style.display = 'none');
                     if (addProductBtn) addProductBtn.style.display = 'none';
+                    if (addVariantsBtn) addVariantsBtn.style.display = 'none';
                     adminToolbarBtns.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
                     adminSeps.forEach(el => el.style.display = 'none');
                 }
