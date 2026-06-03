@@ -17,6 +17,7 @@ from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.utils import formataddr
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import atexit
@@ -139,7 +140,8 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
             email_settings,
             alert_email,
             f'{shop_name} - Scheduled Low Stock Alert ({len(low_stock_products)} items)',
-            email_body
+            email_body,
+            from_name=shop_name
         )
 
         print(f"[SCHEDULER] ✓ Alert sent for shop '{shop_name}': {len(low_stock_products)} low stock item(s)")
@@ -2671,7 +2673,8 @@ def send_test_email():
             settings,
             settings['alert_email'],
             f'{shop_name} - Test Email',
-            f'<h2>Email Configuration Test</h2><p>This is a test email from your POS system ({shop_name}).</p><p>If you received this, your email settings are configured correctly!</p>'
+            f'<h2>Email Configuration Test</h2><p>This is a test email from your POS system ({shop_name}).</p><p>If you received this, your email settings are configured correctly!</p>',
+            from_name=shop_name
         )
 
         return jsonify({'success': True, 'message': 'Test email sent successfully'})
@@ -2770,7 +2773,8 @@ def check_low_stock():
             email_settings,
             alert_email,
             f'{shop_name} - Low Stock Alert ({len(low_stock_products)} items)',
-            email_body
+            email_body,
+            from_name=shop_name
         )
 
         return jsonify({
@@ -2807,15 +2811,32 @@ def get_shop_email_settings(cursor, shop_id):
         result[key] = row['value'] if row else ''
     return result
 
-def send_email(settings, to_email, subject, html_body):
-    """Send email using SMTP"""
+def send_email(settings, to_email, subject, html_body, from_name=None):
+    """Send email using SMTP. `to_email` may be a single address, a comma/semicolon/space-separated string, or a list of addresses.
+    `from_name` if provided will be used as the display name in the From header (e.g. "Shop Name <noreply@example.com>")."""
     try:
-        print(f"[EMAIL] Attempting to send email to: {to_email}")
+        # Normalize recipients to a list
+        if isinstance(to_email, (list, tuple)):
+            recipients = [str(x).strip() for x in to_email if str(x).strip()]
+        else:
+            # Split on commas, semicolons or whitespace
+            recipients = [r.strip() for r in re.split('[,;\\s]+', str(to_email)) if r.strip()]
+
+        if not recipients:
+            raise Exception('No recipient email address provided')
+
+        print(f"[EMAIL] Attempting to send email to: {recipients}")
         print(f"[EMAIL] SMTP Server: {settings['smtp_server']}:{settings['smtp_port']}")
 
         msg = MIMEMultipart('alternative')
-        msg['From'] = settings['smtp_username']
-        msg['To'] = to_email
+        if from_name:
+            try:
+                msg['From'] = formataddr((str(from_name), settings['smtp_username']))
+            except Exception:
+                msg['From'] = f"{from_name} <{settings['smtp_username']}>"
+        else:
+            msg['From'] = settings['smtp_username']
+        msg['To'] = ', '.join(recipients)
         msg['Subject'] = subject
 
         html_part = MIMEText(html_body, 'html')
@@ -2825,18 +2846,17 @@ def send_email(settings, to_email, subject, html_body):
         port = int(settings['smtp_port'])
 
         if port == 465:
-            # Use SMTP_SSL for port 465
             server = smtplib.SMTP_SSL(settings['smtp_server'], port, timeout=10)
             print(f"[EMAIL] Connected via SSL (port 465)")
         else:
-            # Use SMTP with STARTTLS for port 587
             server = smtplib.SMTP(settings['smtp_server'], port, timeout=10)
             print(f"[EMAIL] Starting TLS...")
             server.starttls()
+
         print(f"[EMAIL] Logging in as: {settings['smtp_username']}")
         server.login(settings['smtp_username'], settings['smtp_password'])
-        print(f"[EMAIL] Sending message...")
-        server.send_message(msg)
+        print(f"[EMAIL] Sending message to: {recipients}")
+        server.send_message(msg, to_addrs=recipients)
         print(f"[EMAIL] Closing connection...")
         server.quit()
         print(f"[EMAIL] Email sent successfully!")
