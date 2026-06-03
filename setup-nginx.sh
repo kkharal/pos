@@ -157,10 +157,19 @@ else
     echo ""
     echo "  ⚠ SSL certificate failed. Common reasons:"
     echo "    - Domain '$DOMAIN' does not point to this server's IP"
-    echo "    - Port 80 is blocked by firewall or hosting provider"
+    echo "    - Port 80 is blocked by hosting provider's network firewall"
     echo ""
     echo "  The app is still accessible via http://${DOMAIN}"
-    echo "  Re-run certbot later: sudo certbot --nginx -d ${DOMAIN}"
+    echo ""
+    echo "  To fix, try one of these:"
+    echo "    1. Open port 80/443 in your hosting provider's firewall panel, then:"
+    echo "       sudo certbot --nginx -d ${DOMAIN}"
+    echo ""
+    echo "    2. Use DNS validation (works even if port 80 is blocked):"
+    echo "       sudo certbot certonly --manual --preferred-challenges dns -d ${DOMAIN}"
+    echo "       (Add the TXT record it shows to your DNS, verify with dig, then press Enter)"
+    echo "       Then install into Nginx:"
+    echo "       sudo certbot install --nginx -d ${DOMAIN}"
 fi
 
 # ── Step 5: Set up auto-renewal ──────────────────────────────────────────────

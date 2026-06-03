@@ -595,6 +595,25 @@ sudo nginx -t && sudo systemctl restart nginx
 sudo certbot --nginx -d yourdomain.com
 ```
 
+**If certbot fails (port 80 blocked by hosting provider):**
+
+Use DNS validation instead:
+```bash
+# 1. Request cert via DNS challenge
+sudo certbot certonly --manual --preferred-challenges dns -d yourdomain.com
+
+# 2. Add the TXT record it shows to your domain's DNS:
+#    Type: TXT | Name: _acme-challenge | Value: (the string certbot displays)
+
+# 3. Verify propagation before pressing Enter:
+dig TXT _acme-challenge.yourdomain.com +short
+
+# 4. Press Enter in certbot once dig shows the value
+
+# 5. Install the cert into Nginx:
+sudo certbot install --nginx -d yourdomain.com
+```
+
 #### Environment Variables (Production)
 
 | Variable | Default | Description |
