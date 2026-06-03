@@ -2808,14 +2808,24 @@ def get_shop_email_settings(cursor, shop_id):
     return result
 
 def send_email(settings, to_email, subject, html_body):
-    """Send email using SMTP"""
+    """Send email using SMTP. `to_email` may be a single address, a comma/semicolon/space-separated string, or a list of addresses."""
     try:
-        print(f"[EMAIL] Attempting to send email to: {to_email}")
+        # Normalize recipients to a list
+        if isinstance(to_email, (list, tuple)):
+            recipients = [str(x).strip() for x in to_email if str(x).strip()]
+        else:
+            # Split on commas, semicolons or whitespace
+            recipients = [r.strip() for r in re.split('[,;\\s]+', str(to_email)) if r.strip()]
+
+        if not recipients:
+            raise Exception('No recipient email address provided')
+
+        print(f"[EMAIL] Attempting to send email to: {recipients}")
         print(f"[EMAIL] SMTP Server: {settings['smtp_server']}:{settings['smtp_port']}")
 
         msg = MIMEMultipart('alternative')
         msg['From'] = settings['smtp_username']
-        msg['To'] = to_email
+        msg['To'] = ', '.join(recipients)
         msg['Subject'] = subject
 
         html_part = MIMEText(html_body, 'html')
@@ -2825,18 +2835,17 @@ def send_email(settings, to_email, subject, html_body):
         port = int(settings['smtp_port'])
 
         if port == 465:
-            # Use SMTP_SSL for port 465
             server = smtplib.SMTP_SSL(settings['smtp_server'], port, timeout=10)
             print(f"[EMAIL] Connected via SSL (port 465)")
         else:
-            # Use SMTP with STARTTLS for port 587
             server = smtplib.SMTP(settings['smtp_server'], port, timeout=10)
             print(f"[EMAIL] Starting TLS...")
             server.starttls()
+
         print(f"[EMAIL] Logging in as: {settings['smtp_username']}")
         server.login(settings['smtp_username'], settings['smtp_password'])
-        print(f"[EMAIL] Sending message...")
-        server.send_message(msg)
+        print(f"[EMAIL] Sending message to: {recipients}")
+        server.send_message(msg, to_addrs=recipients)
         print(f"[EMAIL] Closing connection...")
         server.quit()
         print(f"[EMAIL] Email sent successfully!")
