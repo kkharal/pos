@@ -25,6 +25,27 @@ set -e
 DOMAIN="$1"
 EMAIL="${2:-}"
 
+# Validate domain format (prevent injection attacks)
+if [ -n "$DOMAIN" ]; then
+    # Check valid domain format and prevent shell metacharacters
+    if ! [[ "$DOMAIN" =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
+        echo "❌ Invalid domain format: $DOMAIN"
+        echo "   Domain must contain only letters, numbers, hyphens, and dots."
+        echo "   Examples: example.com, my-shop.example.co.uk"
+        exit 1
+    fi
+    # Prevent domains that are too long (DNS limit is 253 chars)
+    if [ ${#DOMAIN} -gt 253 ]; then
+        echo "❌ Domain name too long (max 253 characters): $DOMAIN"
+        exit 1
+    fi
+    # Warn if domain contains uppercase (will be converted to lowercase by DNS)
+    if [[ "$DOMAIN" =~ [A-Z] ]]; then
+        echo "⚠ Converting domain to lowercase: ${DOMAIN,,}"
+        DOMAIN="${DOMAIN,,}"
+    fi
+fi
+
 if [ -z "$DOMAIN" ]; then
     echo "❌ Usage: sudo $0 <domain> [email]"
     echo ""
@@ -33,6 +54,12 @@ if [ -z "$DOMAIN" ]; then
     echo "    sudo $0 myshop.example.com admin@example.com"
     echo ""
     echo "  The domain must already point to this server's IP address."
+    exit 1
+fi
+
+# Validate email format if provided
+if [ -n "$EMAIL" ] && ! [[ "$EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+    echo "❌ Invalid email format: $EMAIL"
     exit 1
 fi
 
@@ -64,9 +91,11 @@ if command -v ufw &>/dev/null; then
     ufw allow 'Nginx Full' > /dev/null 2>&1 || true
     ufw allow OpenSSH > /dev/null 2>&1 || true
 
-    # Block common attack ports outbound (prevent abuse if compromised)
-    ufw deny out 23/tcp > /dev/null 2>&1 || true   # Telnet
-    ufw deny out 8080/tcp > /dev/null 2>&1 || true # HTTP-proxy scanning
+    # Block dangerous outbound ports (prevent abuse if compromised)
+    ufw deny out 23/tcp > /dev/null 2>&1 || true    # Telnet
+    ufw deny out 25/tcp > /dev/null 2>&1 || true    # SMTP
+    ufw deny out 8080/tcp > /dev/null 2>&1 || true  # HTTP-proxy scanning
+    ufw deny out 3389/tcp > /dev/null 2>&1 || true  # RDP
 
     # Enable UFW if not already active
     if ! ufw status | grep -q "Status: active"; then
@@ -75,7 +104,7 @@ if command -v ufw &>/dev/null; then
 
     echo "  ✓ UFW configured (HTTP, HTTPS, SSH allowed; outbound 23,8080 blocked)"
 else
-    echo "  ⚠ UFW not found, skipping firewall config"
+    echo "  ⚠ UFW not found. Install for enhanced security: sudo apt install ufw"
 fi
 
 # ── Step 3: Create Nginx site config ─────────────────────────────────────────
@@ -85,21 +114,31 @@ echo "[3/5] Creating Nginx configuration..."
 NGINX_CONF="/etc/nginx/sites-available/pos"
 
 cat > "$NGINX_CONF" <<EOF
+# Rate limiting
+limit_req_zone \$binary_remote_addr zone=api_limit:10m rate=10r/s;
+limit_req_zone \$binary_remote_addr zone=login_limit:10m rate=5r/m;
+
 server {
     listen 80;
     server_name ${DOMAIN};
+
+    # Logging for security audits
+    access_log /var/log/nginx/pos_access.log combined buffer=32k flush=5s;
+    error_log /var/log/nginx/pos_error.log warn;
 
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
     # Max upload size (for database restore)
     client_max_body_size 200M;
 
     location / {
-        proxy_pass http://127.0.0.1:5000;
+        proxy_pass http://localhost:5000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -116,9 +155,28 @@ server {
         proxy_read_timeout 120s;
     }
 
+    # Rate limit login and API endpoints
+    location /login {
+        limit_req zone=login_limit burst=3 nodelay;
+        proxy_pass http://localhost:5000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /api/ {
+        limit_req zone=api_limit burst=20 nodelay;
+        proxy_pass http://localhost:5000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
     # Cache static files
     location /static/ {
-        proxy_pass http://127.0.0.1:5000/static/;
+        proxy_pass http://localhost:5000/static/;
         expires 7d;
         add_header Cache-Control "public, immutable";
     }

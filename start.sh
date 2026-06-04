@@ -28,6 +28,19 @@ else
     OS="linux"
 fi
 
+# Ensure Python venv support is installed on Debian/Ubuntu
+if [[ "$OS" == "debian" ]]; then
+    if ! dpkg -s python3-venv python3-pip >/dev/null 2>&1; then
+        echo "Installing python3-venv and python3-pip..."
+        sudo apt update && sudo apt install -y python3-venv python3-pip python3.12-venv
+        if [ $? -ne 0 ]; then
+            echo "❌ Error: Failed to install python3-venv/python3-pip."
+            echo "Please install them manually: sudo apt install python3-venv python3-pip"
+            exit 1
+        fi
+    fi
+fi
+
 # Check if MySQL is installed
 if ! command -v mysql &> /dev/null; then
     echo "MySQL not found."
@@ -113,9 +126,14 @@ if [[ "$OS" == "debian" || "$OS" == "redhat" || "$OS" == "linux" ]]; then
     # Check if root can connect via TCP without password
     if ! mysql -h 127.0.0.1 -u root -e "SELECT 1" &>/dev/null; then
         echo "Configuring MySQL root user for TCP access..."
-        # Connect via unix socket (auth_socket) and switch to mysql_native_password
-        sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY ''; FLUSH PRIVILEGES;" 2>/dev/null
-        if [ $? -eq 0 ]; then
+        sudo mysql <<'SQL'
+CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
+CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY '';
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
+ALTER USER 'root'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY '';
+FLUSH PRIVILEGES;
+SQL
+        if mysql -h 127.0.0.1 -u root -e "SELECT 1" &>/dev/null; then
             echo "✓ MySQL root configured for TCP access"
         else
             echo "⚠ Could not configure MySQL root user. You may need to set DB credentials in .env"
@@ -126,12 +144,21 @@ fi
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
     echo "Virtual environment not found. Creating one..."
-    python3 -m venv venv
+    if ! python3 -m venv venv; then
+        if [[ "$OS" == "debian" ]]; then
+            echo "Installing python3-venv package..."
+            sudo apt update && sudo apt install -y python3-venv python3.12-venv
+        elif [[ "$OS" == "redhat" ]]; then
+            echo "Installing python3-venv package..."
+            sudo dnf install -y python3-venv || sudo dnf install -y python3-virtualenv
+        fi
+        python3 -m venv venv
+    fi
 
     if [ $? -ne 0 ]; then
         echo "❌ Error: Failed to create virtual environment!"
         echo ""
-        echo "Please install python3-venv:"
+        echo "Please install python3-venv manually and rerun the script:"
         echo "  Ubuntu/Debian: sudo apt install python3-venv"
         echo "  Fedora/RHEL:   sudo dnf install python3-venv"
         echo ""
@@ -146,13 +173,40 @@ PYTHON="./venv/bin/python"
 PIP="./venv/bin/pip"
 
 # Check if venv binaries exist
-if [ ! -f "$PYTHON" ]; then
+if [ ! -x "$PYTHON" ]; then
     echo "❌ Error: Virtual environment seems corrupted. Deleting and recreating..."
-
     rm -rf venv
     python3 -m venv venv
+fi
 
-    echo "✓ Virtual environment recreated"
+# Bootstrapping pip if needed
+if [ ! -x "$PIP" ]; then
+    echo "pip is missing from the virtual environment. Bootstrapping pip..."
+    if ! $PYTHON -m ensurepip --upgrade >/dev/null 2>&1; then
+        if [[ "$OS" == "debian" ]]; then
+            sudo apt update && sudo apt install -y python3-pip python3.12-venv
+        elif [[ "$OS" == "redhat" ]]; then
+            sudo dnf install -y python3-pip
+        fi
+    fi
+
+    if [ ! -x "$PIP" ]; then
+        $PYTHON -m pip install --upgrade pip setuptools wheel >/dev/null 2>&1 || true
+    fi
+
+    if [ ! -x "$PIP" ]; then
+        echo "Trying virtualenv fallback..."
+        python3 -m pip install --user virtualenv >/dev/null 2>&1 || true
+        python3 -m virtualenv --clear venv >/dev/null 2>&1 || true
+        PYTHON="./venv/bin/python"
+        PIP="./venv/bin/pip"
+    fi
+fi
+
+if [ ! -x "$PIP" ]; then
+    echo "❌ Error: Virtual environment pip is still unavailable."
+    echo "Please install python3-venv and python3-pip and rerun the script."
+    exit 1
 fi
 
 # Check if dependencies are installed
