@@ -132,19 +132,18 @@ if [ ! -d "venv" ]; then
     if ! python3 -m venv venv; then
         if [[ "$OS" == "debian" ]]; then
             echo "Installing python3-venv package..."
-            sudo apt update && sudo apt install -y python3-venv
-            python3 -m venv venv
+            sudo apt update && sudo apt install -y python3-venv python3.12-venv
         elif [[ "$OS" == "redhat" ]]; then
             echo "Installing python3-venv package..."
             sudo dnf install -y python3-venv || sudo dnf install -y python3-virtualenv
-            python3 -m venv venv
         fi
+        python3 -m venv venv
     fi
 
     if [ $? -ne 0 ]; then
         echo "❌ Error: Failed to create virtual environment!"
         echo ""
-        echo "Please install python3-venv manually and rerun the script:" 
+        echo "Please install python3-venv manually and rerun the script:"
         echo "  Ubuntu/Debian: sudo apt install python3-venv"
         echo "  Fedora/RHEL:   sudo dnf install python3-venv"
         echo ""
@@ -159,13 +158,31 @@ PYTHON="./venv/bin/python"
 PIP="./venv/bin/pip"
 
 # Check if venv binaries exist
-if [ ! -f "$PYTHON" ]; then
+if [ ! -x "$PYTHON" ]; then
     echo "❌ Error: Virtual environment seems corrupted. Deleting and recreating..."
-
     rm -rf venv
     python3 -m venv venv
+fi
 
-    echo "✓ Virtual environment recreated"
+# Bootstrapping pip if needed
+if [ ! -x "$PIP" ]; then
+    echo "pip is missing from the virtual environment. Bootstrapping pip..."
+    if ! $PYTHON -m ensurepip --upgrade >/dev/null 2>&1; then
+        if [[ "$OS" == "debian" ]]; then
+            sudo apt update && sudo apt install -y python3-pip
+        elif [[ "$OS" == "redhat" ]]; then
+            sudo dnf install -y python3-pip
+        fi
+    fi
+    if [ ! -x "$PIP" ]; then
+        $PYTHON -m pip install --upgrade pip setuptools wheel >/dev/null 2>&1 || true
+    fi
+fi
+
+if [ ! -x "$PIP" ]; then
+    echo "❌ Error: Virtual environment pip is still unavailable."
+    echo "Please install python3-venv and python3-pip and rerun the script."
+    exit 1
 fi
 
 # Check if dependencies are installed
