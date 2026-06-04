@@ -113,9 +113,12 @@ if [[ "$OS" == "debian" || "$OS" == "redhat" || "$OS" == "linux" ]]; then
     # Check if root can connect via TCP without password
     if ! mysql -h 127.0.0.1 -u root -e "SELECT 1" &>/dev/null; then
         echo "Configuring MySQL root user for TCP access..."
-        # Connect via unix socket (auth_socket) and switch to mysql_native_password
-        sudo mysql -e "ALTER USER 'root'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY ''; FLUSH PRIVILEGES;" 2>/dev/null
-        if [ $? -eq 0 ]; then
+        sudo mysql <<'SQL'
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
+ALTER USER 'root'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY '';
+FLUSH PRIVILEGES;
+SQL
+        if mysql -h 127.0.0.1 -u root -e "SELECT 1" &>/dev/null; then
             echo "✓ MySQL root configured for TCP access"
         else
             echo "⚠ Could not configure MySQL root user. You may need to set DB credentials in .env"
@@ -126,12 +129,22 @@ fi
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
     echo "Virtual environment not found. Creating one..."
-    python3 -m venv venv
+    if ! python3 -m venv venv; then
+        if [[ "$OS" == "debian" ]]; then
+            echo "Installing python3-venv package..."
+            sudo apt update && sudo apt install -y python3-venv
+            python3 -m venv venv
+        elif [[ "$OS" == "redhat" ]]; then
+            echo "Installing python3-venv package..."
+            sudo dnf install -y python3-venv || sudo dnf install -y python3-virtualenv
+            python3 -m venv venv
+        fi
+    fi
 
     if [ $? -ne 0 ]; then
         echo "❌ Error: Failed to create virtual environment!"
         echo ""
-        echo "Please install python3-venv:"
+        echo "Please install python3-venv manually and rerun the script:" 
         echo "  Ubuntu/Debian: sudo apt install python3-venv"
         echo "  Fedora/RHEL:   sudo dnf install python3-venv"
         echo ""
