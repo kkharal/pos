@@ -28,6 +28,19 @@ else
     OS="linux"
 fi
 
+# Ensure Python venv support is installed on Debian/Ubuntu
+if [[ "$OS" == "debian" ]]; then
+    if ! dpkg -s python3-venv python3-pip >/dev/null 2>&1; then
+        echo "Installing python3-venv and python3-pip..."
+        sudo apt update && sudo apt install -y python3-venv python3-pip python3.12-venv
+        if [ $? -ne 0 ]; then
+            echo "❌ Error: Failed to install python3-venv/python3-pip."
+            echo "Please install them manually: sudo apt install python3-venv python3-pip"
+            exit 1
+        fi
+    fi
+fi
+
 # Check if MySQL is installed
 if ! command -v mysql &> /dev/null; then
     echo "MySQL not found."
@@ -114,6 +127,8 @@ if [[ "$OS" == "debian" || "$OS" == "redhat" || "$OS" == "linux" ]]; then
     if ! mysql -h 127.0.0.1 -u root -e "SELECT 1" &>/dev/null; then
         echo "Configuring MySQL root user for TCP access..."
         sudo mysql <<'SQL'
+CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
+CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY '';
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
 ALTER USER 'root'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY '';
 FLUSH PRIVILEGES;
@@ -169,13 +184,22 @@ if [ ! -x "$PIP" ]; then
     echo "pip is missing from the virtual environment. Bootstrapping pip..."
     if ! $PYTHON -m ensurepip --upgrade >/dev/null 2>&1; then
         if [[ "$OS" == "debian" ]]; then
-            sudo apt update && sudo apt install -y python3-pip
+            sudo apt update && sudo apt install -y python3-pip python3.12-venv
         elif [[ "$OS" == "redhat" ]]; then
             sudo dnf install -y python3-pip
         fi
     fi
+
     if [ ! -x "$PIP" ]; then
         $PYTHON -m pip install --upgrade pip setuptools wheel >/dev/null 2>&1 || true
+    fi
+
+    if [ ! -x "$PIP" ]; then
+        echo "Trying virtualenv fallback..."
+        python3 -m pip install --user virtualenv >/dev/null 2>&1 || true
+        python3 -m virtualenv --clear venv >/dev/null 2>&1 || true
+        PYTHON="./venv/bin/python"
+        PIP="./venv/bin/pip"
     fi
 fi
 
