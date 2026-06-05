@@ -4685,7 +4685,11 @@ def get_suppliers():
     conn = get_db_connection()
     flt_sql, flt_params = shop_filter('s')
     suppliers = conn.execute(f'''
-        SELECT s.*, COUNT(po.id) as order_count
+        SELECT s.*,
+            COUNT(po.id) as order_count,
+            COALESCE(SUM(po.total_amount), 0) as total_purchased,
+            MAX(po.created_at) as last_order_date,
+            SUM(CASE WHEN po.status IN ('draft','ordered','partial') THEN 1 ELSE 0 END) as pending_orders
         FROM suppliers s
         LEFT JOIN purchase_orders po ON po.supplier_id = s.id
         WHERE 1=1 {flt_sql}
@@ -4746,12 +4750,21 @@ def update_supplier(supplier_id):
     conn = get_db_connection()
     try:
         flt_sql, flt_params = shop_filter()
-        conn.execute(f'''
-            UPDATE suppliers SET name=?, contact_person=?, email=?, phone=?, address=?, notes=?
-            WHERE id=? {flt_sql}
-        ''', [data['name'].strip(), data.get('contact_person', '').strip(),
-              data.get('email', '').strip(), data.get('phone', '').strip(),
-              data.get('address', '').strip(), data.get('notes', '').strip(), supplier_id] + flt_params)
+        status = data.get('status', '').strip()
+        if status and status in ('active', 'inactive'):
+            conn.execute(f'''
+                UPDATE suppliers SET name=?, contact_person=?, email=?, phone=?, address=?, notes=?, status=?
+                WHERE id=? {flt_sql}
+            ''', [data['name'].strip(), data.get('contact_person', '').strip(),
+                  data.get('email', '').strip(), data.get('phone', '').strip(),
+                  data.get('address', '').strip(), data.get('notes', '').strip(), status, supplier_id] + flt_params)
+        else:
+            conn.execute(f'''
+                UPDATE suppliers SET name=?, contact_person=?, email=?, phone=?, address=?, notes=?
+                WHERE id=? {flt_sql}
+            ''', [data['name'].strip(), data.get('contact_person', '').strip(),
+                  data.get('email', '').strip(), data.get('phone', '').strip(),
+                  data.get('address', '').strip(), data.get('notes', '').strip(), supplier_id] + flt_params)
         conn.commit()
         return jsonify({'success': True})
     except Exception as e:
