@@ -5679,6 +5679,25 @@ def get_expenses_summary():
         'top_category': dict(top_category) if top_category else {'name': '-', 'total': 0}
     })
 
+@app.route('/api/expenses/category-breakdown', methods=['GET'])
+@login_required
+@admin_required
+def get_expenses_category_breakdown():
+    conn = get_db_connection()
+    flt_sql, flt_params = shop_filter('e')
+    first_of_month = datetime.now().strftime('%Y-%m-01')
+
+    breakdown = conn.execute(f'''
+        SELECT ec.id, ec.name, ec.icon, COALESCE(SUM(e.amount), 0) as total
+        FROM expenses e
+        LEFT JOIN expense_categories ec ON e.category_id = ec.id
+        WHERE e.expense_date >= ? {flt_sql}
+        GROUP BY ec.id, ec.name, ec.icon
+        ORDER BY total DESC
+    ''', [first_of_month] + flt_params).fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in breakdown])
+
 @app.route('/api/expenses', methods=['POST'])
 @login_required
 @admin_required
