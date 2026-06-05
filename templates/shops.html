@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shops - POS System</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=4">
+    <link rel="stylesheet" href="/static/css/style.css?v=7">
+    <script src="/static/js/loading.js?v=1" defer></script>
     <script src="/static/js/ui.js?v=4"></script>
     <style>
         /* ===== Page Header ===== */
@@ -111,9 +112,9 @@
             <div class="topbar-spacer"></div>
             <div class="user-profile-container">
                 <div class="user-profile" id="user-profile-toggle">
-                    <div class="user-profile-icon" id="user-icon">A</div>
+                    <div class="user-profile-icon" id="user-icon">{{ session.get('full_name', 'A')[0] | upper }}</div>
                     <div class="user-profile-info">
-                        <span class="user-profile-name" id="user-name">Admin</span>
+                        <span class="user-profile-name" id="user-name">{{ session.get('full_name', '') }}</span>
                     </div>
                     <span class="user-profile-arrow">&#9660;</span>
                 </div>

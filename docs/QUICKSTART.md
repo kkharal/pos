@@ -14,7 +14,7 @@ This will automatically:
 - Initialize database if needed
 - Start the application
 
-Then open your browser to: **http://localhost:5000**
+Then open your browser to: **http://localhost:8080**
 
 ## Manual Start (All Platforms)
 
@@ -29,7 +29,7 @@ Then open your browser to: **http://localhost:5000**
    python app.py
    ```
 
-3. Open browser to: **http://localhost:5000**
+3. Open browser to: **http://localhost:8080**
 
 ## First Time Setup
 
@@ -102,8 +102,8 @@ cp pos_database.db pos_database_backup_$(date +%Y%m%d).db
 - Check if dependencies are installed: `pip list`
 
 **Can't access the app?**
-- Make sure you're going to: http://localhost:5000
-- Check if port 5000 is already in use
+- Make sure you're going to: http://localhost:8080
+- Check if port 8080 is already in use
 - Look for errors in the terminal
 
 **Database errors?**

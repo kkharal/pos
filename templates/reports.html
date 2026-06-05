@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reports & Analytics - POS System</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=7">
+    <script src="/static/js/loading.js?v=1" defer></script>
     <script src="/static/js/ui.js"></script>
     <style>
         /* ===== Analytics Layout ===== */
@@ -158,9 +159,9 @@
             <div class="topbar-spacer"></div>
             <div class="user-profile-container">
                 <div class="user-profile" id="user-profile-toggle">
-                    <div class="user-profile-icon" id="user-icon">A</div>
+                    <div class="user-profile-icon" id="user-icon">{{ session.get('full_name', 'A')[0] | upper }}</div>
                     <div class="user-profile-info">
-                        <span class="user-profile-name" id="user-name">Admin</span>
+                        <span class="user-profile-name" id="user-name">{{ session.get('full_name', '') }}</span>
                     </div>
                     <span class="user-profile-arrow">&#9660;</span>
                 </div>
@@ -254,7 +255,7 @@
                     <div class="chart-card">
                         <div class="chart-card-title">Top Products</div>
                         <div id="overview-top-products">
-                            <div class="empty-state"><p>Loading...</p></div>
+                            <div class="skeleton skeleton-text" style="width:85%"></div><div class="skeleton skeleton-text" style="width:70%"></div><div class="skeleton skeleton-text" style="width:55%"></div><div class="skeleton skeleton-text" style="width:60%"></div>
                         </div>
                     </div>
                     <div class="chart-card">
@@ -386,12 +387,12 @@
                     <!-- Top Sellers -->
                     <div class="data-card" style="margin-bottom:0;">
                         <div class="data-card-title" style="margin-bottom:0.75rem;">🔥 Top Sellers</div>
-                        <div id="inv-top-sellers"><p style="color:#94a3b8;font-size:0.84rem;">Loading...</p></div>
+                        <div id="inv-top-sellers"><div class="skeleton skeleton-text" style="width:80%"></div><div class="skeleton skeleton-text" style="width:65%"></div><div class="skeleton skeleton-text" style="width:50%"></div></div>
                     </div>
                     <!-- Slow Movers -->
                     <div class="data-card" style="margin-bottom:0;">
                         <div class="data-card-title" style="margin-bottom:0.75rem;">🐌 Slow Movers</div>
-                        <div id="inv-slow-movers"><p style="color:#94a3b8;font-size:0.84rem;">Loading...</p></div>
+                        <div id="inv-slow-movers"><div class="skeleton skeleton-text" style="width:75%"></div><div class="skeleton skeleton-text" style="width:60%"></div><div class="skeleton skeleton-text" style="width:45%"></div></div>
                     </div>
                 </div>
 

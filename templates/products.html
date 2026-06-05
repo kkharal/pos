@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Products - POS System</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=7">
+    <script src="/static/js/loading.js?v=1" defer></script>
     <script src="/static/js/ui.js"></script>
     <style>
         .products-main { padding: 1.5rem; overflow-y: auto; height: calc(100vh - 70px); transition: margin-right 0.3s ease; }
@@ -127,9 +128,9 @@
             <div class="topbar-spacer"></div>
             <div class="user-profile-container">
                 <div class="user-profile" id="user-profile-toggle">
-                    <div class="user-profile-icon" id="user-icon">A</div>
+                    <div class="user-profile-icon" id="user-icon">{{ session.get('full_name', 'A')[0] | upper }}</div>
                     <div class="user-profile-info">
-                        <span class="user-profile-name" id="user-name">Admin</span>
+                        <span class="user-profile-name" id="user-name">{{ session.get('full_name', '') }}</span>
                     </div>
                     <span class="user-profile-arrow">&#9660;</span>
                 </div>
@@ -162,7 +163,7 @@
         <div class="summary-row" id="product-summary"></div>
         <div class="search-bar"><input type="text" id="product-search" placeholder="Search products by name, SKU, size, color..."></div>
         <div class="product-list-header"><span>Product</span><span>Variants</span><span>Stock</span><span>Price</span><span>Status</span></div>
-        <div class="product-list" id="product-list"><div class="products-empty"><div class="empty-icon">📦</div><p>Loading products...</p></div></div>
+        <div class="product-list" id="product-list"><div style="padding:0.5rem 1rem;display:flex;flex-direction:column;gap:0.5rem;"><div class="skeleton skeleton-product"></div><div class="skeleton skeleton-product"></div><div class="skeleton skeleton-product"></div><div class="skeleton skeleton-product"></div><div class="skeleton skeleton-product"></div></div></div>
     </div>
 
     <!-- Side Drawer -->

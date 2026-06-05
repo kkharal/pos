@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - POS System</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=7">
+    <script src="/static/js/loading.js?v=1" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="/static/js/ui.js"></script>
     <style>
@@ -132,9 +133,9 @@
             <div class="topbar-spacer"></div>
             <div class="user-profile-container">
                 <div class="user-profile" id="user-profile-toggle">
-                    <div class="user-profile-icon" id="user-icon">A</div>
+                    <div class="user-profile-icon" id="user-icon">{{ session.get('full_name', 'A')[0] | upper }}</div>
                     <div class="user-profile-info">
-                        <span class="user-profile-name" id="user-name">Admin</span>
+                        <span class="user-profile-name" id="user-name">{{ session.get('full_name', '') }}</span>
                     </div>
                     <span class="user-profile-arrow">&#9660;</span>
                 </div>
@@ -218,7 +219,11 @@
                 <div class="dash-card">
                     <div class="dash-card-title">Top Products (7 days)</div>
                     <div id="best-sellers-list">
-                        <p style="text-align:center; color:#94a3b8; padding:2rem 0; font-size:0.85rem;">Loading...</p>
+                        <div class="skeleton skeleton-text" style="width:90%"></div>
+                        <div class="skeleton skeleton-text" style="width:75%"></div>
+                        <div class="skeleton skeleton-text" style="width:60%"></div>
+                        <div class="skeleton skeleton-text" style="width:80%"></div>
+                        <div class="skeleton skeleton-text" style="width:50%"></div>
                     </div>
                 </div>
             </div>
@@ -227,7 +232,10 @@
             <div class="dash-card">
                 <div class="dash-card-title">Recent Activity</div>
                 <div id="recent-activity">
-                    <p style="text-align:center; color:#94a3b8; padding:1.5rem 0; font-size:0.85rem;">Loading...</p>
+                    <div class="skeleton skeleton-table-row"></div>
+                    <div class="skeleton skeleton-table-row"></div>
+                    <div class="skeleton skeleton-table-row"></div>
+                    <div class="skeleton skeleton-table-row"></div>
                 </div>
             </div>
 

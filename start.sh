@@ -278,7 +278,7 @@ fi
 # Determine run mode
 MODE="${RUN_MODE:-production}"
 HOST="${HOST:-127.0.0.1}"
-PORT="${PORT:-5000}"
+PORT="${PORT:-8080}"
 WORKERS="${GUNICORN_WORKERS:-4}"
 
 # Create logs directory if it doesn't exist

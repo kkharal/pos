@@ -28,7 +28,7 @@ _secret = os.environ.get('SECRET_KEY')
 if not _secret:
     raise RuntimeError("SECRET_KEY environment variable is required. Generate one with: python3 -c \"import secrets; print(secrets.token_hex(32))\"")
 app.secret_key = _secret
-CORS(app, origins=os.environ.get('ALLOWED_ORIGINS', 'http://localhost:5000').split(','))
+CORS(app, origins=os.environ.get('ALLOWED_ORIGINS', 'http://localhost:8080').split(','))
 
 # Initialize database on startup
 init_db()
@@ -6457,6 +6457,6 @@ def generate_pnl_excel(shop_name, currency, start_date, end_date, data):
 
 if __name__ == '__main__':
     debug = os.environ.get('FLASK_DEBUG', '0').lower() in ('1', 'true')
-    port = int(os.environ.get('PORT', '5000'))
+    port = int(os.environ.get('PORT', '8080'))
     host = os.environ.get('HOST', '127.0.0.1')
     app.run(debug=debug, host=host, port=port)
