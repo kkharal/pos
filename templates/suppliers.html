@@ -7,36 +7,69 @@
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="/static/js/ui.js"></script>
     <style>
-        /* ===== Table styling ===== */
-        .report-table-scroll { max-height: 65vh; overflow-y: auto; border-radius: 6px; border: 1px solid #e9ecef; }
-        .report-table-scroll table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-        .report-table-scroll thead th {
-            position: sticky; top: 0; z-index: 2;
-            background: #2c3e50; color: white;
-            padding: 0.65rem 1rem; text-align: left;
-            font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;
-            border-bottom: 2px solid #1a252f;
-        }
-        .report-table-scroll tbody tr:nth-child(even) { background: #f8f9fa; }
-        .report-table-scroll tbody tr:hover { background: #e8f4fd; transition: background 0.1s; }
-        .report-table-scroll tbody td { padding: 0.6rem 1rem; border-bottom: 1px solid #edf0f2; vertical-align: middle; }
-        .report-table-scroll tbody tr:last-child td { border-bottom: none; }
+        /* ===== KPI Cards ===== */
+        .supplier-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .supplier-kpi { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem 1.25rem; }
+        .supplier-kpi .kpi-value { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
+        .supplier-kpi .kpi-label { font-size: 0.78rem; color: #64748b; margin-top: 0.2rem; }
 
-        /* ===== Card header accent ===== */
-        .card h2 {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding-left: 0.75rem;
-            border-left: 4px solid #3498db;
-            font-size: 1.05rem;
-            color: #2c3e50;
-            margin: 0;
-        }
+        /* ===== Supplier Cards ===== */
+        .supplier-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+        .supplier-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; transition: box-shadow 0.15s, border-color 0.15s; cursor: pointer; position: relative; }
+        .supplier-card:hover { border-color: #93c5fd; box-shadow: 0 4px 12px rgba(59,130,246,0.08); }
+        .supplier-card.inactive { opacity: 0.6; }
+        .supplier-card-header { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem; }
+        .supplier-card-icon { width: 40px; height: 40px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .supplier-card-title { font-weight: 600; font-size: 1rem; color: #1e293b; line-height: 1.3; }
+        .supplier-card-contact { font-size: 0.82rem; color: #64748b; margin-top: 0.15rem; }
+        .supplier-card-stats { display: flex; gap: 1.5rem; margin: 0.75rem 0; padding: 0.6rem 0; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
+        .supplier-card-stat { font-size: 0.82rem; color: #64748b; }
+        .supplier-card-stat strong { color: #1e293b; display: block; font-size: 0.95rem; }
+        .supplier-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; }
+        .supplier-card-last-order { font-size: 0.78rem; color: #94a3b8; }
+        .supplier-card-actions { display: flex; gap: 0.4rem; }
+        .supplier-card-actions button, .supplier-card-actions a { font-size: 0.75rem; padding: 0.3rem 0.6rem; border-radius: 5px; border: 1px solid #e2e8f0; background: white; color: #475569; cursor: pointer; text-decoration: none; transition: background 0.1s; }
+        .supplier-card-actions button:hover, .supplier-card-actions a:hover { background: #f1f5f9; }
+        .supplier-card-actions .btn-new-po { border-color: #93c5fd; color: #1d4ed8; background: #eff6ff; }
+        .supplier-card-actions .btn-new-po:hover { background: #dbeafe; }
+
+        /* ===== Status badge ===== */
+        .supplier-status { position: absolute; top: 1rem; right: 1rem; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+        .supplier-status.active { background: #dcfce7; color: #166534; }
+        .supplier-status.inactive { background: #f1f5f9; color: #64748b; }
+
+        /* ===== Supplier Detail Modal ===== */
+        .supplier-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1.5rem; margin-bottom: 1.25rem; font-size: 0.9rem; }
+        .supplier-detail-grid .detail-label { color: #64748b; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+        .supplier-detail-grid .detail-value { color: #1e293b; margin-bottom: 0.5rem; }
+
+        .supplier-detail-section { margin-top: 1.25rem; }
+        .supplier-detail-section-title { font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; margin-bottom: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid #e2e8f0; }
+
+        .po-history-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f8fafc; font-size: 0.88rem; }
+        .po-history-row:last-child { border-bottom: none; }
+        .po-history-status { font-size: 0.72rem; padding: 0.15rem 0.4rem; border-radius: 10px; font-weight: 600; }
+        .po-history-status.received { background: #dcfce7; color: #166534; }
+        .po-history-status.ordered { background: #dbeafe; color: #1d4ed8; }
+        .po-history-status.partial { background: #fef3c7; color: #92400e; }
+        .po-history-status.draft { background: #f1f5f9; color: #64748b; }
+
+        .product-tag { display: inline-block; font-size: 0.78rem; padding: 0.2rem 0.5rem; background: #f1f5f9; border-radius: 4px; margin: 0.2rem 0.2rem 0.2rem 0; color: #475569; }
+
+        /* ===== Page layout ===== */
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        .page-header h1 { font-size: 1.4rem; color: #1e293b; margin: 0; font-weight: 700; }
+        .page-header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+        .supplier-search-bar { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1.25rem; }
+        .supplier-search-bar input { flex: 1; max-width: 320px; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.88rem; background: #f8fafc; box-sizing: border-box; height: 36px; }
+        .supplier-search-bar input:focus { outline: none; border-color: #3b82f6; background: white; }
+        .supplier-search-bar select { padding: 0.5rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.85rem; background: white; box-sizing: border-box; height: 36px; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.6rem center; padding-right: 1.8rem; }
 
         /* ===== Empty state ===== */
-        .supp-empty-state { text-align: center; padding: 3.5rem 2rem; }
-        .supp-empty-state .empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.6rem; }
-        .supp-empty-state p { font-size: 0.95rem; color: #868e96; margin: 0 0 0.25rem; }
-        .supp-empty-state small { font-size: 0.82rem; color: #adb5bd; }
+        .supplier-empty { text-align: center; padding: 3rem 2rem; }
+        .supplier-empty .empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.5rem; }
+        .supplier-empty p { color: #94a3b8; margin: 0; font-size: 0.9rem; }
     </style>
 </head>
 <body class="has-sidebar">
@@ -105,36 +138,37 @@
             </div>
         </header>
 
-
     <div class="container">
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                <h2>📦 Suppliers</h2>
-                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                    <span id="supp-results-count" style="font-size:0.82rem;color:#6c757d;background:#f1f3f5;border-radius:20px;padding:0.2rem 0.7rem;"></span>
-                    <input type="text" id="supplier-search" placeholder="Search suppliers..." style="padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.9rem;">
-                    <button class="btn btn-secondary" onclick="exportSuppliersCSV()" title="Export to CSV">⬇ Export CSV</button>
-                    <button class="btn btn-primary" onclick="openAddModal()">+ Add Supplier</button>
-                </div>
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>🏭 Suppliers</h1>
+            <div class="page-header-actions">
+                <button class="btn btn-secondary" onclick="exportSuppliersCSV()" title="Export CSV">⬇ Export</button>
+                <button class="btn btn-primary" onclick="openAddModal()">+ Add Supplier</button>
             </div>
+        </div>
 
-            <div class="report-table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Contact Person</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Orders</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="suppliers-table">
-                        <tr><td colspan="6" style="text-align:center;">Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+        <!-- KPI Cards -->
+        <div class="supplier-kpis">
+            <div class="supplier-kpi"><div class="kpi-value" id="kpi-active">0</div><div class="kpi-label">Active Suppliers</div></div>
+            <div class="supplier-kpi"><div class="kpi-value" id="kpi-purchased">$0</div><div class="kpi-label">Total Purchased</div></div>
+            <div class="supplier-kpi"><div class="kpi-value" id="kpi-pending">0</div><div class="kpi-label">Pending Orders</div></div>
+            <div class="supplier-kpi"><div class="kpi-value" id="kpi-total-orders">0</div><div class="kpi-label">Total Orders</div></div>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="supplier-search-bar">
+            <input type="text" id="supplier-search" placeholder="Search suppliers...">
+            <select id="status-filter">
+                <option value="active">Active</option>
+                <option value="">All</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+
+        <!-- Supplier Cards Grid -->
+        <div class="supplier-grid" id="supplier-grid">
+            <div class="supplier-empty"><div class="empty-icon">🏭</div><p>Loading suppliers...</p></div>
         </div>
     </div>
 
@@ -151,17 +185,19 @@
                     <label>Supplier Name *</label>
                     <input type="text" id="supplier-name" required placeholder="Company or supplier name" maxlength="200">
                 </div>
-                <div class="form-group">
-                    <label>Contact Person</label>
-                    <input type="text" id="contact-person" placeholder="Contact person name" maxlength="100">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                    <div class="form-group">
+                        <label>Contact Person</label>
+                        <input type="text" id="contact-person" placeholder="Contact person" maxlength="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="text" id="supplier-phone" placeholder="Phone number" maxlength="50">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Email</label>
                     <input type="email" id="supplier-email" placeholder="supplier@example.com">
-                </div>
-                <div class="form-group">
-                    <label>Phone</label>
-                    <input type="text" id="supplier-phone" placeholder="Phone number" maxlength="50">
                 </div>
                 <div class="form-group">
                     <label>Address</label>
@@ -172,10 +208,21 @@
                     <textarea id="supplier-notes" rows="2" placeholder="Additional notes" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius); font-family:inherit;"></textarea>
                 </div>
                 <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary" id="save-btn">Save Supplier</button>
+                    <button type="submit" class="btn btn-primary">Save Supplier</button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Supplier Detail Modal -->
+    <div id="supplier-detail-modal" class="modal">
+        <div class="modal-content" style="max-width:650px;">
+            <div class="modal-header">
+                <h2 id="detail-title">Supplier</h2>
+                <button class="close-btn" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div id="supplier-detail-content"></div>
         </div>
     </div>
 
@@ -208,148 +255,257 @@
     </div>
 
     <script>
-        let suppliers = [];
+        var currencySymbol = '$';
+        var suppliers = [];
+        var purchaseOrders = [];
 
-        // Restore filter state from URL
-        (function restoreUrlState() {
-            const p = new URLSearchParams(window.location.search);
-            if (p.get('search')) document.getElementById('supplier-search').value = p.get('search');
-        })();
-
-        function syncUrlState() {
-            const p = new URLSearchParams();
-            const search = (document.getElementById('supplier-search').value || '').trim();
-            if (search) p.set('search', search);
-            const qs = p.toString();
-            history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
-        }
-
+        // --- User Info ---
         async function loadUserInfo() {
             try {
                 const response = await fetch('/api/current-user');
                 const user = await response.json();
                 if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
                 if (user.shop_icon) { const bi = document.querySelector('.navbar-brand-icon'); if (bi) bi.textContent = user.shop_icon; }
+                if (user.currency) currencySymbol = user.currency;
                 const initial = (user.full_name || user.username).charAt(0).toUpperCase();
                 document.getElementById('user-icon').textContent = initial;
                 document.getElementById('user-name').textContent = user.full_name || user.username;
                 const roleBadge = document.getElementById('role-badge');
                 roleBadge.textContent = getRoleLabel(user.role); roleBadge.className = getRoleBadgeClass(user.role);
-                const adminEls = document.querySelectorAll('.admin-only');
-                adminEls.forEach(el => el.style.display = isAdminRole(user.role) ? '' : 'none');
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdminRole(user.role) ? '' : 'none');
                 if (user.role === 'super_admin') {
                     document.querySelectorAll('.super-admin-only').forEach(el => el.style.display = '');
                     loadShopSwitcher(user.active_shop_id);
                 } else if (user.role === 'shop_owner') {
                     loadShopSwitcher(user.active_shop_id);
                 }
-            } catch (e) { console.error('Error loading user info:', e); }
+            } catch (e) { console.error(e); }
         }
 
         document.getElementById('user-profile-toggle').addEventListener('click', function(e) {
-            e.stopPropagation();
-            this.classList.toggle('active');
-            document.getElementById('user-dropdown').classList.toggle('active');
+            e.stopPropagation(); this.classList.toggle('active'); document.getElementById('user-dropdown').classList.toggle('active');
         });
         document.addEventListener('click', function(e) {
             const d = document.getElementById('user-dropdown'), t = document.getElementById('user-profile-toggle');
             if (!t.contains(e.target) && !d.contains(e.target)) { t.classList.remove('active'); d.classList.remove('active'); }
         });
-
         function openChangePasswordModal() {
             document.getElementById('change-password-modal').classList.add('active');
             document.getElementById('user-dropdown').classList.remove('active');
             document.getElementById('user-profile-toggle').classList.remove('active');
         }
-        function closeChangePasswordModal() {
-            document.getElementById('change-password-modal').classList.remove('active');
-            document.getElementById('change-password-form').reset();
-        }
-
+        function closeChangePasswordModal() { document.getElementById('change-password-modal').classList.remove('active'); document.getElementById('change-password-form').reset(); }
         document.getElementById('change-password-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const curr = document.getElementById('current-password').value;
-            const newP = document.getElementById('new-password').value;
-            const conf = document.getElementById('confirm-password').value;
+            const curr = document.getElementById('current-password').value, newP = document.getElementById('new-password').value, conf = document.getElementById('confirm-password').value;
             if (newP !== conf) { showToast('Passwords do not match!', 'warning'); return; }
-            if (newP.length < 6) { showToast('Minimum 6 characters!', 'warning'); return; }
+            if (newP.length < 6) { showToast('Min 6 characters!', 'warning'); return; }
             try {
-                const r = await fetch('/api/change-password', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({current_password: curr, new_password: newP}) });
+                const r = await fetch('/api/change-password', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({current_password:curr, new_password:newP}) });
                 const res = await r.json();
-                if (r.ok) { showToast('Password changed!', 'success'); closeChangePasswordModal(); }
-                else showToast(res.error || 'Error', 'error');
-            } catch(e) { showToast('Error changing password', 'error'); }
+                if (r.ok) { showToast('Password changed!', 'success'); closeChangePasswordModal(); } else showToast(res.error||'Error','error');
+            } catch(e) { showToast('Error','error'); }
         });
 
-        // --- Suppliers ---
-        async function loadSuppliers() {
+        // --- URL State ---
+        (function restoreUrlState() {
+            const p = new URLSearchParams(window.location.search);
+            if (p.get('search')) document.getElementById('supplier-search').value = p.get('search');
+            if (p.get('status')) document.getElementById('status-filter').value = p.get('status');
+        })();
+
+        function syncUrlState() {
+            const p = new URLSearchParams();
+            const search = (document.getElementById('supplier-search').value || '').trim();
+            const status = document.getElementById('status-filter').value;
+            if (search) p.set('search', search);
+            if (status && status !== 'active') p.set('status', status);
+            const qs = p.toString();
+            history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
+        }
+
+        // --- Data Loading ---
+        async function loadData() {
             try {
-                const r = await fetch('/api/suppliers');
-                suppliers = await r.json();
+                const [supRes, poRes] = await Promise.all([
+                    fetch('/api/suppliers'),
+                    fetch('/api/purchase-orders')
+                ]);
+                suppliers = await supRes.json();
+                purchaseOrders = await poRes.json();
+                renderKPIs();
                 renderSuppliers();
             } catch(e) { console.error(e); }
+        }
+
+        function renderKPIs() {
+            const active = suppliers.filter(s => (s.status || 'active') === 'active');
+            const totalPurchased = suppliers.reduce((sum, s) => sum + (s.total_purchased || 0), 0);
+            const pendingOrders = suppliers.reduce((sum, s) => sum + (s.pending_orders || 0), 0);
+            const totalOrders = suppliers.reduce((sum, s) => sum + (s.order_count || 0), 0);
+
+            document.getElementById('kpi-active').textContent = active.length;
+            document.getElementById('kpi-purchased').textContent = currencySymbol + totalPurchased.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+            document.getElementById('kpi-pending').textContent = pendingOrders;
+            document.getElementById('kpi-total-orders').textContent = totalOrders;
         }
 
         function renderSuppliers() {
             syncUrlState();
             const search = (document.getElementById('supplier-search').value || '').toLowerCase();
-            const filtered = suppliers.filter(s =>
-                s.name.toLowerCase().includes(search) ||
-                (s.contact_person || '').toLowerCase().includes(search) ||
-                (s.email || '').toLowerCase().includes(search) ||
-                (s.phone || '').toLowerCase().includes(search)
-            );
-            const countEl = document.getElementById('supp-results-count');
-            if (countEl) countEl.textContent = search ? `${filtered.length} of ${suppliers.length}` : `${suppliers.length} supplier${suppliers.length !== 1 ? 's' : ''}`;
-            const tbody = document.getElementById('suppliers-table');
+            const statusFilter = document.getElementById('status-filter').value;
+
+            var filtered = suppliers.filter(function(s) {
+                var status = s.status || 'active';
+                if (statusFilter && status !== statusFilter) return false;
+                if (search) {
+                    return s.name.toLowerCase().includes(search) ||
+                        (s.contact_person || '').toLowerCase().includes(search) ||
+                        (s.email || '').toLowerCase().includes(search) ||
+                        (s.phone || '').toLowerCase().includes(search);
+                }
+                return true;
+            });
+
+            var grid = document.getElementById('supplier-grid');
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="padding:0; border:none;">
-                    <div class="supp-empty-state">
-                        <div class="empty-icon">🏭</div>
-                        <p>No suppliers found</p>
-                        <small>Try a different search term or add a new supplier</small>
-                    </div>
-                </td></tr>`;
+                grid.innerHTML = '<div class="supplier-empty"><div class="empty-icon">🏭</div><p>No suppliers found</p></div>';
                 return;
             }
-            tbody.innerHTML = filtered.map(s => `
-                <tr>
-                    <td><strong>${s.name}</strong>${s.address ? `<div style="font-size:0.78rem;color:#888;margin-top:0.15rem;">${s.address}</div>` : ''}</td>
-                    <td>${s.contact_person || '<span style="color:#ccc;">—</span>'}</td>
-                    <td>${s.email ? `<a href="mailto:${s.email}" style="color:#3498db;">${s.email}</a>` : '<span style="color:#ccc;">—</span>'}</td>
-                    <td>${s.phone || '<span style="color:#ccc;">—</span>'}</td>
-                    <td><a href="/purchase-orders?supplier=${s.id}" style="font-weight:600;color:#3498db;">${s.order_count || 0}</a></td>
-                    <td>
-                        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
-                            <button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.55rem;" onclick="editSupplier(${s.id})">✏️ Edit</button>
-                            <a href="/purchase-orders?supplier=${s.id}&new=1" class="btn btn-success" style="font-size:0.75rem;padding:0.25rem 0.55rem;text-decoration:none;">+ PO</a>
-                            <button class="btn" style="font-size:0.75rem;padding:0.25rem 0.55rem;background:#e74c3c;color:white;" onclick="deleteSupplier(${s.id}, '${s.name.replace(/'/g, "\\'")}')">Delete</button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+
+            grid.innerHTML = filtered.map(function(s) {
+                var status = s.status || 'active';
+                var lastOrder = s.last_order_date ? timeAgo(s.last_order_date) : 'Never';
+                var totalPurchased = s.total_purchased || 0;
+
+                return '<div class="supplier-card ' + (status === 'inactive' ? 'inactive' : '') + '" onclick="openSupplierDetail(' + s.id + ')">' +
+                    '<span class="supplier-status ' + status + '">' + status + '</span>' +
+                    '<div class="supplier-card-header">' +
+                        '<div class="supplier-card-icon">🏭</div>' +
+                        '<div>' +
+                            '<div class="supplier-card-title">' + escapeHtml(s.name) + '</div>' +
+                            '<div class="supplier-card-contact">' + escapeHtml(s.contact_person || 'No contact person') + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="supplier-card-stats">' +
+                        '<div class="supplier-card-stat"><strong>' + (s.order_count || 0) + '</strong>Orders</div>' +
+                        '<div class="supplier-card-stat"><strong>' + currencySymbol + totalPurchased.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0}) + '</strong>Purchased</div>' +
+                    '</div>' +
+                    '<div class="supplier-card-footer">' +
+                        '<div class="supplier-card-last-order">Last order: ' + lastOrder + '</div>' +
+                        '<div class="supplier-card-actions" onclick="event.stopPropagation()">' +
+                            '<a href="/purchase-orders?supplier=' + s.id + '&new=1" class="btn-new-po">+ PO</a>' +
+                            '<button onclick="editSupplier(' + s.id + ')">Edit</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
         }
+
+        function timeAgo(dateStr) {
+            if (!dateStr) return 'Never';
+            var d = parseUTC(dateStr);
+            var now = new Date();
+            var diff = Math.floor((now - d) / 86400000);
+            if (diff === 0) return 'Today';
+            if (diff === 1) return 'Yesterday';
+            if (diff < 7) return diff + ' days ago';
+            if (diff < 30) return Math.floor(diff/7) + ' week' + (Math.floor(diff/7)>1?'s':'') + ' ago';
+            if (diff < 365) return Math.floor(diff/30) + ' month' + (Math.floor(diff/30)>1?'s':'') + ' ago';
+            return d.toLocaleDateString();
+        }
+
+        function escapeHtml(str) { var d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 
         document.getElementById('supplier-search').addEventListener('input', renderSuppliers);
+        document.getElementById('status-filter').addEventListener('change', renderSuppliers);
 
-        function exportSuppliersCSV() {
-            const search = (document.getElementById('supplier-search').value || '').toLowerCase();
-            const rows = suppliers.filter(s =>
-                !search || s.name.toLowerCase().includes(search) ||
-                (s.contact_person || '').toLowerCase().includes(search) ||
-                (s.email || '').toLowerCase().includes(search) ||
-                (s.phone || '').toLowerCase().includes(search)
-            );
-            const headers = ['Name', 'Contact Person', 'Email', 'Phone', 'Address', 'Purchase Orders'];
-            const csv = [headers, ...rows.map(s => [
-                s.name, s.contact_person || '', s.email || '', s.phone || '', (s.address || '').replace(/\n/g, ' '), s.order_count || 0
-            ].map(v => `"${String(v).replace(/"/g, '""')}"`))].map(r => r.join(',')).join('\n');
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-            a.download = `suppliers_${new Date().toISOString().slice(0,10)}.csv`;
-            a.click();
+        // --- Supplier Detail ---
+        async function openSupplierDetail(id) {
+            var s = suppliers.find(function(x){ return x.id === id; });
+            if (!s) return;
+            document.getElementById('detail-title').textContent = s.name;
+
+            var html = '<div class="supplier-detail-grid">';
+            html += '<div><div class="detail-label">Contact Person</div><div class="detail-value">' + escapeHtml(s.contact_person || '—') + '</div></div>';
+            html += '<div><div class="detail-label">Phone</div><div class="detail-value">' + escapeHtml(s.phone || '—') + '</div></div>';
+            html += '<div><div class="detail-label">Email</div><div class="detail-value">' + (s.email ? '<a href="mailto:' + s.email + '" style="color:#3b82f6;">' + escapeHtml(s.email) + '</a>' : '—') + '</div></div>';
+            html += '<div><div class="detail-label">Address</div><div class="detail-value">' + escapeHtml(s.address || '—') + '</div></div>';
+            if (s.notes) html += '<div style="grid-column:1/-1;"><div class="detail-label">Notes</div><div class="detail-value">' + escapeHtml(s.notes) + '</div></div>';
+            html += '</div>';
+
+            // Purchase history
+            var pos = purchaseOrders.filter(function(po){ return po.supplier_id === id; });
+            html += '<div class="supplier-detail-section"><div class="supplier-detail-section-title">Purchase Orders (' + pos.length + ')</div>';
+            if (pos.length === 0) {
+                html += '<p style="color:#94a3b8;font-size:0.85rem;">No purchase orders yet</p>';
+            } else {
+                html += '<div style="max-height:200px;overflow-y:auto;">';
+                pos.slice(0, 20).forEach(function(po) {
+                    var poNum = po.po_number || ('PO-' + String(po.id).padStart(5,'0'));
+                    var date = parseUTC(po.created_at).toLocaleDateString();
+                    html += '<div class="po-history-row">' +
+                        '<div><a href="/purchase-orders?supplier=' + id + '" style="color:#1e293b;text-decoration:none;font-weight:600;">' + poNum + '</a><span style="color:#94a3b8;margin-left:0.5rem;font-size:0.8rem;">' + date + '</span></div>' +
+                        '<div style="display:flex;align-items:center;gap:0.5rem;"><span class="po-history-status ' + po.status + '">' + po.status + '</span><strong>' + currencySymbol + po.total_amount.toFixed(2) + '</strong><a href="/purchase-orders?supplier=' + id + '" style="font-size:0.72rem;color:#3b82f6;text-decoration:none;padding:0.15rem 0.4rem;border:1px solid #dbeafe;border-radius:4px;">View</a></div>' +
+                    '</div>';
+                });
+                html += '</div>';
+            }
+            html += '</div>';
+
+            // Products supplied
+            try {
+                var r = await fetch('/api/suppliers/' + id + '/products');
+                var prods = await r.json();
+                html += '<div class="supplier-detail-section"><div class="supplier-detail-section-title">Products Supplied (' + prods.length + ')</div>';
+                if (prods.length === 0) {
+                    html += '<p style="color:#94a3b8;font-size:0.85rem;">No products linked yet. Link products from the Products page.</p>';
+                } else {
+                    // Group by name
+                    var grouped = {};
+                    prods.forEach(function(p) { if (!grouped[p.name]) grouped[p.name] = []; grouped[p.name].push(p); });
+                    html += '<div style="display:flex;flex-wrap:wrap;gap:0.3rem;">';
+                    Object.keys(grouped).forEach(function(name) {
+                        html += '<span class="product-tag">' + escapeHtml(name) + ' (' + grouped[name].length + ')</span>';
+                    });
+                    html += '</div>';
+                }
+                html += '</div>';
+            } catch(e) {}
+
+            // Actions
+            var statusText = (s.status || 'active') === 'active' ? 'Archive' : 'Reactivate';
+            html += '<div style="display:flex;gap:0.75rem;margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e2e8f0;">';
+            html += '<a href="/purchase-orders?supplier=' + s.id + '&new=1" class="btn btn-primary" style="text-decoration:none;">+ New Purchase Order</a>';
+            html += '<button class="btn btn-secondary" onclick="closeDetailModal();editSupplier(' + s.id + ')">Edit</button>';
+            html += '<button class="btn btn-secondary" onclick="toggleSupplierStatus(' + s.id + ')" style="margin-left:auto;">' + statusText + '</button>';
+            html += '</div>';
+
+            document.getElementById('supplier-detail-content').innerHTML = html;
+            document.getElementById('supplier-detail-modal').classList.add('active');
         }
 
+        function closeDetailModal() { document.getElementById('supplier-detail-modal').classList.remove('active'); }
+
+        async function toggleSupplierStatus(id) {
+            var s = suppliers.find(function(x){ return x.id === id; });
+            if (!s) return;
+            var newStatus = (s.status || 'active') === 'active' ? 'inactive' : 'active';
+            try {
+                var r = await fetch('/api/suppliers/' + id, {
+                    method: 'PUT',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ name: s.name, contact_person: s.contact_person, email: s.email, phone: s.phone, address: s.address, notes: s.notes, status: newStatus })
+                });
+                if (r.ok) {
+                    showToast('Supplier ' + (newStatus === 'active' ? 'reactivated' : 'archived'), 'success');
+                    closeDetailModal();
+                    loadData();
+                } else { showToast('Error updating status', 'error'); }
+            } catch(e) { showToast('Error', 'error'); }
+        }
+
+        // --- Add/Edit Supplier ---
         function openAddModal() {
             document.getElementById('modal-title').textContent = 'Add Supplier';
             document.getElementById('supplier-form').reset();
@@ -358,7 +514,7 @@
         }
 
         function editSupplier(id) {
-            const s = suppliers.find(x => x.id === id);
+            var s = suppliers.find(function(x){ return x.id === id; });
             if (!s) return;
             document.getElementById('modal-title').textContent = 'Edit Supplier';
             document.getElementById('supplier-id').value = s.id;
@@ -371,14 +527,12 @@
             document.getElementById('supplier-modal').classList.add('active');
         }
 
-        function closeModal() {
-            document.getElementById('supplier-modal').classList.remove('active');
-        }
+        function closeModal() { document.getElementById('supplier-modal').classList.remove('active'); }
 
-        document.getElementById('supplier-form').addEventListener('submit', async (e) => {
+        document.getElementById('supplier-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const id = document.getElementById('supplier-id').value;
-            const data = {
+            var id = document.getElementById('supplier-id').value;
+            var data = {
                 name: document.getElementById('supplier-name').value,
                 contact_person: document.getElementById('contact-person').value,
                 email: document.getElementById('supplier-email').value,
@@ -387,32 +541,39 @@
                 notes: document.getElementById('supplier-notes').value
             };
             try {
-                const url = id ? `/api/suppliers/${id}` : '/api/suppliers';
-                const method = id ? 'PUT' : 'POST';
-                const r = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-                const res = await r.json();
+                var url = id ? '/api/suppliers/' + id : '/api/suppliers';
+                var method = id ? 'PUT' : 'POST';
+                var r = await fetch(url, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+                var res = await r.json();
                 if (r.ok || res.success) {
                     showToast(id ? 'Supplier updated!' : 'Supplier added!', 'success');
                     closeModal();
-                    loadSuppliers();
-                } else {
-                    showToast(res.error || 'Error saving supplier', 'error');
-                }
+                    loadData();
+                } else { showToast(res.error || 'Error', 'error'); }
             } catch(e) { showToast('Error saving supplier', 'error'); }
         });
 
-        async function deleteSupplier(id, name) {
-            if (!confirm(`Delete supplier "${name}"?`)) return;
-            try {
-                const r = await fetch(`/api/suppliers/${id}`, { method: 'DELETE' });
-                const res = await r.json();
-                if (r.ok || res.success) { showToast('Supplier deleted', 'success'); loadSuppliers(); }
-                else showToast(res.error || 'Error deleting', 'error');
-            } catch(e) { showToast('Error deleting supplier', 'error'); }
+        // --- Export CSV ---
+        function exportSuppliersCSV() {
+            var search = (document.getElementById('supplier-search').value || '').toLowerCase();
+            var rows = suppliers.filter(function(s) {
+                return !search || s.name.toLowerCase().includes(search) ||
+                    (s.contact_person || '').toLowerCase().includes(search);
+            });
+            var headers = ['Name', 'Contact Person', 'Email', 'Phone', 'Address', 'Orders', 'Total Purchased', 'Status'];
+            var csv = [headers].concat(rows.map(function(s) {
+                return [s.name, s.contact_person||'', s.email||'', s.phone||'', (s.address||'').replace(/\n/g,' '), s.order_count||0, s.total_purchased||0, s.status||'active']
+                    .map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; });
+            })).map(function(r){ return r.join(','); }).join('\n');
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            a.download = 'suppliers_' + new Date().toISOString().slice(0,10) + '.csv';
+            a.click();
         }
 
+        // --- Init ---
         loadUserInfo();
-        loadSuppliers();
+        loadData();
     </script>
     <script src="/static/js/session.js"></script>
     <script>
