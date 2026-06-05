@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - POS System</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/ui.js"></script>
+    <style>
+        /* ===== Table styling ===== */
+        .report-table-scroll { overflow-y: auto; border-radius: 6px; border: 1px solid #e9ecef; }
+        .report-table-scroll table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+        .report-table-scroll thead th {
+            position: sticky; top: 0; z-index: 2;
+            background: #2c3e50; color: white;
+            padding: 0.65rem 1rem; text-align: left;
+            font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;
+            border-bottom: 2px solid #1a252f;
+        }
+        .report-table-scroll tbody tr:nth-child(even) { background: #f8f9fa; }
+        .report-table-scroll tbody tr:hover { background: #e8f4fd; transition: background 0.1s; }
+        .report-table-scroll tbody td { padding: 0.65rem 1rem; border-bottom: 1px solid #edf0f2; vertical-align: middle; }
+        .report-table-scroll tbody tr:last-child td { border-bottom: none; }
+
+        /* ===== Card header accent ===== */
+        .card h2 {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding-left: 0.75rem;
+            border-left: 4px solid #3498db;
+            font-size: 1.05rem; color: #2c3e50; margin: 0;
+        }
+
+        /* ===== Role info card ===== */
+        .role-info-card {
+            background: #f0faf4; border: 1px solid #b7e3c9;
+            border-left: 4px solid #27ae60;
+            border-radius: 8px; padding: 1.25rem 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .role-info-card h3 { color: #1e8449; margin: 0 0 1rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .role-info-card h4 { color: #2c3e50; margin: 0 0 0.5rem; font-size: 0.9rem; }
+        .role-info-card ul { margin: 0 0 0 1.25rem; padding: 0; line-height: 1.9; font-size: 0.87rem; color: #444; }
+
+        /* ===== Empty state ===== */
+        .users-empty-state { text-align: center; padding: 3.5rem 2rem; }
+        .users-empty-state .empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.6rem; }
+        .users-empty-state p { font-size: 0.95rem; color: #868e96; margin: 0; }
+    </style>
+</head>
+<body class="has-sidebar">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <div class="navbar-brand-icon">🛒</div>
+                <span class="sidebar-brand-name" id="shop-name-title">POS System</span>
+            </div>
+        </div>
+        <div class="sidebar-nav">
+            <div class="sidebar-section-title">Overview</div>
+            <a href="/" class="sidebar-item"><span class="sidebar-icon">&#128202;</span><span class="sidebar-label">Dashboard</span></a>
+            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">&#128722;</span><span class="sidebar-label">Point of Sale</span></a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Sales</div>
+            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">&#128203;</span><span class="sidebar-label">Sales History</span></a>
+            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">&#128200;</span><span class="sidebar-label">Reports</span></a>
+            <div class="sidebar-divider admin-only"></div>
+            <div class="sidebar-section-title admin-only">Inventory</div>
+            <a href="/products" class="sidebar-item admin-only"><span class="sidebar-icon">&#128230;</span><span class="sidebar-label">Products</span></a>
+            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">&#127981;</span><span class="sidebar-label">Suppliers</span></a>
+            <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-icon">&#128204;</span><span class="sidebar-label">Purchase Orders</span></a>
+            <div class="sidebar-divider admin-only"></div>
+            <div class="sidebar-section-title admin-only">Customers</div>
+            <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">&#128101;</span><span class="sidebar-label">Customers</span></a>
+            <div class="sidebar-divider admin-only"></div>
+            <div class="sidebar-section-title admin-only">Finance</div>
+            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">&#128176;</span><span class="sidebar-label">Expenses</span></a>
+            <div class="sidebar-divider admin-only"></div>
+            <div class="sidebar-section-title admin-only">Administration</div>
+            <a href="/users" class="sidebar-item admin-only active"><span class="sidebar-icon">&#128100;</span><span class="sidebar-label">Users</span></a>
+            <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">&#9881;&#65039;</span><span class="sidebar-label">Settings</span></a>
+            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">&#127978;</span><span class="sidebar-label">Shops</span></a>
+        </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+    <div class="main-wrapper" id="main-wrapper">
+        <header class="topbar">
+            <button class="topbar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
+            <div id="shop-switcher" class="shop-switcher" style="display:none;">
+                <select id="shop-select" onchange="switchShop(this.value)">
+                    <option value="">&#127760; All Shops</option>
+                </select>
+            </div>
+            <div class="topbar-spacer"></div>
+            <div class="user-profile-container">
+                <div class="user-profile" id="user-profile-toggle">
+                    <div class="user-profile-icon" id="user-icon">A</div>
+                    <div class="user-profile-info">
+                        <span class="user-profile-name" id="user-name">Admin</span>
+                    </div>
+                    <span class="user-profile-arrow">&#9660;</span>
+                </div>
+                <div class="user-dropdown" id="user-dropdown">
+                    <div class="dropdown-header">
+                        <div class="dropdown-role">
+                            Role: <span class="role-badge admin" id="role-badge">Administrator</span>
+                        </div>
+                    </div>
+                    <div class="dropdown-menu">
+                        <a href="#" onclick="openOwnPasswordModal(); return false;" class="dropdown-item">Change Password</a>
+                        <a href="/logout" class="dropdown-item">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+
+    <div class="container">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <h2 style="margin: 0;">User Management</h2>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <input type="text" id="user-search" placeholder="Search users..." style="padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius); font-size:0.9rem;">
+                    <button class="btn btn-primary" onclick="openAddUserModal()">+ Add User</button>
+                </div>
+            </div>
+
+            <div id="message-area"></div>
+
+            <div class="report-table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Full Name</th>
+                        <th>Role</th>
+                        <th class="super-admin-only" style="display:none;">Shop</th>
+                        <th>Created</th>
+                        <th>Last Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table">
+                    <tr><td colspan="7" style="text-align:center; padding:2rem; color:#adb5bd;">Loading...</td></tr>
+                </tbody>
+            </table>
+            </div>
+        </div>
+
+        <div class="role-info-card">
+            <h3>User Roles Explained</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div style="border-left: 3px solid #8e44ad; padding-left: 0.75rem;">
+                    <h4>👑 Super Admin</h4>
+                    <ul>
+                        <li>Everything Admin can do</li>
+                        <li>Create &amp; manage multiple shops</li>
+                        <li>Switch between shops (all shops view)</li>
+                        <li>See data across all shops</li>
+                        <li>System-level configuration</li>
+                        <li>Intended for business owners</li>
+                    </ul>
+                </div>
+                <div style="border-left: 3px solid #e67e22; padding-left: 0.75rem;">
+                    <h4>🏪 Shop Owner</h4>
+                    <ul>
+                        <li>Admin-level access for assigned shops</li>
+                        <li>Switch between assigned shops only</li>
+                        <li>Manage products, stock &amp; settings</li>
+                        <li>Create admin &amp; sales staff users</li>
+                        <li>View reports for assigned shops</li>
+                        <li>Cannot create or delete shops</li>
+                    </ul>
+                </div>
+                <div style="border-left: 3px solid #2980b9; padding-left: 0.75rem;">
+                    <h4>🛡️ Admin Role</h4>
+                    <ul>
+                        <li>Full access to all pages</li>
+                        <li>Can see cost prices and profits</li>
+                        <li>Manage products and stock</li>
+                        <li>View sales history &amp; reports</li>
+                        <li>Create and manage users</li>
+                        <li>Access dashboard with metrics</li>
+                    </ul>
+                </div>
+                <div style="border-left: 3px solid #636e72; padding-left: 0.75rem;">
+                    <h4>💼 User (Sales Staff)</h4>
+                    <ul>
+                        <li>Access Point of Sale only</li>
+                        <li>Make sales transactions</li>
+                        <li>See sell prices only (not cost)</li>
+                        <li>Cannot see profit margins</li>
+                        <li>Cannot access admin pages</li>
+                        <li>Recommended for employees</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="add-user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New User</h2>
+                <button class="close-btn" onclick="closeAddUserModal()">&times;</button>
+            </div>
+            <form id="add-user-form">
+                <div class="form-group">
+                    <label>Username *</label>
+                    <input type="text" name="username" required placeholder="e.g., sarah">
+                </div>
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" name="password" required placeholder="Minimum 6 characters" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="full_name" placeholder="e.g., Sarah Johnson">
+                </div>
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select name="role" required id="role-select">
+                        <option value="">Select role</option>
+                        <option value="admin">Admin (Full Access)</option>
+                        <option value="user">User (Sales Staff Only)</option>
+                        <option value="shop_owner" class="super-admin-only" style="display:none;">Shop Owner (Multi-Shop)</option>
+                    </select>
+                </div>
+                <div id="shop-field" class="form-group multi-shop-field" style="display:none;">
+                    <label>Assign to Shop *</label>
+                    <select name="shop_id" id="user-shop-select">
+                        <option value="">Select shop...</option>
+                    </select>
+                </div>
+                <div id="multi-shop-field" class="form-group" style="display:none;">
+                    <label>Assign Shops * <span style="font-weight:normal;color:#888;">(select one or more)</span></label>
+                    <div id="multi-shop-checkboxes" style="max-height:180px;overflow-y:auto;border:1px solid #ddd;border-radius:6px;padding:0.5rem;"></div>
+                </div>
+                <div id="role-description" style="padding: 1rem; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 1rem; display: none;">
+                    <!-- Role description will be shown here -->
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary">Create User</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddUserModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal (Admin changing other users) -->
+    <div id="change-password-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Change User Password</h2>
+                <button class="close-btn" onclick="closeChangePasswordModal()">&times;</button>
+            </div>
+            <form id="change-password-form">
+                <input type="hidden" id="change-password-user-id">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="change-password-username" readonly style="background-color: #f5f5f5;">
+                </div>
+                <div class="form-group">
+                    <label>New Password *</label>
+                    <input type="password" id="new-password" required placeholder="Minimum 6 characters" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password *</label>
+                    <input type="password" id="confirm-password" required placeholder="Re-enter new password" minlength="6">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary">Change Password</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Own Password Modal -->
+    <div id="own-password-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Change My Password</h2>
+                <button class="close-btn" onclick="closeOwnPasswordModal()">&times;</button>
+            </div>
+            <form id="own-password-form">
+                <div class="form-group">
+                    <label>Current Password *</label>
+                    <input type="password" id="own-current-password" required placeholder="Enter current password">
+                </div>
+                <div class="form-group">
+                    <label>New Password *</label>
+                    <input type="password" id="own-new-password" required placeholder="Minimum 6 characters" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password *</label>
+                    <input type="password" id="own-confirm-password" required placeholder="Re-enter new password" minlength="6">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary">Change Password</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeOwnPasswordModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Shop Assignment Modal (super_admin only, for shop_owner users) -->
+    <div id="shop-assign-modal" class="modal">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h2>Assign Shops — <span id="assign-username"></span></h2>
+                <button class="close-btn" onclick="closeShopAssignModal()">&times;</button>
+            </div>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;">Select which shops this user can access and manage:</p>
+            <div id="shop-assign-list" style="max-height:300px; overflow-y:auto; border:1px solid #ddd; border-radius:4px; padding:0.5rem; margin-bottom:1rem;">
+                <p style="color:#888;">Loading shops...</p>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-primary" onclick="saveShopAssignment()">Save Assignment</button>
+                <button class="btn btn-secondary" onclick="closeShopAssignModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reassign Shop Modal (super_admin only, for admin/user roles) -->
+    <div id="reassign-shop-modal" class="modal">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h2>Reassign Shop — <span id="reassign-username"></span></h2>
+                <button class="close-btn" onclick="closeReassignShopModal()">&times;</button>
+            </div>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;">Select which shop this user should be assigned to:</p>
+            <select id="reassign-shop-select" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;font-size:0.95rem;margin-bottom:1rem;">
+                <option value="">Loading shops...</option>
+            </select>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-primary" onclick="saveReassignShop()">Save</button>
+                <button class="btn btn-secondary" onclick="closeReassignShopModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let users = [];
+        let activeShopId = null;
+
+        // Load users
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/users');
+                users = await response.json();
+                renderUsers();
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('users-table');
+            const isSuperAdmin = document.querySelector('.super-admin-only') && document.querySelector('.super-admin-only').style.display !== 'none';
+            const search = (document.getElementById('user-search').value || '').toLowerCase();
+            const filtered = search ? users.filter(u =>
+                u.username.toLowerCase().includes(search) ||
+                (u.full_name || '').toLowerCase().includes(search) ||
+                u.role.toLowerCase().includes(search) ||
+                (u.shop_name || '').toLowerCase().includes(search)
+            ) : users;
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="padding:0;border:none;"><div class="users-empty-state"><div class="empty-icon">👤</div><p>${users.length === 0 ? 'No users yet — add your first user above' : 'No users match your search'}</p></div></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(user => {
+                const roleColor = user.role === 'super_admin' ? '#8e44ad' : user.role === 'shop_owner' ? '#e67e22' : user.role === 'admin' ? '#2980b9' : '#636e72';
+                const roleBg = user.role === 'super_admin' ? '#f4ecf7' : user.role === 'shop_owner' ? '#fef5e7' : user.role === 'admin' ? '#eaf4fd' : '#f1f2f6';
+                const roleLabel = getRoleLabel(user.role);
+                const created = parseUTC(user.created_at);
+                const createdStr = created.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
+                const lastActiveStr = (() => {
+                    if (!user.last_login) return '<span style="color:#ccc;">Never</span>';
+                    const d = parseUTC(user.last_login);
+                    const diffMs = Date.now() - d.getTime();
+                    const diffMins = Math.floor(diffMs / 60000);
+                    if (diffMins < 2) return '<span style="color:#27ae60;font-weight:600;">Just now</span>';
+                    if (diffMins < 60) return `<span style="color:#27ae60;">${diffMins}m ago</span>`;
+                    const diffHrs = Math.floor(diffMins / 60);
+                    if (diffHrs < 24) return `<span style="color:#2980b9;">${diffHrs}h ago</span>`;
+                    const diffDays = Math.floor(diffHrs / 24);
+                    if (diffDays < 7) return `${diffDays}d ago`;
+                    return d.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
+                })();
+                return `
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:0.6rem;">
+                            <div style="width:2rem;height:2rem;border-radius:50%;background:${roleColor};color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">${(user.full_name || user.username).charAt(0).toUpperCase()}</div>
+                            <strong>${user.username}</strong>
+                        </div>
+                    </td>
+                    <td>${user.full_name || '<span style="color:#ccc;">—</span>'}</td>
+                    <td><span style="display:inline-block;padding:0.2rem 0.65rem;border-radius:20px;font-size:0.78rem;font-weight:700;background:${roleBg};color:${roleColor};border:1px solid ${roleColor}33;">${roleLabel}</span></td>
+                    <td class="super-admin-only" style="display:${isSuperAdmin ? '' : 'none'}">${user.role === 'shop_owner' ? (user.assigned_shops && user.assigned_shops.length ? user.assigned_shops.map(s => '<span style="display:inline-block;padding:0.15rem 0.5rem;margin:0.1rem;border-radius:12px;font-size:0.75rem;background:#fef5e7;color:#e67e22;border:1px solid #e67e2233;">' + s + '</span>').join('') : '<span style="color:#ccc;">No shops</span>') : (user.shop_name || '<span style="color:#ccc;">—</span>')}</td>
+                    <td style="font-size:0.85rem;color:#6c757d;">${createdStr}</td>
+                    <td style="font-size:0.82rem;">${lastActiveStr}</td>
+                    <td>
+                        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+                            ${user.role === 'shop_owner' && isSuperAdmin ? '<button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="openShopAssignModal(' + user.id + ', \'' + user.username + '\')">🏪 Shops</button>' : ''}
+                            ${(user.role === 'admin' || user.role === 'user') && isSuperAdmin ? '<button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="openReassignShopModal(' + user.id + ', \'' + user.username + '\', ' + (user.shop_id || 'null') + ')">🏪 Shop</button>' : ''}
+                            <button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="openChangePasswordModal(${user.id}, '${user.username}')">🔑 Password</button>
+                            <button class="btn btn-danger" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="deleteUser(${user.id}, '${user.username}')">🗑️ Delete</button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        document.getElementById('user-search').addEventListener('input', renderUsers);
+
+        let _allShops = [];
+        // Add user modal
+        async function openAddUserModal() {
+            document.getElementById('add-user-modal').classList.add('active');
+            // Always load shops list for super_admin (needed for both single & multi)
+            const currentRole = document.getElementById('role-select').value;
+            try {
+                const resp = await fetch('/api/shops');
+                _allShops = await resp.json();
+                populateShopControls(currentRole);
+            } catch (e) { console.error('Failed to load shops', e); }
+        }
+
+        function populateShopControls(selectedRole) {
+            // Single shop dropdown
+            const sel = document.getElementById('user-shop-select');
+            sel.innerHTML = '<option value="">Select shop...</option>';
+            _allShops.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = (s.icon || '🛒') + ' ' + s.name;
+                sel.appendChild(opt);
+            });
+            if (activeShopId) sel.value = activeShopId;
+
+            // Multi shop checkboxes
+            const container = document.getElementById('multi-shop-checkboxes');
+            container.innerHTML = '';
+            _allShops.forEach(s => {
+                const label = document.createElement('label');
+                label.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.25rem;cursor:pointer;border-bottom:1px solid #f0f0f0;';
+                label.innerHTML = `<input type="checkbox" name="shop_ids" value="${s.id}" style="width:16px;height:16px;"> ${s.icon || '🛒'} ${s.name}`;
+                container.appendChild(label);
+            });
+
+            // Toggle visibility based on role
+            const shopField = document.getElementById('shop-field');
+            const multiShopField = document.getElementById('multi-shop-field');
+            if (selectedRole === 'shop_owner') {
+                shopField.style.display = 'none';
+                multiShopField.style.display = '';
+            } else {
+                shopField.style.display = '';
+                multiShopField.style.display = 'none';
+            }
+        }
+
+        function closeAddUserModal() {
+            document.getElementById('add-user-modal').classList.remove('active');
+            document.getElementById('add-user-form').reset();
+            document.getElementById('role-description').style.display = 'none';
+            document.getElementById('multi-shop-field').style.display = 'none';
+            document.getElementById('multi-shop-checkboxes').innerHTML = '';
+        }
+
+        // Show role description when role is selected
+        document.getElementById('role-select').addEventListener('change', function() {
+            const roleDesc = document.getElementById('role-description');
+            const role = this.value;
+
+            if (role === 'admin') {
+                roleDesc.innerHTML = `
+                    <strong style="color: #3498db;">Admin Role:</strong><br>
+                    Full access to all features. Can see cost prices, profits, manage products, and view all reports.
+                    Use this for single-shop managers.
+                `;
+                roleDesc.style.display = 'block';
+            } else if (role === 'shop_owner') {
+                roleDesc.innerHTML = `
+                    <strong style="color: #e67e22;">Shop Owner Role:</strong><br>
+                    Admin-level access across multiple assigned shops. Can switch between shops and manage inventory, users, and settings for each.
+                    <strong style="color: #e67e22;">Select the shops to assign below.</strong>
+                `;
+                roleDesc.style.display = 'block';
+            } else if (role === 'user') {
+                roleDesc.innerHTML = `
+                    <strong style="color: #95a5a6;">User Role (Sales Staff):</strong><br>
+                    Limited to Point of Sale only. Cannot see cost prices or profit margins. Perfect for sales staff.
+                    <strong style="color: #27ae60;">Recommended for employees.</strong>
+                `;
+                roleDesc.style.display = 'block';
+            } else {
+                roleDesc.style.display = 'none';
+            }
+
+            // Toggle single-shop vs multi-shop fields
+            const shopField = document.getElementById('shop-field');
+            const multiShopField = document.getElementById('multi-shop-field');
+            if (role === 'shop_owner') {
+                shopField.style.display = 'none';
+                multiShopField.style.display = '';
+                if (_allShops.length) populateShopControls(role);
+            } else {
+                multiShopField.style.display = 'none';
+                if (shopField.classList.contains('multi-shop-field')) shopField.style.display = '';
+            }
+        });
+
+        document.getElementById('add-user-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            // For shop_owner, collect checked shop IDs
+            if (data.role === 'shop_owner') {
+                const checked = document.querySelectorAll('#multi-shop-checkboxes input[name="shop_ids"]:checked');
+                const shopIds = Array.from(checked).map(cb => parseInt(cb.value));
+                if (shopIds.length === 0) {
+                    showMessage('error', 'Please select at least one shop for the Shop Owner');
+                    return;
+                }
+                data.shop_ids = shopIds;
+                data.shop_id = shopIds[0]; // primary shop
+            }
+
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('success', `User '${data.username}' created successfully!`);
+                    closeAddUserModal();
+                    loadUsers();
+                } else {
+                    showMessage('error', result.error || 'Error creating user');
+                }
+            } catch (error) {
+                console.error('Error creating user:', error);
+                showMessage('error', 'Error creating user');
+            }
+        });
+
+        // Delete user
+        async function deleteUser(userId, username) {
+            if (!confirm(`Are you sure you want to delete user '${username}'?\n\nThis action cannot be undone.`)) return;
+
+            try {
+                const response = await fetch(`/api/users/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('success', `User '${username}' deleted successfully!`);
+                    loadUsers();
+                } else {
+                    showMessage('error', result.error || 'Error deleting user');
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showMessage('error', 'Error deleting user');
+            }
+        }
+
+        // Change password modal
+        function openChangePasswordModal(userId, username) {
+            document.getElementById('change-password-user-id').value = userId;
+            document.getElementById('change-password-username').value = username;
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+            document.getElementById('change-password-modal').classList.add('active');
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.remove('active');
+            document.getElementById('change-password-form').reset();
+        }
+
+        // Handle change password form submission
+        document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const userId = document.getElementById('change-password-user-id').value;
+            const username = document.getElementById('change-password-username').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                showMessage('error', 'Passwords do not match!');
+                return;
+            }
+
+            // Validate password length
+            if (newPassword.length < 6) {
+                showMessage('error', 'Password must be at least 6 characters!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/users/${userId}/password`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: newPassword })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('success', `Password changed successfully for user '${username}'!`);
+                    closeChangePasswordModal();
+                } else {
+                    showMessage('error', result.error || 'Error changing password');
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                showMessage('error', 'Error changing password');
+            }
+        });
+
+        // Show message
+        function showMessage(type, message) {
+            const messageArea = document.getElementById('message-area');
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+            messageArea.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 5000);
+        }
+
+        // Load user info
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/current-user');
+                const user = await response.json();
+
+                // Set shop name
+                if (user.shop_name) {
+                    document.getElementById('shop-name-title').textContent = user.shop_name;
+                }
+                if (user.shop_icon) {
+                    const bi = document.querySelector('.navbar-brand-icon');
+                    if (bi) bi.textContent = user.shop_icon;
+                }
+
+                // Set user icon (first letter of name)
+                const initial = (user.full_name || user.username).charAt(0).toUpperCase();
+                document.getElementById('user-icon').textContent = initial;
+
+                // Set user name
+                document.getElementById('user-name').textContent = user.full_name || user.username;
+
+                // Set user role badge
+                const roleBadge = document.getElementById('role-badge');
+                roleBadge.textContent = getRoleLabel(user.role);
+                roleBadge.className = getRoleBadgeClass(user.role);
+
+                // Show/hide admin-only elements
+                const adminEls = document.querySelectorAll('.admin-only');
+                if (isAdminRole(user.role)) {
+                    adminEls.forEach(el => el.style.display = '');
+                } else {
+                    adminEls.forEach(el => el.style.display = 'none');
+                }
+                if (user.role === 'super_admin') {
+                    document.querySelectorAll('.super-admin-only').forEach(el => el.style.display = '');
+                    // Show shop assignment field in add user form
+                    const shopField = document.getElementById('shop-field');
+                    if (shopField) shopField.style.display = '';
+                    activeShopId = user.active_shop_id || null;
+                    loadShopSwitcher(user.active_shop_id);
+                } else if (user.role === 'shop_owner') {
+                    loadShopSwitcher(user.active_shop_id);
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+            }
+        }
+
+        // Toggle user dropdown
+        document.getElementById('user-profile-toggle').addEventListener('click', function(e) {
+            e.stopPropagation();
+            this.classList.toggle('active');
+            document.getElementById('user-dropdown').classList.toggle('active');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('user-dropdown');
+            const toggle = document.getElementById('user-profile-toggle');
+            if (!toggle.contains(e.target) && !dropdown.contains(e.target)) {
+                toggle.classList.remove('active');
+                dropdown.classList.remove('active');
+            }
+        });
+
+        // Own password change modal
+        function openOwnPasswordModal() {
+            document.getElementById('own-password-modal').classList.add('active');
+            document.getElementById('user-dropdown').classList.remove('active');
+            document.getElementById('user-profile-toggle').classList.remove('active');
+        }
+
+        function closeOwnPasswordModal() {
+            document.getElementById('own-password-modal').classList.remove('active');
+            document.getElementById('own-password-form').reset();
+        }
+
+        // Handle own password change
+        document.getElementById('own-password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const currentPassword = document.getElementById('own-current-password').value;
+            const newPassword = document.getElementById('own-new-password').value;
+            const confirmPassword = document.getElementById('own-confirm-password').value;
+
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                showMessage('error', 'New passwords do not match!');
+                return;
+            }
+
+            // Validate password length
+            if (newPassword.length < 6) {
+                showMessage('error', 'New password must be at least 6 characters!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/change-password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('success', 'Password changed successfully!');
+                    closeOwnPasswordModal();
+                } else {
+                    showMessage('error', result.error || 'Error changing password');
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                showMessage('error', 'Error changing password');
+            }
+        });
+
+        // Initialize
+        loadUserInfo();
+        loadUsers();
+    </script>
+    <script src="/static/js/session.js"></script>
+    <script>
+        let _assignUserId = null;
+
+        async function openShopAssignModal(userId, username) {
+            _assignUserId = userId;
+            document.getElementById('assign-username').textContent = username;
+            document.getElementById('shop-assign-modal').classList.add('active');
+            document.getElementById('shop-assign-list').innerHTML = '<p style="color:#888;">Loading...</p>';
+
+            try {
+                const [allResp, assignedResp] = await Promise.all([
+                    fetch('/api/shops'),
+                    fetch(`/api/users/${userId}/shops`)
+                ]);
+                const allShops = await allResp.json();
+                const assignedShops = await assignedResp.json();
+                const assignedIds = new Set(assignedShops.map(s => s.id));
+
+                document.getElementById('shop-assign-list').innerHTML = allShops.map(s =>
+                    `<label style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.3rem;cursor:pointer;border-bottom:1px solid #f0f0f0;">
+                        <input type="checkbox" value="${s.id}" ${assignedIds.has(s.id) ? 'checked' : ''} style="width:1.1rem;height:1.1rem;">
+                        <span>${s.icon || '🛒'}</span>
+                        <span style="font-size:0.9rem;">${s.name}</span>
+                    </label>`
+                ).join('');
+            } catch (e) {
+                document.getElementById('shop-assign-list').innerHTML = '<p style="color:#e74c3c;">Error loading shops</p>';
+            }
+        }
+
+        function closeShopAssignModal() {
+            document.getElementById('shop-assign-modal').classList.remove('active');
+            _assignUserId = null;
+        }
+
+        async function saveShopAssignment() {
+            if (!_assignUserId) return;
+            const checkboxes = document.querySelectorAll('#shop-assign-list input[type=checkbox]:checked');
+            const shopIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+            try {
+                const resp = await fetch(`/api/users/${_assignUserId}/shops`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ shop_ids: shopIds })
+                });
+                const result = await resp.json();
+                if (resp.ok) {
+                    showToast(`Assigned ${result.assigned} shop(s) successfully!`, 'success');
+                    closeShopAssignModal();
+                } else {
+                    showToast('Error: ' + (result.error || 'Failed'), 'error');
+                }
+            } catch (e) {
+                showToast('Error saving assignment', 'error');
+            }
+        }
+
+        let _reassignUserId = null;
+
+        async function openReassignShopModal(userId, username, currentShopId) {
+            _reassignUserId = userId;
+            document.getElementById('reassign-username').textContent = username;
+            document.getElementById('reassign-shop-modal').classList.add('active');
+            const sel = document.getElementById('reassign-shop-select');
+            sel.innerHTML = '<option value="">Loading...</option>';
+
+            try {
+                const resp = await fetch('/api/shops');
+                const shops = await resp.json();
+                sel.innerHTML = '<option value="">Select shop...</option>' +
+                    shops.map(s => `<option value="${s.id}" ${s.id === currentShopId ? 'selected' : ''}>${s.icon || '🛒'} ${s.name}</option>`).join('');
+            } catch (e) {
+                sel.innerHTML = '<option value="">Error loading shops</option>';
+            }
+        }
+
+        function closeReassignShopModal() {
+            document.getElementById('reassign-shop-modal').classList.remove('active');
+            _reassignUserId = null;
+        }
+
+        async function saveReassignShop() {
+            if (!_reassignUserId) return;
+            const shopId = document.getElementById('reassign-shop-select').value;
+            if (!shopId) { showToast('Please select a shop', 'warning'); return; }
+
+            try {
+                const resp = await fetch(`/api/users/${_reassignUserId}/shop`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ shop_id: parseInt(shopId) })
+                });
+                const result = await resp.json();
+                if (resp.ok) {
+                    showToast('Shop reassigned successfully!', 'success');
+                    closeReassignShopModal();
+                    loadUsers();
+                } else {
+                    showToast('Error: ' + (result.error || 'Failed'), 'error');
+                }
+            } catch (e) {
+                showToast('Error reassigning shop', 'error');
+            }
+        }
+
+        async function loadShopSwitcher(activeShopId) {
+            try {
+                const resp = await fetch('/api/shops');
+                const shops = await resp.json();
+                const switcher = document.getElementById('shop-switcher');
+                const sel = document.getElementById('shop-select');
+                sel.innerHTML = '<option value="">All Shops</option>';
+                shops.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = (s.icon || '🛒') + ' ' + s.name;
+                    if (activeShopId && String(s.id) === String(activeShopId)) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+                if (!activeShopId) sel.value = '';
+                switcher.style.display = '';
+            } catch (e) { console.error('Failed to load shops', e); }
+        }
+
+        async function switchShop(shopId) {
+            try {
+                await fetch('/api/shops/switch', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({shop_id: shopId || null})
+                });
+                window.location.reload();
+            } catch (e) { console.error('Failed to switch shop', e); }
+        }
+    </script>
+    </div><!-- /main-wrapper -->
+</body>
+</html>

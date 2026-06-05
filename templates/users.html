@@ -3,48 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management - POS System</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <script src="/static/js/ui.js"></script>
+    <title>Users - POS System</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=4">
+    <script src="/static/js/ui.js?v=4"></script>
     <style>
-        /* ===== Table styling ===== */
-        .report-table-scroll { overflow-y: auto; border-radius: 6px; border: 1px solid #e9ecef; }
-        .report-table-scroll table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-        .report-table-scroll thead th {
-            position: sticky; top: 0; z-index: 2;
-            background: #2c3e50; color: white;
-            padding: 0.65rem 1rem; text-align: left;
-            font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;
-            border-bottom: 2px solid #1a252f;
-        }
-        .report-table-scroll tbody tr:nth-child(even) { background: #f8f9fa; }
-        .report-table-scroll tbody tr:hover { background: #e8f4fd; transition: background 0.1s; }
-        .report-table-scroll tbody td { padding: 0.65rem 1rem; border-bottom: 1px solid #edf0f2; vertical-align: middle; }
-        .report-table-scroll tbody tr:last-child td { border-bottom: none; }
+        /* ===== Page Header ===== */
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        .page-header h1 { font-size: 1.4rem; color: #1e293b; margin: 0; font-weight: 700; }
 
-        /* ===== Card header accent ===== */
-        .card h2 {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding-left: 0.75rem;
-            border-left: 4px solid #3498db;
-            font-size: 1.05rem; color: #2c3e50; margin: 0;
-        }
+        /* ===== KPI row ===== */
+        .user-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .user-kpi { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem 1.25rem; }
+        .user-kpi .kpi-value { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
+        .user-kpi .kpi-label { font-size: 0.78rem; color: #64748b; margin-top: 0.2rem; }
 
-        /* ===== Role info card ===== */
-        .role-info-card {
-            background: #f0faf4; border: 1px solid #b7e3c9;
-            border-left: 4px solid #27ae60;
-            border-radius: 8px; padding: 1.25rem 1.5rem;
-            margin-top: 1.5rem;
-        }
-        .role-info-card h3 { color: #1e8449; margin: 0 0 1rem; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        .role-info-card h4 { color: #2c3e50; margin: 0 0 0.5rem; font-size: 0.9rem; }
-        .role-info-card ul { margin: 0 0 0 1.25rem; padding: 0; line-height: 1.9; font-size: 0.87rem; color: #444; }
+        /* ===== User Cards ===== */
+        .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+        .user-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; transition: box-shadow 0.15s, border-color 0.15s; cursor: pointer; position: relative; }
+        .user-card:hover { border-color: #93c5fd; box-shadow: 0 4px 12px rgba(59,130,246,0.08); }
+        .user-card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+        .user-card-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: white; flex-shrink: 0; }
+        .user-card-name { font-weight: 600; font-size: 1rem; color: #1e293b; line-height: 1.3; }
+        .user-card-username { font-size: 0.78rem; color: #94a3b8; }
+        .user-card-role { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 10px; font-size: 0.72rem; font-weight: 600; margin-top: 0.3rem; }
+        .user-card-meta { display: flex; gap: 1rem; margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px solid #f1f5f9; font-size: 0.82rem; color: #64748b; }
+        .user-card-meta-item { display: flex; align-items: center; gap: 0.25rem; }
+        .user-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; }
+        .user-card-active { font-size: 0.78rem; color: #94a3b8; }
+        .user-card-active.online { color: #22c55e; }
+        .user-card-actions { display: flex; gap: 0.4rem; }
+        .user-card-actions button { font-size: 0.72rem; padding: 0.25rem 0.5rem; border-radius: 5px; border: 1px solid #e2e8f0; background: white; color: #475569; cursor: pointer; transition: background 0.1s; }
+        .user-card-actions button:hover { background: #f1f5f9; }
+
+        /* ===== Search & Filter ===== */
+        .user-toolbar { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; }
+        .user-toolbar input { flex: 1; max-width: 280px; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.88rem; background: #f8fafc; box-sizing: border-box; height: 36px; }
+        .user-toolbar input:focus { outline: none; border-color: #3b82f6; background: white; }
+        .user-filter-pills { display: flex; gap: 0.4rem; }
+        .user-pill { padding: 0.25rem 0.7rem; font-size: 0.78rem; border-radius: 16px; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; transition: all 0.12s; }
+        .user-pill:hover { border-color: #93c5fd; color: #1d4ed8; }
+        .user-pill.active { background: #1e293b; color: white; border-color: #1e293b; }
+
+        /* ===== Detail Panel ===== */
+        .user-detail-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 1000; }
+        .user-detail-overlay.active { display: block; }
+        .user-detail-panel { position: fixed; top: 0; right: 0; width: 420px; max-width: 90vw; height: 100vh; background: white; box-shadow: -4px 0 20px rgba(0,0,0,0.1); z-index: 1001; overflow-y: auto; padding: 1.5rem; transform: translateX(100%); transition: transform 0.2s ease; }
+        .user-detail-panel.active { transform: translateX(0); }
+        .user-detail-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
+
+        .user-detail-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0; }
+        .user-detail-avatar { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 700; color: white; }
+        .user-detail-name { font-size: 1.2rem; font-weight: 700; color: #1e293b; }
+        .user-detail-username { font-size: 0.85rem; color: #94a3b8; }
+
+        .user-detail-section { margin-top: 1.25rem; }
+        .user-detail-section-title { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; margin-bottom: 0.5rem; padding-bottom: 0.4rem; border-bottom: 1px solid #e2e8f0; }
+        .user-detail-info { display: grid; gap: 0.5rem; font-size: 0.88rem; }
+        .user-detail-info .item { display: flex; justify-content: space-between; align-items: center; padding: 0.3rem 0; }
+        .user-detail-info .item .label { color: #64748b; font-size: 0.82rem; }
+        .user-detail-info .item .value { color: #1e293b; font-weight: 500; }
+
+        .perm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; }
+        .perm-item { font-size: 0.82rem; padding: 0.25rem 0; display: flex; align-items: center; gap: 0.3rem; }
+        .perm-item.granted { color: #166534; }
+        .perm-item.denied { color: #94a3b8; }
+
+        .user-detail-actions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; }
+        .user-detail-actions button { width: 100%; text-align: left; padding: 0.6rem 0.8rem; border-radius: 6px; border: 1px solid #e2e8f0; background: white; color: #475569; cursor: pointer; font-size: 0.85rem; transition: background 0.1s; display: flex; align-items: center; gap: 0.5rem; }
+        .user-detail-actions button:hover { background: #f8fafc; }
+        .user-detail-actions button.danger { color: #ef4444; border-color: #fecaca; }
+        .user-detail-actions button.danger:hover { background: #fef2f2; }
 
         /* ===== Empty state ===== */
-        .users-empty-state { text-align: center; padding: 3.5rem 2rem; }
-        .users-empty-state .empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.6rem; }
-        .users-empty-state p { font-size: 0.95rem; color: #868e96; margin: 0; }
+        .user-empty { text-align: center; padding: 3rem 2rem; grid-column: 1 / -1; }
+        .user-empty .empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.5rem; }
+        .user-empty p { color: #94a3b8; margin: 0; font-size: 0.9rem; }
     </style>
 </head>
 <body class="has-sidebar">
@@ -113,132 +146,86 @@
             </div>
         </header>
 
-
     <div class="container">
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                <h2 style="margin: 0;">User Management</h2>
-                <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <input type="text" id="user-search" placeholder="Search users..." style="padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius); font-size:0.9rem;">
-                    <button class="btn btn-primary" onclick="openAddUserModal()">+ Add User</button>
-                </div>
-            </div>
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>👤 Users</h1>
+            <button class="btn btn-primary" onclick="openAddUserModal()">+ Add User</button>
+        </div>
 
-            <div id="message-area"></div>
+        <!-- KPI Cards -->
+        <div class="user-kpis">
+            <div class="user-kpi"><div class="kpi-value" id="kpi-total">0</div><div class="kpi-label">Total Users</div></div>
+            <div class="user-kpi"><div class="kpi-value" id="kpi-admins">0</div><div class="kpi-label">Admins</div></div>
+            <div class="user-kpi"><div class="kpi-value" id="kpi-staff">0</div><div class="kpi-label">Staff</div></div>
+            <div class="user-kpi"><div class="kpi-value" id="kpi-active">0</div><div class="kpi-label">Active (24h)</div></div>
+        </div>
 
-            <div class="report-table-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Full Name</th>
-                        <th>Role</th>
-                        <th class="super-admin-only" style="display:none;">Shop</th>
-                        <th>Created</th>
-                        <th>Last Active</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="users-table">
-                    <tr><td colspan="7" style="text-align:center; padding:2rem; color:#adb5bd;">Loading...</td></tr>
-                </tbody>
-            </table>
+        <!-- Toolbar -->
+        <div class="user-toolbar">
+            <input type="text" id="user-search" placeholder="Search users..." oninput="renderUsers()">
+            <div class="user-filter-pills">
+                <button class="user-pill active" onclick="setFilter('all')">All</button>
+                <button class="user-pill" onclick="setFilter('admin')">Admins</button>
+                <button class="user-pill" onclick="setFilter('user')">Staff</button>
             </div>
         </div>
 
-        <div class="role-info-card">
-            <h3>User Roles Explained</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                <div style="border-left: 3px solid #8e44ad; padding-left: 0.75rem;">
-                    <h4>👑 Super Admin</h4>
-                    <ul>
-                        <li>Everything Admin can do</li>
-                        <li>Create &amp; manage multiple shops</li>
-                        <li>Switch between shops (all shops view)</li>
-                        <li>See data across all shops</li>
-                        <li>System-level configuration</li>
-                        <li>Intended for business owners</li>
-                    </ul>
-                </div>
-                <div style="border-left: 3px solid #e67e22; padding-left: 0.75rem;">
-                    <h4>🏪 Shop Owner</h4>
-                    <ul>
-                        <li>Admin-level access for assigned shops</li>
-                        <li>Switch between assigned shops only</li>
-                        <li>Manage products, stock &amp; settings</li>
-                        <li>Create admin &amp; sales staff users</li>
-                        <li>View reports for assigned shops</li>
-                        <li>Cannot create or delete shops</li>
-                    </ul>
-                </div>
-                <div style="border-left: 3px solid #2980b9; padding-left: 0.75rem;">
-                    <h4>🛡️ Admin Role</h4>
-                    <ul>
-                        <li>Full access to all pages</li>
-                        <li>Can see cost prices and profits</li>
-                        <li>Manage products and stock</li>
-                        <li>View sales history &amp; reports</li>
-                        <li>Create and manage users</li>
-                        <li>Access dashboard with metrics</li>
-                    </ul>
-                </div>
-                <div style="border-left: 3px solid #636e72; padding-left: 0.75rem;">
-                    <h4>💼 User (Sales Staff)</h4>
-                    <ul>
-                        <li>Access Point of Sale only</li>
-                        <li>Make sales transactions</li>
-                        <li>See sell prices only (not cost)</li>
-                        <li>Cannot see profit margins</li>
-                        <li>Cannot access admin pages</li>
-                        <li>Recommended for employees</li>
-                    </ul>
-                </div>
-            </div>
+        <!-- User Cards -->
+        <div class="user-grid" id="user-grid">
+            <div class="user-empty"><div class="empty-icon">👤</div><p>Loading...</p></div>
         </div>
+    </div>
+
+    <!-- User Detail Slide Panel -->
+    <div class="user-detail-overlay" id="detail-overlay" onclick="closeDetail()"></div>
+    <div class="user-detail-panel" id="detail-panel">
+        <button class="user-detail-close" onclick="closeDetail()">&times;</button>
+        <div id="detail-content"></div>
     </div>
 
     <!-- Add User Modal -->
     <div id="add-user-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width:480px;">
             <div class="modal-header">
-                <h2>Add New User</h2>
+                <h2>Add User</h2>
                 <button class="close-btn" onclick="closeAddUserModal()">&times;</button>
             </div>
             <form id="add-user-form">
                 <div class="form-group">
-                    <label>Username *</label>
-                    <input type="text" name="username" required placeholder="e.g., sarah">
-                </div>
-                <div class="form-group">
-                    <label>Password *</label>
-                    <input type="password" name="password" required placeholder="Minimum 6 characters" minlength="6">
-                </div>
-                <div class="form-group">
                     <label>Full Name</label>
                     <input type="text" name="full_name" placeholder="e.g., Sarah Johnson">
                 </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                    <div class="form-group">
+                        <label>Username *</label>
+                        <input type="text" name="username" required placeholder="e.g., sarah">
+                    </div>
+                    <div class="form-group">
+                        <label>Password *</label>
+                        <input type="password" name="password" required placeholder="Min 6 chars" minlength="6">
+                    </div>
+                </div>
                 <div class="form-group">
                     <label>Role *</label>
-                    <select name="role" required id="role-select">
-                        <option value="">Select role</option>
+                    <select name="role" required id="role-select" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);height:36px;box-sizing:border-box;appearance:none;background:white url('data:image/svg+xml;utf8,<svg fill=&quot;%2364748b&quot; viewBox=&quot;0 0 20 20&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><path d=&quot;M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z&quot;/></svg>') no-repeat right 0.5rem center/1rem;">
+                        <option value="">Select role...</option>
                         <option value="admin">Admin (Full Access)</option>
-                        <option value="user">User (Sales Staff Only)</option>
+                        <option value="user">Cashier (POS Only)</option>
                         <option value="shop_owner" class="super-admin-only" style="display:none;">Shop Owner (Multi-Shop)</option>
                     </select>
                 </div>
-                <div id="shop-field" class="form-group multi-shop-field" style="display:none;">
+                <div id="shop-field" class="form-group" style="display:none;">
                     <label>Assign to Shop *</label>
-                    <select name="shop_id" id="user-shop-select">
+                    <select name="shop_id" id="user-shop-select" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);height:36px;box-sizing:border-box;">
                         <option value="">Select shop...</option>
                     </select>
                 </div>
                 <div id="multi-shop-field" class="form-group" style="display:none;">
-                    <label>Assign Shops * <span style="font-weight:normal;color:#888;">(select one or more)</span></label>
-                    <div id="multi-shop-checkboxes" style="max-height:180px;overflow-y:auto;border:1px solid #ddd;border-radius:6px;padding:0.5rem;"></div>
+                    <label>Assign Shops * <span style="font-weight:normal;color:#94a3b8;">(select one or more)</span></label>
+                    <div id="multi-shop-checkboxes" style="max-height:150px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem;"></div>
                 </div>
-                <div id="role-description" style="padding: 1rem; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 1rem; display: none;">
-                    <!-- Role description will be shown here -->
-                </div>
+                <div id="role-hint" style="padding:0.6rem 0.8rem;background:#f8fafc;border-radius:6px;margin-bottom:1rem;font-size:0.82rem;color:#64748b;display:none;"></div>
                 <div style="display: flex; gap: 1rem;">
                     <button type="submit" class="btn btn-primary">Create User</button>
                     <button type="button" class="btn btn-secondary" onclick="closeAddUserModal()">Cancel</button>
@@ -247,56 +234,44 @@
         </div>
     </div>
 
-    <!-- Change Password Modal (Admin changing other users) -->
+    <!-- Change Password Modal -->
     <div id="change-password-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width:420px;">
             <div class="modal-header">
-                <h2>Change User Password</h2>
+                <h2>Reset Password</h2>
                 <button class="close-btn" onclick="closeChangePasswordModal()">&times;</button>
             </div>
             <form id="change-password-form">
                 <input type="hidden" id="change-password-user-id">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="change-password-username" readonly style="background-color: #f5f5f5;">
-                </div>
+                <div style="padding:0.6rem 0.8rem;background:#f8fafc;border-radius:6px;margin-bottom:1rem;font-size:0.88rem;">Resetting password for: <strong id="change-password-username"></strong></div>
                 <div class="form-group">
                     <label>New Password *</label>
                     <input type="password" id="new-password" required placeholder="Minimum 6 characters" minlength="6">
                 </div>
                 <div class="form-group">
                     <label>Confirm Password *</label>
-                    <input type="password" id="confirm-password" required placeholder="Re-enter new password" minlength="6">
+                    <input type="password" id="confirm-password" required placeholder="Re-enter password" minlength="6">
                 </div>
                 <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary">Change Password</button>
+                    <button type="submit" class="btn btn-primary">Reset Password</button>
                     <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Change Own Password Modal -->
+    <!-- Own Password Modal -->
     <div id="own-password-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width:420px;">
             <div class="modal-header">
                 <h2>Change My Password</h2>
                 <button class="close-btn" onclick="closeOwnPasswordModal()">&times;</button>
             </div>
             <form id="own-password-form">
-                <div class="form-group">
-                    <label>Current Password *</label>
-                    <input type="password" id="own-current-password" required placeholder="Enter current password">
-                </div>
-                <div class="form-group">
-                    <label>New Password *</label>
-                    <input type="password" id="own-new-password" required placeholder="Minimum 6 characters" minlength="6">
-                </div>
-                <div class="form-group">
-                    <label>Confirm New Password *</label>
-                    <input type="password" id="own-confirm-password" required placeholder="Re-enter new password" minlength="6">
-                </div>
-                <div style="display: flex; gap: 1rem;">
+                <div class="form-group"><label>Current Password *</label><input type="password" id="own-current-password" required></div>
+                <div class="form-group"><label>New Password *</label><input type="password" id="own-new-password" required minlength="6"></div>
+                <div class="form-group"><label>Confirm *</label><input type="password" id="own-confirm-password" required minlength="6"></div>
+                <div style="display:flex;gap:1rem;">
                     <button type="submit" class="btn btn-primary">Change Password</button>
                     <button type="button" class="btn btn-secondary" onclick="closeOwnPasswordModal()">Cancel</button>
                 </div>
@@ -304,609 +279,482 @@
         </div>
     </div>
 
-    <!-- Shop Assignment Modal (super_admin only, for shop_owner users) -->
+    <!-- Shop Assignment Modal -->
     <div id="shop-assign-modal" class="modal">
-        <div class="modal-content" style="max-width:500px;">
+        <div class="modal-content" style="max-width:450px;">
             <div class="modal-header">
-                <h2>Assign Shops — <span id="assign-username"></span></h2>
+                <h2>Shop Access — <span id="assign-username"></span></h2>
                 <button class="close-btn" onclick="closeShopAssignModal()">&times;</button>
             </div>
-            <p style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;">Select which shops this user can access and manage:</p>
-            <div id="shop-assign-list" style="max-height:300px; overflow-y:auto; border:1px solid #ddd; border-radius:4px; padding:0.5rem; margin-bottom:1rem;">
-                <p style="color:#888;">Loading shops...</p>
-            </div>
-            <div style="display: flex; gap: 1rem;">
-                <button class="btn btn-primary" onclick="saveShopAssignment()">Save Assignment</button>
+            <p style="font-size:0.85rem;color:#64748b;margin-bottom:0.75rem;">Select which shops this user can access:</p>
+            <div id="shop-assign-list" style="max-height:250px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem;margin-bottom:1rem;"></div>
+            <div style="display:flex;gap:1rem;">
+                <button class="btn btn-primary" onclick="saveShopAssignment()">Save</button>
                 <button class="btn btn-secondary" onclick="closeShopAssignModal()">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Reassign Shop Modal (super_admin only, for admin/user roles) -->
+    <!-- Reassign Shop Modal -->
     <div id="reassign-shop-modal" class="modal">
-        <div class="modal-content" style="max-width:420px;">
+        <div class="modal-content" style="max-width:400px;">
             <div class="modal-header">
-                <h2>Reassign Shop — <span id="reassign-username"></span></h2>
+                <h2>Change Shop — <span id="reassign-username"></span></h2>
                 <button class="close-btn" onclick="closeReassignShopModal()">&times;</button>
             </div>
-            <p style="font-size:0.85rem; color:#666; margin-bottom:0.75rem;">Select which shop this user should be assigned to:</p>
-            <select id="reassign-shop-select" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;font-size:0.95rem;margin-bottom:1rem;">
-                <option value="">Loading shops...</option>
-            </select>
-            <div style="display: flex; gap: 1rem;">
+            <div class="form-group">
+                <label>Assign to Shop</label>
+                <select id="reassign-shop-select" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);height:36px;box-sizing:border-box;">
+                    <option value="">Loading...</option>
+                </select>
+            </div>
+            <div style="display:flex;gap:1rem;">
                 <button class="btn btn-primary" onclick="saveReassignShop()">Save</button>
                 <button class="btn btn-secondary" onclick="closeReassignShopModal()">Cancel</button>
             </div>
         </div>
     </div>
 
+    </div><!-- /main-wrapper -->
+
+    <script src="/static/js/session.js?v=4"></script>
     <script>
-        let users = [];
-        let activeShopId = null;
+        var users = [];
+        var activeShopId = null;
+        var currentFilter = 'all';
+        var isSuperAdmin = false;
 
-        // Load users
-        async function loadUsers() {
-            try {
-                const response = await fetch('/api/users');
-                users = await response.json();
-                renderUsers();
-            } catch (error) {
-                console.error('Error loading users:', error);
-            }
+        // ── Role helpers ──
+        function roleColor(role) {
+            if (role === 'super_admin') return '#8b5cf6';
+            if (role === 'shop_owner') return '#f59e0b';
+            if (role === 'admin') return '#3b82f6';
+            return '#64748b';
+        }
+        function roleBg(role) {
+            if (role === 'super_admin') return '#f5f3ff';
+            if (role === 'shop_owner') return '#fffbeb';
+            if (role === 'admin') return '#eff6ff';
+            return '#f1f5f9';
+        }
+        function roleLabel(role) {
+            if (role === 'super_admin') return 'Super Admin';
+            if (role === 'shop_owner') return 'Shop Owner';
+            if (role === 'admin') return 'Admin';
+            return 'Cashier';
+        }
+        function rolePermissions(role) {
+            if (role === 'super_admin' || role === 'shop_owner') return ['Products','Inventory','Customers','Suppliers','Reports','Expenses','Users','Settings','Shops'];
+            if (role === 'admin') return ['Products','Inventory','Customers','Suppliers','Reports','Expenses','Users','Settings'];
+            return ['Point of Sale'];
+        }
+        function roleDenied(role) {
+            if (role === 'user') return ['Products','Reports','Expenses','Users','Settings','Cost Prices'];
+            return [];
         }
 
-        function renderUsers() {
-            const tbody = document.getElementById('users-table');
-            const isSuperAdmin = document.querySelector('.super-admin-only') && document.querySelector('.super-admin-only').style.display !== 'none';
-            const search = (document.getElementById('user-search').value || '').toLowerCase();
-            const filtered = search ? users.filter(u =>
-                u.username.toLowerCase().includes(search) ||
-                (u.full_name || '').toLowerCase().includes(search) ||
-                u.role.toLowerCase().includes(search) ||
-                (u.shop_name || '').toLowerCase().includes(search)
-            ) : users;
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="padding:0;border:none;"><div class="users-empty-state"><div class="empty-icon">👤</div><p>${users.length === 0 ? 'No users yet — add your first user above' : 'No users match your search'}</p></div></td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = filtered.map(user => {
-                const roleColor = user.role === 'super_admin' ? '#8e44ad' : user.role === 'shop_owner' ? '#e67e22' : user.role === 'admin' ? '#2980b9' : '#636e72';
-                const roleBg = user.role === 'super_admin' ? '#f4ecf7' : user.role === 'shop_owner' ? '#fef5e7' : user.role === 'admin' ? '#eaf4fd' : '#f1f2f6';
-                const roleLabel = getRoleLabel(user.role);
-                const created = parseUTC(user.created_at);
-                const createdStr = created.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
-                const lastActiveStr = (() => {
-                    if (!user.last_login) return '<span style="color:#ccc;">Never</span>';
-                    const d = parseUTC(user.last_login);
-                    const diffMs = Date.now() - d.getTime();
-                    const diffMins = Math.floor(diffMs / 60000);
-                    if (diffMins < 2) return '<span style="color:#27ae60;font-weight:600;">Just now</span>';
-                    if (diffMins < 60) return `<span style="color:#27ae60;">${diffMins}m ago</span>`;
-                    const diffHrs = Math.floor(diffMins / 60);
-                    if (diffHrs < 24) return `<span style="color:#2980b9;">${diffHrs}h ago</span>`;
-                    const diffDays = Math.floor(diffHrs / 24);
-                    if (diffDays < 7) return `${diffDays}d ago`;
-                    return d.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
-                })();
-                return `
-                <tr>
-                    <td>
-                        <div style="display:flex;align-items:center;gap:0.6rem;">
-                            <div style="width:2rem;height:2rem;border-radius:50%;background:${roleColor};color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">${(user.full_name || user.username).charAt(0).toUpperCase()}</div>
-                            <strong>${user.username}</strong>
-                        </div>
-                    </td>
-                    <td>${user.full_name || '<span style="color:#ccc;">—</span>'}</td>
-                    <td><span style="display:inline-block;padding:0.2rem 0.65rem;border-radius:20px;font-size:0.78rem;font-weight:700;background:${roleBg};color:${roleColor};border:1px solid ${roleColor}33;">${roleLabel}</span></td>
-                    <td class="super-admin-only" style="display:${isSuperAdmin ? '' : 'none'}">${user.role === 'shop_owner' ? (user.assigned_shops && user.assigned_shops.length ? user.assigned_shops.map(s => '<span style="display:inline-block;padding:0.15rem 0.5rem;margin:0.1rem;border-radius:12px;font-size:0.75rem;background:#fef5e7;color:#e67e22;border:1px solid #e67e2233;">' + s + '</span>').join('') : '<span style="color:#ccc;">No shops</span>') : (user.shop_name || '<span style="color:#ccc;">—</span>')}</td>
-                    <td style="font-size:0.85rem;color:#6c757d;">${createdStr}</td>
-                    <td style="font-size:0.82rem;">${lastActiveStr}</td>
-                    <td>
-                        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
-                            ${user.role === 'shop_owner' && isSuperAdmin ? '<button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="openShopAssignModal(' + user.id + ', \'' + user.username + '\')">🏪 Shops</button>' : ''}
-                            ${(user.role === 'admin' || user.role === 'user') && isSuperAdmin ? '<button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="openReassignShopModal(' + user.id + ', \'' + user.username + '\', ' + (user.shop_id || 'null') + ')">🏪 Shop</button>' : ''}
-                            <button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="openChangePasswordModal(${user.id}, '${user.username}')">🔑 Password</button>
-                            <button class="btn btn-danger" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="deleteUser(${user.id}, '${user.username}')">🗑️ Delete</button>
-                        </div>
-                    </td>
-                </tr>`;
-            }).join('');
+        function timeAgo(dateStr) {
+            if (!dateStr) return 'Never';
+            var d = parseUTC(dateStr);
+            var diff = Math.floor((Date.now() - d.getTime()) / 60000);
+            if (diff < 2) return 'Just now';
+            if (diff < 60) return diff + 'm ago';
+            var hrs = Math.floor(diff / 60);
+            if (hrs < 24) return hrs + 'h ago';
+            var days = Math.floor(hrs / 24);
+            if (days < 7) return days + 'd ago';
+            return d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
         }
 
-        document.getElementById('user-search').addEventListener('input', renderUsers);
+        function escHtml(str) { var d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 
-        let _allShops = [];
-        // Add user modal
-        async function openAddUserModal() {
-            document.getElementById('add-user-modal').classList.add('active');
-            // Always load shops list for super_admin (needed for both single & multi)
-            const currentRole = document.getElementById('role-select').value;
-            try {
-                const resp = await fetch('/api/shops');
-                _allShops = await resp.json();
-                populateShopControls(currentRole);
-            } catch (e) { console.error('Failed to load shops', e); }
-        }
-
-        function populateShopControls(selectedRole) {
-            // Single shop dropdown
-            const sel = document.getElementById('user-shop-select');
-            sel.innerHTML = '<option value="">Select shop...</option>';
-            _allShops.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.id;
-                opt.textContent = (s.icon || '🛒') + ' ' + s.name;
-                sel.appendChild(opt);
-            });
-            if (activeShopId) sel.value = activeShopId;
-
-            // Multi shop checkboxes
-            const container = document.getElementById('multi-shop-checkboxes');
-            container.innerHTML = '';
-            _allShops.forEach(s => {
-                const label = document.createElement('label');
-                label.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.25rem;cursor:pointer;border-bottom:1px solid #f0f0f0;';
-                label.innerHTML = `<input type="checkbox" name="shop_ids" value="${s.id}" style="width:16px;height:16px;"> ${s.icon || '🛒'} ${s.name}`;
-                container.appendChild(label);
-            });
-
-            // Toggle visibility based on role
-            const shopField = document.getElementById('shop-field');
-            const multiShopField = document.getElementById('multi-shop-field');
-            if (selectedRole === 'shop_owner') {
-                shopField.style.display = 'none';
-                multiShopField.style.display = '';
-            } else {
-                shopField.style.display = '';
-                multiShopField.style.display = 'none';
-            }
-        }
-
-        function closeAddUserModal() {
-            document.getElementById('add-user-modal').classList.remove('active');
-            document.getElementById('add-user-form').reset();
-            document.getElementById('role-description').style.display = 'none';
-            document.getElementById('multi-shop-field').style.display = 'none';
-            document.getElementById('multi-shop-checkboxes').innerHTML = '';
-        }
-
-        // Show role description when role is selected
-        document.getElementById('role-select').addEventListener('change', function() {
-            const roleDesc = document.getElementById('role-description');
-            const role = this.value;
-
-            if (role === 'admin') {
-                roleDesc.innerHTML = `
-                    <strong style="color: #3498db;">Admin Role:</strong><br>
-                    Full access to all features. Can see cost prices, profits, manage products, and view all reports.
-                    Use this for single-shop managers.
-                `;
-                roleDesc.style.display = 'block';
-            } else if (role === 'shop_owner') {
-                roleDesc.innerHTML = `
-                    <strong style="color: #e67e22;">Shop Owner Role:</strong><br>
-                    Admin-level access across multiple assigned shops. Can switch between shops and manage inventory, users, and settings for each.
-                    <strong style="color: #e67e22;">Select the shops to assign below.</strong>
-                `;
-                roleDesc.style.display = 'block';
-            } else if (role === 'user') {
-                roleDesc.innerHTML = `
-                    <strong style="color: #95a5a6;">User Role (Sales Staff):</strong><br>
-                    Limited to Point of Sale only. Cannot see cost prices or profit margins. Perfect for sales staff.
-                    <strong style="color: #27ae60;">Recommended for employees.</strong>
-                `;
-                roleDesc.style.display = 'block';
-            } else {
-                roleDesc.style.display = 'none';
-            }
-
-            // Toggle single-shop vs multi-shop fields
-            const shopField = document.getElementById('shop-field');
-            const multiShopField = document.getElementById('multi-shop-field');
-            if (role === 'shop_owner') {
-                shopField.style.display = 'none';
-                multiShopField.style.display = '';
-                if (_allShops.length) populateShopControls(role);
-            } else {
-                multiShopField.style.display = 'none';
-                if (shopField.classList.contains('multi-shop-field')) shopField.style.display = '';
-            }
-        });
-
-        document.getElementById('add-user-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
-
-            // For shop_owner, collect checked shop IDs
-            if (data.role === 'shop_owner') {
-                const checked = document.querySelectorAll('#multi-shop-checkboxes input[name="shop_ids"]:checked');
-                const shopIds = Array.from(checked).map(cb => parseInt(cb.value));
-                if (shopIds.length === 0) {
-                    showMessage('error', 'Please select at least one shop for the Shop Owner');
-                    return;
-                }
-                data.shop_ids = shopIds;
-                data.shop_id = shopIds[0]; // primary shop
-            }
-
-            try {
-                const response = await fetch('/api/users', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showMessage('success', `User '${data.username}' created successfully!`);
-                    closeAddUserModal();
-                    loadUsers();
-                } else {
-                    showMessage('error', result.error || 'Error creating user');
-                }
-            } catch (error) {
-                console.error('Error creating user:', error);
-                showMessage('error', 'Error creating user');
-            }
-        });
-
-        // Delete user
-        async function deleteUser(userId, username) {
-            if (!confirm(`Are you sure you want to delete user '${username}'?\n\nThis action cannot be undone.`)) return;
-
-            try {
-                const response = await fetch(`/api/users/${userId}`, {
-                    method: 'DELETE'
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showMessage('success', `User '${username}' deleted successfully!`);
-                    loadUsers();
-                } else {
-                    showMessage('error', result.error || 'Error deleting user');
-                }
-            } catch (error) {
-                console.error('Error deleting user:', error);
-                showMessage('error', 'Error deleting user');
-            }
-        }
-
-        // Change password modal
-        function openChangePasswordModal(userId, username) {
-            document.getElementById('change-password-user-id').value = userId;
-            document.getElementById('change-password-username').value = username;
-            document.getElementById('new-password').value = '';
-            document.getElementById('confirm-password').value = '';
-            document.getElementById('change-password-modal').classList.add('active');
-        }
-
-        function closeChangePasswordModal() {
-            document.getElementById('change-password-modal').classList.remove('active');
-            document.getElementById('change-password-form').reset();
-        }
-
-        // Handle change password form submission
-        document.getElementById('change-password-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const userId = document.getElementById('change-password-user-id').value;
-            const username = document.getElementById('change-password-username').value;
-            const newPassword = document.getElementById('new-password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-
-            // Validate passwords match
-            if (newPassword !== confirmPassword) {
-                showMessage('error', 'Passwords do not match!');
-                return;
-            }
-
-            // Validate password length
-            if (newPassword.length < 6) {
-                showMessage('error', 'Password must be at least 6 characters!');
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/users/${userId}/password`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password: newPassword })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showMessage('success', `Password changed successfully for user '${username}'!`);
-                    closeChangePasswordModal();
-                } else {
-                    showMessage('error', result.error || 'Error changing password');
-                }
-            } catch (error) {
-                console.error('Error changing password:', error);
-                showMessage('error', 'Error changing password');
-            }
-        });
-
-        // Show message
-        function showMessage(type, message) {
-            const messageArea = document.getElementById('message-area');
-            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
-            messageArea.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
-
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                messageArea.innerHTML = '';
-            }, 5000);
-        }
-
-        // Load user info
+        // ── User Info ──
         async function loadUserInfo() {
             try {
-                const response = await fetch('/api/current-user');
-                const user = await response.json();
-
-                // Set shop name
-                if (user.shop_name) {
-                    document.getElementById('shop-name-title').textContent = user.shop_name;
-                }
-                if (user.shop_icon) {
-                    const bi = document.querySelector('.navbar-brand-icon');
-                    if (bi) bi.textContent = user.shop_icon;
-                }
-
-                // Set user icon (first letter of name)
-                const initial = (user.full_name || user.username).charAt(0).toUpperCase();
+                var resp = await fetch('/api/current-user');
+                var user = await resp.json();
+                if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
+                if (user.shop_icon) { var bi = document.querySelector('.navbar-brand-icon'); if (bi) bi.textContent = user.shop_icon; }
+                var initial = (user.full_name || user.username).charAt(0).toUpperCase();
                 document.getElementById('user-icon').textContent = initial;
-
-                // Set user name
                 document.getElementById('user-name').textContent = user.full_name || user.username;
-
-                // Set user role badge
-                const roleBadge = document.getElementById('role-badge');
-                roleBadge.textContent = getRoleLabel(user.role);
-                roleBadge.className = getRoleBadgeClass(user.role);
-
-                // Show/hide admin-only elements
-                const adminEls = document.querySelectorAll('.admin-only');
-                if (isAdminRole(user.role)) {
-                    adminEls.forEach(el => el.style.display = '');
-                } else {
-                    adminEls.forEach(el => el.style.display = 'none');
-                }
+                var rb = document.getElementById('role-badge');
+                rb.textContent = getRoleLabel(user.role); rb.className = getRoleBadgeClass(user.role);
+                document.querySelectorAll('.admin-only').forEach(function(el){ el.style.display = isAdminRole(user.role) ? '' : 'none'; });
                 if (user.role === 'super_admin') {
-                    document.querySelectorAll('.super-admin-only').forEach(el => el.style.display = '');
-                    // Show shop assignment field in add user form
-                    const shopField = document.getElementById('shop-field');
-                    if (shopField) shopField.style.display = '';
+                    isSuperAdmin = true;
+                    document.querySelectorAll('.super-admin-only').forEach(function(el){ el.style.display = ''; });
                     activeShopId = user.active_shop_id || null;
                     loadShopSwitcher(user.active_shop_id);
                 } else if (user.role === 'shop_owner') {
                     loadShopSwitcher(user.active_shop_id);
                 }
-            } catch (error) {
-                console.error('Error loading user info:', error);
-            }
+            } catch(e) { console.error(e); }
         }
 
-        // Toggle user dropdown
         document.getElementById('user-profile-toggle').addEventListener('click', function(e) {
-            e.stopPropagation();
-            this.classList.toggle('active');
-            document.getElementById('user-dropdown').classList.toggle('active');
+            e.stopPropagation(); this.classList.toggle('active'); document.getElementById('user-dropdown').classList.toggle('active');
         });
-
-        // Close dropdown when clicking outside
         document.addEventListener('click', function(e) {
-            const dropdown = document.getElementById('user-dropdown');
-            const toggle = document.getElementById('user-profile-toggle');
-            if (!toggle.contains(e.target) && !dropdown.contains(e.target)) {
-                toggle.classList.remove('active');
-                dropdown.classList.remove('active');
-            }
+            var d = document.getElementById('user-dropdown'), t = document.getElementById('user-profile-toggle');
+            if (!t.contains(e.target) && !d.contains(e.target)) { t.classList.remove('active'); d.classList.remove('active'); }
         });
 
-        // Own password change modal
-        function openOwnPasswordModal() {
-            document.getElementById('own-password-modal').classList.add('active');
-            document.getElementById('user-dropdown').classList.remove('active');
-            document.getElementById('user-profile-toggle').classList.remove('active');
-        }
-
-        function closeOwnPasswordModal() {
-            document.getElementById('own-password-modal').classList.remove('active');
-            document.getElementById('own-password-form').reset();
-        }
-
-        // Handle own password change
-        document.getElementById('own-password-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const currentPassword = document.getElementById('own-current-password').value;
-            const newPassword = document.getElementById('own-new-password').value;
-            const confirmPassword = document.getElementById('own-confirm-password').value;
-
-            // Validate passwords match
-            if (newPassword !== confirmPassword) {
-                showMessage('error', 'New passwords do not match!');
-                return;
-            }
-
-            // Validate password length
-            if (newPassword.length < 6) {
-                showMessage('error', 'New password must be at least 6 characters!');
-                return;
-            }
-
+        // ── Load Users ──
+        async function loadUsers() {
             try {
-                const response = await fetch('/api/change-password', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        current_password: currentPassword,
-                        new_password: newPassword
-                    })
-                });
+                var resp = await fetch('/api/users');
+                users = await resp.json();
+                renderKPIs();
+                renderUsers();
+            } catch(e) { console.error(e); }
+        }
 
-                const result = await response.json();
+        function renderKPIs() {
+            var now = Date.now();
+            var active24h = users.filter(function(u){ return u.last_login && (now - parseUTC(u.last_login).getTime()) < 86400000; }).length;
+            var admins = users.filter(function(u){ return u.role === 'admin' || u.role === 'super_admin' || u.role === 'shop_owner'; }).length;
+            var staff = users.filter(function(u){ return u.role === 'user'; }).length;
+            document.getElementById('kpi-total').textContent = users.length;
+            document.getElementById('kpi-admins').textContent = admins;
+            document.getElementById('kpi-staff').textContent = staff;
+            document.getElementById('kpi-active').textContent = active24h;
+        }
 
-                if (response.ok) {
-                    showMessage('success', 'Password changed successfully!');
-                    closeOwnPasswordModal();
-                } else {
-                    showMessage('error', result.error || 'Error changing password');
+        function setFilter(f) {
+            currentFilter = f;
+            document.querySelectorAll('.user-pill').forEach(function(el){ el.classList.remove('active'); });
+            event.target.classList.add('active');
+            renderUsers();
+        }
+
+        function renderUsers() {
+            var search = (document.getElementById('user-search').value || '').toLowerCase();
+            var filtered = users.filter(function(u) {
+                if (currentFilter === 'admin' && u.role !== 'admin' && u.role !== 'super_admin' && u.role !== 'shop_owner') return false;
+                if (currentFilter === 'user' && u.role !== 'user') return false;
+                if (search) {
+                    return u.username.toLowerCase().includes(search) ||
+                        (u.full_name || '').toLowerCase().includes(search) ||
+                        u.role.toLowerCase().includes(search) ||
+                        (u.shop_name || '').toLowerCase().includes(search);
                 }
-            } catch (error) {
-                console.error('Error changing password:', error);
-                showMessage('error', 'Error changing password');
+                return true;
+            });
+
+            var grid = document.getElementById('user-grid');
+            if (!filtered.length) {
+                grid.innerHTML = '<div class="user-empty"><div class="empty-icon">👤</div><p>No users found</p></div>';
+                return;
             }
+
+            grid.innerHTML = filtered.map(function(u) {
+                var color = roleColor(u.role);
+                var initial = (u.full_name || u.username).charAt(0).toUpperCase();
+                var lastActive = timeAgo(u.last_login);
+                var isOnline = u.last_login && (Date.now() - parseUTC(u.last_login).getTime()) < 300000;
+                var shopDisplay = u.role === 'shop_owner' && u.assigned_shops && u.assigned_shops.length
+                    ? u.assigned_shops.join(', ')
+                    : (u.shop_name || '—');
+
+                return '<div class="user-card" onclick="openDetail(' + u.id + ')">' +
+                    '<div class="user-card-header">' +
+                        '<div class="user-card-avatar" style="background:' + color + ';">' + initial + '</div>' +
+                        '<div>' +
+                            '<div class="user-card-name">' + escHtml(u.full_name || u.username) + '</div>' +
+                            '<div class="user-card-username">@' + escHtml(u.username) + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div><span class="user-card-role" style="background:' + roleBg(u.role) + ';color:' + color + ';">' + roleLabel(u.role) + '</span></div>' +
+                    '<div class="user-card-meta">' +
+                        (isSuperAdmin ? '<div class="user-card-meta-item">🏪 ' + escHtml(shopDisplay) + '</div>' : '') +
+                        '<div class="user-card-meta-item ' + (isOnline ? 'online' : '') + '">' + (isOnline ? '🟢' : '⏱') + ' ' + lastActive + '</div>' +
+                    '</div>' +
+                    '<div class="user-card-footer">' +
+                        '<div></div>' +
+                        '<div class="user-card-actions" onclick="event.stopPropagation()">' +
+                            '<button onclick="openDetail(' + u.id + ')">Manage</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        // ── User Detail Panel ──
+        function openDetail(id) {
+            var u = users.find(function(x){ return x.id === id; });
+            if (!u) return;
+
+            var color = roleColor(u.role);
+            var initial = (u.full_name || u.username).charAt(0).toUpperCase();
+            var lastActive = timeAgo(u.last_login);
+            var perms = rolePermissions(u.role);
+            var denied = roleDenied(u.role);
+            var shopDisplay = u.role === 'shop_owner' && u.assigned_shops && u.assigned_shops.length
+                ? u.assigned_shops.join(', ')
+                : (u.shop_name || '—');
+
+            var html = '<div class="user-detail-header">' +
+                '<div class="user-detail-avatar" style="background:' + color + ';">' + initial + '</div>' +
+                '<div><div class="user-detail-name">' + escHtml(u.full_name || u.username) + '</div>' +
+                '<div class="user-detail-username">@' + escHtml(u.username) + '</div></div></div>';
+
+            // Role & Status
+            html += '<div class="user-detail-section"><div class="user-detail-section-title">Profile</div>';
+            html += '<div class="user-detail-info">';
+            html += '<div class="item"><span class="label">Role</span><span class="value" style="color:' + color + ';font-weight:600;">' + roleLabel(u.role) + '</span></div>';
+            html += '<div class="item"><span class="label">Last Active</span><span class="value">' + lastActive + '</span></div>';
+            if (u.created_at) html += '<div class="item"><span class="label">Created</span><span class="value">' + parseUTC(u.created_at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}) + '</span></div>';
+            html += '</div></div>';
+
+            // Permissions
+            html += '<div class="user-detail-section"><div class="user-detail-section-title">Permissions</div>';
+            html += '<div class="perm-grid">';
+            perms.forEach(function(p) { html += '<div class="perm-item granted">✓ ' + p + '</div>'; });
+            denied.forEach(function(p) { html += '<div class="perm-item denied">✗ ' + p + '</div>'; });
+            html += '</div></div>';
+
+            // Shop Access
+            html += '<div class="user-detail-section"><div class="user-detail-section-title">Shop Access</div>';
+            if (u.role === 'super_admin') {
+                html += '<div style="font-size:0.88rem;color:#1e293b;padding:0.3rem 0;">🌐 All Shops</div>';
+            } else if (u.role === 'shop_owner' && u.assigned_shops && u.assigned_shops.length) {
+                html += u.assigned_shops.map(function(s){ return '<div style="font-size:0.88rem;padding:0.2rem 0;">🏪 ' + escHtml(s) + '</div>'; }).join('');
+            } else {
+                html += '<div style="font-size:0.88rem;padding:0.3rem 0;">🏪 ' + escHtml(shopDisplay) + '</div>';
+            }
+            html += '</div>';
+
+            // Security actions
+            html += '<div class="user-detail-actions">';
+            html += '<button onclick="closeDetail();openChangePasswordModal(' + u.id + ',\'' + escHtml(u.username).replace(/'/g,"\\'") + '\')">🔑 Reset Password</button>';
+            if (isSuperAdmin && u.role === 'shop_owner') {
+                html += '<button onclick="closeDetail();openShopAssignModal(' + u.id + ',\'' + escHtml(u.username).replace(/'/g,"\\'") + '\')">🏪 Manage Shop Access</button>';
+            }
+            if (isSuperAdmin && (u.role === 'admin' || u.role === 'user')) {
+                html += '<button onclick="closeDetail();openReassignShopModal(' + u.id + ',\'' + escHtml(u.username).replace(/'/g,"\\'") + '\',' + (u.shop_id || 'null') + ')">🏪 Change Shop</button>';
+            }
+            html += '<button class="danger" onclick="deleteUser(' + u.id + ',\'' + escHtml(u.username).replace(/'/g,"\\'") + '\')">🗑 Delete User</button>';
+            html += '</div>';
+
+            document.getElementById('detail-content').innerHTML = html;
+            document.getElementById('detail-overlay').classList.add('active');
+            document.getElementById('detail-panel').classList.add('active');
+        }
+
+        function closeDetail() {
+            document.getElementById('detail-overlay').classList.remove('active');
+            document.getElementById('detail-panel').classList.remove('active');
+        }
+
+        // ── Add User ──
+        var _allShops = [];
+
+        async function openAddUserModal() {
+            document.getElementById('add-user-modal').classList.add('active');
+            document.getElementById('add-user-form').reset();
+            document.getElementById('role-hint').style.display = 'none';
+            document.getElementById('multi-shop-field').style.display = 'none';
+            try {
+                var resp = await fetch('/api/shops');
+                _allShops = await resp.json();
+                populateShopControls('');
+            } catch(e) {}
+        }
+
+        function populateShopControls(selectedRole) {
+            var sel = document.getElementById('user-shop-select');
+            sel.innerHTML = '<option value="">Select shop...</option>';
+            _allShops.forEach(function(s) {
+                sel.innerHTML += '<option value="' + s.id + '">' + (s.icon || '🛒') + ' ' + escHtml(s.name) + '</option>';
+            });
+            if (activeShopId) sel.value = activeShopId;
+
+            var container = document.getElementById('multi-shop-checkboxes');
+            container.innerHTML = _allShops.map(function(s) {
+                return '<label style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.25rem;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:0.88rem;">' +
+                    '<input type="checkbox" name="shop_ids" value="' + s.id + '" style="width:16px;height:16px;"> ' + (s.icon || '🛒') + ' ' + escHtml(s.name) + '</label>';
+            }).join('');
+
+            var shopField = document.getElementById('shop-field');
+            var multiField = document.getElementById('multi-shop-field');
+            if (selectedRole === 'shop_owner') { shopField.style.display = 'none'; multiField.style.display = ''; }
+            else { shopField.style.display = isSuperAdmin ? '' : 'none'; multiField.style.display = 'none'; }
+        }
+
+        function closeAddUserModal() { document.getElementById('add-user-modal').classList.remove('active'); document.getElementById('add-user-form').reset(); }
+
+        document.getElementById('role-select').addEventListener('change', function() {
+            var hint = document.getElementById('role-hint');
+            if (this.value === 'admin') { hint.textContent = 'Full access: products, reports, expenses, user management.'; hint.style.display = ''; }
+            else if (this.value === 'user') { hint.textContent = 'POS only: can make sales but cannot see cost prices or manage inventory.'; hint.style.display = ''; }
+            else if (this.value === 'shop_owner') { hint.textContent = 'Admin access across multiple assigned shops.'; hint.style.display = ''; }
+            else hint.style.display = 'none';
+            populateShopControls(this.value);
         });
 
-        // Initialize
-        loadUserInfo();
-        loadUsers();
-    </script>
-    <script src="/static/js/session.js"></script>
-    <script>
-        let _assignUserId = null;
+        document.getElementById('add-user-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var fd = new FormData(e.target);
+            var data = Object.fromEntries(fd);
+            if (data.role === 'shop_owner') {
+                var checked = document.querySelectorAll('#multi-shop-checkboxes input[name="shop_ids"]:checked');
+                var shopIds = Array.from(checked).map(function(cb){ return parseInt(cb.value); });
+                if (!shopIds.length) { showToast('Select at least one shop', 'warning'); return; }
+                data.shop_ids = shopIds;
+                data.shop_id = shopIds[0];
+            }
+            try {
+                var resp = await fetch('/api/users', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+                var result = await resp.json();
+                if (resp.ok) { showToast('User created!', 'success'); closeAddUserModal(); loadUsers(); }
+                else showToast(result.error || 'Error', 'error');
+            } catch(e) { showToast('Error creating user', 'error'); }
+        });
+
+        // ── Delete User ──
+        async function deleteUser(id, username) {
+            if (!confirm('Delete user "' + username + '"? This cannot be undone.')) return;
+            try {
+                var resp = await fetch('/api/users/' + id, { method: 'DELETE' });
+                var result = await resp.json();
+                if (resp.ok) { showToast('User deleted', 'success'); closeDetail(); loadUsers(); }
+                else showToast(result.error || 'Error', 'error');
+            } catch(e) { showToast('Error', 'error'); }
+        }
+
+        // ── Change Password ──
+        function openChangePasswordModal(userId, username) {
+            document.getElementById('change-password-user-id').value = userId;
+            document.getElementById('change-password-username').textContent = username;
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+            document.getElementById('change-password-modal').classList.add('active');
+        }
+        function closeChangePasswordModal() { document.getElementById('change-password-modal').classList.remove('active'); }
+
+        document.getElementById('change-password-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var userId = document.getElementById('change-password-user-id').value;
+            var newP = document.getElementById('new-password').value;
+            var conf = document.getElementById('confirm-password').value;
+            if (newP !== conf) { showToast('Passwords do not match', 'warning'); return; }
+            if (newP.length < 6) { showToast('Min 6 characters', 'warning'); return; }
+            try {
+                var resp = await fetch('/api/users/' + userId + '/password', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: newP}) });
+                var result = await resp.json();
+                if (resp.ok) { showToast('Password reset!', 'success'); closeChangePasswordModal(); }
+                else showToast(result.error || 'Error', 'error');
+            } catch(e) { showToast('Error', 'error'); }
+        });
+
+        // ── Own Password ──
+        function openOwnPasswordModal() { document.getElementById('own-password-modal').classList.add('active'); document.getElementById('user-dropdown').classList.remove('active'); document.getElementById('user-profile-toggle').classList.remove('active'); }
+        function closeOwnPasswordModal() { document.getElementById('own-password-modal').classList.remove('active'); document.getElementById('own-password-form').reset(); }
+
+        document.getElementById('own-password-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var curr = document.getElementById('own-current-password').value;
+            var newP = document.getElementById('own-new-password').value;
+            var conf = document.getElementById('own-confirm-password').value;
+            if (newP !== conf) { showToast('Passwords do not match', 'warning'); return; }
+            try {
+                var resp = await fetch('/api/change-password', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({current_password:curr, new_password:newP}) });
+                var result = await resp.json();
+                if (resp.ok) { showToast('Password changed!', 'success'); closeOwnPasswordModal(); }
+                else showToast(result.error || 'Error', 'error');
+            } catch(e) { showToast('Error', 'error'); }
+        });
+
+        // ── Shop Assignment (shop_owner) ──
+        var _assignUserId = null;
 
         async function openShopAssignModal(userId, username) {
             _assignUserId = userId;
             document.getElementById('assign-username').textContent = username;
             document.getElementById('shop-assign-modal').classList.add('active');
-            document.getElementById('shop-assign-list').innerHTML = '<p style="color:#888;">Loading...</p>';
-
+            document.getElementById('shop-assign-list').innerHTML = '<p style="color:#94a3b8;">Loading...</p>';
             try {
-                const [allResp, assignedResp] = await Promise.all([
-                    fetch('/api/shops'),
-                    fetch(`/api/users/${userId}/shops`)
-                ]);
-                const allShops = await allResp.json();
-                const assignedShops = await assignedResp.json();
-                const assignedIds = new Set(assignedShops.map(s => s.id));
-
-                document.getElementById('shop-assign-list').innerHTML = allShops.map(s =>
-                    `<label style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.3rem;cursor:pointer;border-bottom:1px solid #f0f0f0;">
-                        <input type="checkbox" value="${s.id}" ${assignedIds.has(s.id) ? 'checked' : ''} style="width:1.1rem;height:1.1rem;">
-                        <span>${s.icon || '🛒'}</span>
-                        <span style="font-size:0.9rem;">${s.name}</span>
-                    </label>`
-                ).join('');
-            } catch (e) {
-                document.getElementById('shop-assign-list').innerHTML = '<p style="color:#e74c3c;">Error loading shops</p>';
-            }
+                var results = await Promise.all([fetch('/api/shops'), fetch('/api/users/' + userId + '/shops')]);
+                var allShops = await results[0].json();
+                var assigned = await results[1].json();
+                var assignedIds = assigned.map(function(s){ return s.id; });
+                document.getElementById('shop-assign-list').innerHTML = allShops.map(function(s) {
+                    return '<label style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.3rem;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:0.88rem;">' +
+                        '<input type="checkbox" value="' + s.id + '" ' + (assignedIds.indexOf(s.id) >= 0 ? 'checked' : '') + ' style="width:1.1rem;height:1.1rem;"> ' + (s.icon||'🛒') + ' ' + escHtml(s.name) + '</label>';
+                }).join('');
+            } catch(e) { document.getElementById('shop-assign-list').innerHTML = '<p style="color:#ef4444;">Error loading</p>'; }
         }
-
-        function closeShopAssignModal() {
-            document.getElementById('shop-assign-modal').classList.remove('active');
-            _assignUserId = null;
-        }
+        function closeShopAssignModal() { document.getElementById('shop-assign-modal').classList.remove('active'); _assignUserId = null; }
 
         async function saveShopAssignment() {
             if (!_assignUserId) return;
-            const checkboxes = document.querySelectorAll('#shop-assign-list input[type=checkbox]:checked');
-            const shopIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
-
+            var checked = document.querySelectorAll('#shop-assign-list input[type=checkbox]:checked');
+            var shopIds = Array.from(checked).map(function(cb){ return parseInt(cb.value); });
             try {
-                const resp = await fetch(`/api/users/${_assignUserId}/shops`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ shop_ids: shopIds })
-                });
-                const result = await resp.json();
-                if (resp.ok) {
-                    showToast(`Assigned ${result.assigned} shop(s) successfully!`, 'success');
-                    closeShopAssignModal();
-                } else {
-                    showToast('Error: ' + (result.error || 'Failed'), 'error');
-                }
-            } catch (e) {
-                showToast('Error saving assignment', 'error');
-            }
+                var resp = await fetch('/api/users/' + _assignUserId + '/shops', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({shop_ids: shopIds}) });
+                var result = await resp.json();
+                if (resp.ok) { showToast('Shops updated!', 'success'); closeShopAssignModal(); loadUsers(); }
+                else showToast(result.error || 'Error', 'error');
+            } catch(e) { showToast('Error', 'error'); }
         }
 
-        let _reassignUserId = null;
+        // ── Reassign Shop (admin/user) ──
+        var _reassignUserId = null;
 
         async function openReassignShopModal(userId, username, currentShopId) {
             _reassignUserId = userId;
             document.getElementById('reassign-username').textContent = username;
             document.getElementById('reassign-shop-modal').classList.add('active');
-            const sel = document.getElementById('reassign-shop-select');
+            var sel = document.getElementById('reassign-shop-select');
             sel.innerHTML = '<option value="">Loading...</option>';
-
             try {
-                const resp = await fetch('/api/shops');
-                const shops = await resp.json();
-                sel.innerHTML = '<option value="">Select shop...</option>' +
-                    shops.map(s => `<option value="${s.id}" ${s.id === currentShopId ? 'selected' : ''}>${s.icon || '🛒'} ${s.name}</option>`).join('');
-            } catch (e) {
-                sel.innerHTML = '<option value="">Error loading shops</option>';
-            }
+                var resp = await fetch('/api/shops');
+                var shops = await resp.json();
+                sel.innerHTML = '<option value="">Select shop...</option>' + shops.map(function(s) {
+                    return '<option value="' + s.id + '" ' + (s.id === currentShopId ? 'selected' : '') + '>' + (s.icon||'🛒') + ' ' + escHtml(s.name) + '</option>';
+                }).join('');
+            } catch(e) { sel.innerHTML = '<option value="">Error</option>'; }
         }
-
-        function closeReassignShopModal() {
-            document.getElementById('reassign-shop-modal').classList.remove('active');
-            _reassignUserId = null;
-        }
+        function closeReassignShopModal() { document.getElementById('reassign-shop-modal').classList.remove('active'); _reassignUserId = null; }
 
         async function saveReassignShop() {
             if (!_reassignUserId) return;
-            const shopId = document.getElementById('reassign-shop-select').value;
-            if (!shopId) { showToast('Please select a shop', 'warning'); return; }
-
+            var shopId = document.getElementById('reassign-shop-select').value;
+            if (!shopId) { showToast('Select a shop', 'warning'); return; }
             try {
-                const resp = await fetch(`/api/users/${_reassignUserId}/shop`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ shop_id: parseInt(shopId) })
-                });
-                const result = await resp.json();
-                if (resp.ok) {
-                    showToast('Shop reassigned successfully!', 'success');
-                    closeReassignShopModal();
-                    loadUsers();
-                } else {
-                    showToast('Error: ' + (result.error || 'Failed'), 'error');
-                }
-            } catch (e) {
-                showToast('Error reassigning shop', 'error');
-            }
+                var resp = await fetch('/api/users/' + _reassignUserId + '/shop', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({shop_id: parseInt(shopId)}) });
+                var result = await resp.json();
+                if (resp.ok) { showToast('Shop changed!', 'success'); closeReassignShopModal(); loadUsers(); }
+                else showToast(result.error || 'Error', 'error');
+            } catch(e) { showToast('Error', 'error'); }
         }
 
-        async function loadShopSwitcher(activeShopId) {
+        // ── Shop Switcher ──
+        async function loadShopSwitcher(activeId) {
             try {
-                const resp = await fetch('/api/shops');
-                const shops = await resp.json();
-                const switcher = document.getElementById('shop-switcher');
-                const sel = document.getElementById('shop-select');
+                var resp = await fetch('/api/shops');
+                var shops = await resp.json();
+                var switcher = document.getElementById('shop-switcher');
+                var sel = document.getElementById('shop-select');
                 sel.innerHTML = '<option value="">All Shops</option>';
-                shops.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s.id;
-                    opt.textContent = (s.icon || '🛒') + ' ' + s.name;
-                    if (activeShopId && String(s.id) === String(activeShopId)) opt.selected = true;
+                shops.forEach(function(s) {
+                    var opt = document.createElement('option');
+                    opt.value = s.id; opt.textContent = (s.icon || '🛒') + ' ' + s.name;
+                    if (activeId && String(s.id) === String(activeId)) opt.selected = true;
                     sel.appendChild(opt);
                 });
-                if (!activeShopId) sel.value = '';
+                if (!activeId) sel.value = '';
                 switcher.style.display = '';
-            } catch (e) { console.error('Failed to load shops', e); }
+            } catch(e) {}
+        }
+        async function switchShop(shopId) {
+            try { await fetch('/api/shops/switch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({shop_id: shopId || null}) }); window.location.reload(); } catch(e) {}
         }
 
-        async function switchShop(shopId) {
-            try {
-                await fetch('/api/shops/switch', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({shop_id: shopId || null})
-                });
-                window.location.reload();
-            } catch (e) { console.error('Failed to switch shop', e); }
-        }
+        // ── Init ──
+        loadUserInfo();
+        loadUsers();
     </script>
-    </div><!-- /main-wrapper -->
 </body>
 </html>
