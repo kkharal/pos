@@ -5066,7 +5066,9 @@ def get_customers():
     customers = conn.execute(f'''
         SELECT c.*,
             COUNT(DISTINCT i.id) as invoice_count,
-            COALESCE(SUM(CASE WHEN i.status != 'paid' THEN i.total_amount - i.paid_amount ELSE 0 END), 0) as total_outstanding
+            COALESCE(SUM(CASE WHEN i.status != 'paid' THEN i.total_amount - i.paid_amount ELSE 0 END), 0) as total_outstanding,
+            COALESCE(SUM(i.total_amount), 0) as lifetime_sales,
+            MAX(i.created_at) as last_purchase_date
         FROM customers c
         LEFT JOIN invoices i ON i.customer_id = c.id
         WHERE 1=1 {flt_sql}

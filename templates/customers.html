@@ -7,57 +7,77 @@
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="/static/js/ui.js"></script>
     <style>
-        /* ===== Table styling ===== */
-        .report-table-scroll { overflow-y: auto; border-radius: 6px; border: 1px solid #e9ecef; }
-        .report-table-scroll table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-        .report-table-scroll thead th {
-            position: sticky; top: 0; z-index: 2;
-            background: #2c3e50; color: white;
-            padding: 0.65rem 1rem; text-align: left;
-            font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;
-            border-bottom: 2px solid #1a252f;
-        }
-        .report-table-scroll tbody tr:nth-child(even) { background: #f8f9fa; }
-        /* Preserve red highlight for rows with balance */
-        .report-table-scroll tbody tr.has-balance { background: #fff5f5 !important; }
-        .report-table-scroll tbody tr:hover { background: #e8f4fd !important; transition: background 0.1s; }
-        .report-table-scroll tbody td { padding: 0.6rem 1rem; border-bottom: 1px solid #edf0f2; vertical-align: middle; }
-        .report-table-scroll tbody tr:last-child td { border-bottom: none; }
+        /* ===== KPI Cards ===== */
+        .cust-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .cust-kpi { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem 1.25rem; }
+        .cust-kpi .kpi-value { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
+        .cust-kpi .kpi-value.danger { color: #ef4444; }
+        .cust-kpi .kpi-label { font-size: 0.78rem; color: #64748b; margin-top: 0.2rem; }
 
-        /* ===== Card header accent ===== */
-        .card h2 {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding-left: 0.75rem;
-            border-left: 4px solid #3498db;
-            font-size: 1.05rem; color: #2c3e50; margin: 0;
-        }
+        /* ===== Customer Cards ===== */
+        .customer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+        .customer-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; transition: box-shadow 0.15s, border-color 0.15s; cursor: pointer; position: relative; }
+        .customer-card:hover { border-color: #93c5fd; box-shadow: 0 4px 12px rgba(59,130,246,0.08); }
+        .customer-card.has-balance { border-left: 3px solid #ef4444; }
+        .customer-card-header { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.6rem; }
+        .customer-card-avatar { width: 38px; height: 38px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 600; color: #64748b; flex-shrink: 0; }
+        .customer-card-title { font-weight: 600; font-size: 1rem; color: #1e293b; line-height: 1.3; }
+        .customer-card-phone { font-size: 0.82rem; color: #64748b; margin-top: 0.1rem; }
+        .customer-card-stats { display: flex; gap: 1.5rem; margin: 0.6rem 0; padding: 0.5rem 0; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
+        .customer-card-stat { font-size: 0.82rem; color: #64748b; }
+        .customer-card-stat strong { color: #1e293b; display: block; font-size: 0.9rem; }
+        .customer-card-stat strong.danger { color: #ef4444; }
+        .customer-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
+        .customer-card-last { font-size: 0.78rem; color: #94a3b8; }
+        .customer-card-actions { display: flex; gap: 0.4rem; }
+        .customer-card-actions button { font-size: 0.75rem; padding: 0.3rem 0.6rem; border-radius: 5px; border: 1px solid #e2e8f0; background: white; color: #475569; cursor: pointer; transition: background 0.1s; }
+        .customer-card-actions button:hover { background: #f1f5f9; }
+        .customer-card-actions .btn-pay { border-color: #bbf7d0; color: #166534; background: #f0fdf4; }
+        .customer-card-actions .btn-pay:hover { background: #dcfce7; }
 
-        /* ===== Summary stat cards ===== */
-        .cust-stat-card {
-            padding: 1rem 1.25rem; text-align: center; margin-bottom: 0;
-            border-radius: 8px; border: 1px solid #e9ecef;
-            background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-            transition: transform 0.15s, box-shadow 0.15s;
-        }
-        .cust-stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .cust-stat-card .stat-label { font-size: 0.8rem; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
-        .cust-stat-card .stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1.2; }
+        /* ===== Search & Filters ===== */
+        .cust-search-bar { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; }
+        .cust-search-bar input { flex: 1; max-width: 320px; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.88rem; background: #f8fafc; box-sizing: border-box; height: 36px; }
+        .cust-search-bar input:focus { outline: none; border-color: #3b82f6; background: white; }
+        .cust-filter-pills { display: flex; gap: 0.4rem; }
+        .cust-pill { padding: 0.25rem 0.7rem; font-size: 0.78rem; border-radius: 16px; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; transition: all 0.12s; }
+        .cust-pill:hover { border-color: #93c5fd; color: #1d4ed8; }
+        .cust-pill.active { background: #1e293b; color: white; border-color: #1e293b; }
 
-        /* ===== Filter pills ===== */
-        .cust-pill {
-            padding: 0.25rem 0.75rem; font-size: 0.8rem; border-radius: 20px;
-            border: 1px solid #ced4da; background: white; color: #495057;
-            cursor: pointer; white-space: nowrap;
-            transition: background 0.12s, color 0.12s, border-color 0.12s;
-        }
-        .cust-pill:hover { border-color: #3498db; color: #3498db; }
-        .cust-pill.active { background: #2c3e50; color: white; border-color: #2c3e50; }
+        /* ===== Detail Modal ===== */
+        .cust-detail-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; margin-bottom: 1.25rem; }
+        .cust-detail-stat { text-align: center; padding: 0.6rem 0.4rem; background: #f8fafc; border-radius: 8px; }
+        .cust-detail-stat .value { font-size: 1.1rem; font-weight: 700; color: #1e293b; }
+        .cust-detail-stat .value.danger { color: #ef4444; }
+        .cust-detail-stat .label { font-size: 0.72rem; color: #64748b; margin-top: 0.15rem; }
+
+        .cust-detail-section { margin-top: 1.25rem; }
+        .cust-detail-section-title { font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; margin-bottom: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid #e2e8f0; }
+        .cust-detail-info { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 1.5rem; margin-bottom: 1rem; font-size: 0.88rem; }
+        .cust-detail-info .label { color: #64748b; font-size: 0.76rem; font-weight: 600; text-transform: uppercase; }
+        .cust-detail-info .value { color: #1e293b; margin-bottom: 0.4rem; }
+
+        /* Invoice rows */
+        .invoice-row { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid #f8fafc; font-size: 0.85rem; }
+        .invoice-row:last-child { border-bottom: none; }
+        .invoice-status { font-size: 0.7rem; padding: 0.12rem 0.4rem; border-radius: 10px; font-weight: 600; }
+        .invoice-status.paid { background: #dcfce7; color: #166534; }
+        .invoice-status.partial { background: #fef3c7; color: #92400e; }
+        .invoice-status.unpaid { background: #fef2f2; color: #991b1b; }
+
+        /* Payment rows */
+        .payment-row { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid #f8fafc; font-size: 0.85rem; }
+        .payment-row:last-child { border-bottom: none; }
+
+        /* ===== Page layout ===== */
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        .page-header h1 { font-size: 1.4rem; color: #1e293b; margin: 0; font-weight: 700; }
+        .page-header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 
         /* ===== Empty state ===== */
-        .cust-empty-state { text-align: center; padding: 3.5rem 2rem; }
-        .cust-empty-state .empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.6rem; }
-        .cust-empty-state p { font-size: 0.95rem; color: #868e96; margin: 0 0 0.25rem; }
-        .cust-empty-state small { font-size: 0.82rem; color: #adb5bd; }
+        .cust-empty { text-align: center; padding: 3rem 2rem; }
+        .cust-empty .empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.5rem; }
+        .cust-empty p { color: #94a3b8; margin: 0; font-size: 0.9rem; }
     </style>
 </head>
 <body class="has-sidebar">
@@ -126,66 +146,38 @@
             </div>
         </header>
 
-
     <div class="container">
-        <!-- Summary Cards -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-            <div class="cust-stat-card" style="border-left: 4px solid #3498db;">
-                <div class="stat-label">Total Customers</div>
-                <div class="stat-value" id="stat-total">0</div>
-            </div>
-            <div class="cust-stat-card" style="border-left: 4px solid #2980b9;">
-                <div class="stat-label">Total Credit Given</div>
-                <div class="stat-value" style="color:#2980b9;" id="stat-wholesale">0</div>
-            </div>
-            <div class="cust-stat-card" style="border-left: 4px solid #e74c3c;">
-                <div class="stat-label">Total Outstanding</div>
-                <div class="stat-value" style="color:#e74c3c;" id="stat-outstanding">0</div>
-            </div>
-            <div class="cust-stat-card" style="border-left: 4px solid #e67e22;">
-                <div class="stat-label">With Balance</div>
-                <div class="stat-value" style="color:#e67e22;" id="stat-with-balance">0</div>
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>👥 Customers</h1>
+            <div class="page-header-actions">
+                <button class="btn btn-secondary" onclick="showAgingReport()">📊 Aging Report</button>
+                <button class="btn btn-secondary" onclick="exportCustomersCSV()">⬇ Export</button>
+                <button class="btn btn-primary" onclick="openAddModal()">+ Add Customer</button>
             </div>
         </div>
 
+        <!-- KPI Cards -->
+        <div class="cust-kpis">
+            <div class="cust-kpi"><div class="kpi-value" id="kpi-customers">0</div><div class="kpi-label">Customers</div></div>
+            <div class="cust-kpi"><div class="kpi-value" id="kpi-outstanding">$0</div><div class="kpi-label">Outstanding</div></div>
+            <div class="cust-kpi"><div class="kpi-value" id="kpi-with-balance">0</div><div class="kpi-label">With Balance</div></div>
+            <div class="cust-kpi"><div class="kpi-value" id="kpi-lifetime">$0</div><div class="kpi-label">Lifetime Sales</div></div>
+        </div>
 
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 1rem;">
-                <h2 style="margin: 0;">👥 Customers</h2>
-                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                    <span id="cust-results-count" style="font-size:0.82rem;color:#6c757d;background:#f1f3f5;border-radius:20px;padding:0.2rem 0.7rem;"></span>
-                    <input type="text" id="customer-search" placeholder="Search customers..." style="padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.9rem;">
-                    <button class="btn btn-secondary" onclick="exportCustomersCSV()" title="Export to CSV">⬇ Export CSV</button>
-                    <button class="btn btn-primary" onclick="openAddModal()">+ Add Customer</button>
-                    <button class="btn btn-secondary" onclick="showAgingReport()" title="Aging Report">📊 Aging</button>
-                </div>
+        <!-- Search & Filter -->
+        <div class="cust-search-bar">
+            <input type="text" id="customer-search" placeholder="Search customers...">
+            <div class="cust-filter-pills">
+                <button class="cust-pill active" id="filter-all" onclick="setFilter('all')">All</button>
+                <button class="cust-pill" id="filter-balance" onclick="setFilter('with-balance')">With Balance</button>
+                <button class="cust-pill" id="filter-clear" onclick="setFilter('clear')">Clear</button>
             </div>
-            <!-- Balance filter pills -->
-            <div style="display:flex; gap:0.4rem; margin-bottom:1rem; flex-wrap:wrap;">
-                <button id="filter-pill-all" class="cust-pill active" onclick="setCustomerFilter('all')">All</button>
-                <button id="filter-pill-balance" class="cust-pill" onclick="setCustomerFilter('with-balance')">Has Balance</button>
-                <button id="filter-pill-clear" class="cust-pill" onclick="setCustomerFilter('zero-balance')">Zero Balance</button>
-            </div>
+        </div>
 
-            <div class="report-table-scroll" style="max-height: 65vh;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Phone</th>
-                            <th>Email</th>
-                            <th>Credit Limit</th>
-                            <th>Balance</th>
-                            <th>Avail. Credit</th>
-                            <th>Invoices</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="customers-table">
-                        <tr><td colspan="8" style="text-align:center;">Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+        <!-- Customer Cards -->
+        <div class="customer-grid" id="customer-grid">
+            <div class="cust-empty"><div class="empty-icon">👥</div><p>Loading customers...</p></div>
         </div>
     </div>
 
@@ -200,30 +192,35 @@
                 <input type="hidden" id="customer-id">
                 <div class="form-group">
                     <label>Customer Name *</label>
-                    <input type="text" id="cust-name" required placeholder="Customer or company name" maxlength="200">
+                    <input type="text" id="cust-name" required placeholder="Full name" maxlength="200">
                 </div>
-                <input type="hidden" id="cust-type" value="wholesale">
-                <div class="form-group">
-                    <label>Phone</label>
-                    <input type="text" id="cust-phone" placeholder="Phone number" maxlength="50">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="text" id="cust-phone" placeholder="Phone number" maxlength="50">
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="cust-type" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);height:36px;box-sizing:border-box;appearance:none;background:white url('data:image/svg+xml;utf8,<svg fill=\"%2364748b\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z\"/></svg>') no-repeat right 0.5rem center/1rem;"><option value="walk-in">Walk-in</option><option value="regular">Regular</option><option value="wholesale">Wholesale</option></select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Email</label>
-                    <input type="email" id="cust-email" placeholder="customer@example.com">
+                    <input type="email" id="cust-email" placeholder="email@example.com">
                 </div>
                 <div class="form-group">
                     <label>Address</label>
-                    <textarea id="cust-address" rows="2" placeholder="Full address" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius); font-family:inherit;"></textarea>
+                    <textarea id="cust-address" rows="2" placeholder="Full address" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;"></textarea>
                 </div>
-                <div id="credit-limit-section" class="form-group">
+                <div class="form-group">
                     <label>Credit Limit</label>
-                    <input type="number" id="cust-credit-limit" min="0" step="0.01" placeholder="Maximum credit allowed" value="0">
+                    <input type="number" id="cust-credit-limit" min="0" step="0.01" value="0">
                 </div>
                 <div class="form-group">
                     <label>Notes</label>
-                    <textarea id="cust-notes" rows="2" placeholder="Additional notes" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius); font-family:inherit;"></textarea>
+                    <textarea id="cust-notes" rows="2" placeholder="Internal notes" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;"></textarea>
                 </div>
-                <div style="display: flex; gap: 1rem;">
+                <div style="display:flex;gap:1rem;">
                     <button type="submit" class="btn btn-primary">Save Customer</button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                 </div>
@@ -231,54 +228,53 @@
         </div>
     </div>
 
-    <!-- Customer Ledger Modal -->
-    <div id="ledger-modal" class="modal">
-        <div class="modal-content" style="max-width: 800px;">
+    <!-- Customer Detail Modal -->
+    <div id="customer-detail-modal" class="modal">
+        <div class="modal-content" style="max-width:700px;">
             <div class="modal-header">
-                <h2 id="ledger-title">Customer Ledger</h2>
-                <button class="close-btn" onclick="closeLedgerModal()">&times;</button>
+                <h2 id="detail-title">Customer</h2>
+                <button class="close-btn" onclick="closeDetailModal()">&times;</button>
             </div>
-            <div id="ledger-content" style="padding: 0 1rem 1rem;">
-                <p style="text-align:center;">Loading...</p>
-            </div>
+            <div id="customer-detail-content"></div>
         </div>
     </div>
 
     <!-- Record Payment Modal -->
     <div id="payment-modal" class="modal">
-        <div class="modal-content" style="max-width: 480px;">
+        <div class="modal-content" style="max-width:450px;">
             <div class="modal-header">
                 <h2>Record Payment</h2>
                 <button class="close-btn" onclick="closePayModal()">&times;</button>
             </div>
+            <div id="pay-customer-info" style="margin-bottom:1rem;padding:0.6rem 0.8rem;background:#f8fafc;border-radius:6px;font-size:0.9rem;"></div>
             <form id="payment-form">
                 <input type="hidden" id="pay-customer-id">
                 <input type="hidden" id="pay-invoice-id">
-                <div id="pay-customer-info" style="padding: 0.75rem; background: #f8f9fa; border-radius: 6px; margin-bottom: 1rem;"></div>
                 <div class="form-group">
-                    <label>Apply To</label>
-                    <select id="pay-invoice-select" onchange="onInvoiceSelect()">
+                    <label>Apply to Invoice</label>
+                    <select id="pay-invoice-select" onchange="onInvoiceSelect()" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);">
                         <option value="">General payment (oldest first)</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Amount *</label>
-                    <input type="number" id="pay-amount" min="0.01" step="0.01" required placeholder="Payment amount">
+                    <input type="number" id="pay-amount" step="0.01" min="0.01" required placeholder="Payment amount">
                 </div>
                 <div class="form-group">
                     <label>Payment Method</label>
-                    <select id="pay-method">
+                    <select id="pay-method" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);">
                         <option value="cash">Cash</option>
                         <option value="card">Card</option>
-                        <option value="transfer">Bank Transfer</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="mobile_payment">Mobile Payment</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Notes</label>
-                    <input type="text" id="pay-notes" placeholder="Payment reference or notes">
+                    <input type="text" id="pay-notes" placeholder="Optional notes">
                 </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-success">Record Payment</button>
+                <div style="display:flex;gap:1rem;">
+                    <button type="submit" class="btn btn-primary">Record Payment</button>
                     <button type="button" class="btn btn-secondary" onclick="closePayModal()">Cancel</button>
                 </div>
             </form>
@@ -287,14 +283,12 @@
 
     <!-- Aging Report Modal -->
     <div id="aging-modal" class="modal">
-        <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-content" style="max-width:850px;">
             <div class="modal-header">
-                <h2>📊 Accounts Receivable - Aging Report</h2>
+                <h2>📊 Aging Report</h2>
                 <button class="close-btn" onclick="document.getElementById('aging-modal').classList.remove('active')">&times;</button>
             </div>
-            <div id="aging-content" style="padding: 0 1rem 1rem;">
-                <p style="text-align:center;">Loading...</p>
-            </div>
+            <div id="aging-content"></div>
         </div>
     </div>
 
@@ -306,31 +300,20 @@
                 <button class="close-btn" onclick="closeChangePasswordModal()">&times;</button>
             </div>
             <form id="change-password-form">
-                <div class="form-group">
-                    <label>Current Password *</label>
-                    <input type="password" id="current-password" required placeholder="Enter current password">
-                </div>
-                <div class="form-group">
-                    <label>New Password *</label>
-                    <input type="password" id="new-password" required placeholder="Minimum 6 characters" minlength="6">
-                </div>
-                <div class="form-group">
-                    <label>Confirm New Password *</label>
-                    <input type="password" id="confirm-password" required placeholder="Re-enter new password" minlength="6">
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary">Change Password</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
-                </div>
+                <div class="form-group"><label>Current Password *</label><input type="password" id="current-password" required placeholder="Enter current password"></div>
+                <div class="form-group"><label>New Password *</label><input type="password" id="new-password" required placeholder="Minimum 6 characters" minlength="6"></div>
+                <div class="form-group"><label>Confirm New Password *</label><input type="password" id="confirm-password" required placeholder="Re-enter new password" minlength="6"></div>
+                <div style="display:flex;gap:1rem;"><button type="submit" class="btn btn-primary">Change Password</button><button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button></div>
             </form>
         </div>
     </div>
 
     <script>
-        let customers = [];
-        let currencySymbol = '$';
-        let currentFilter = 'all';
+        var currencySymbol = '$';
+        var customers = [];
+        var currentFilter = 'all';
 
+        // --- User Info ---
         async function loadUserInfo() {
             try {
                 const response = await fetch('/api/current-user');
@@ -343,177 +326,241 @@
                 document.getElementById('user-name').textContent = user.full_name || user.username;
                 const roleBadge = document.getElementById('role-badge');
                 roleBadge.textContent = getRoleLabel(user.role); roleBadge.className = getRoleBadgeClass(user.role);
-                const adminEls = document.querySelectorAll('.admin-only');
-                adminEls.forEach(el => el.style.display = isAdminRole(user.role) ? '' : 'none');
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdminRole(user.role) ? '' : 'none');
                 if (user.role === 'super_admin') {
                     document.querySelectorAll('.super-admin-only').forEach(el => el.style.display = '');
                     loadShopSwitcher(user.active_shop_id);
                 } else if (user.role === 'shop_owner') {
                     loadShopSwitcher(user.active_shop_id);
                 }
-            } catch (e) { console.error('Error loading user info:', e); }
+            } catch (e) { console.error(e); }
         }
 
         document.getElementById('user-profile-toggle').addEventListener('click', function(e) {
-            e.stopPropagation();
-            this.classList.toggle('active');
-            document.getElementById('user-dropdown').classList.toggle('active');
+            e.stopPropagation(); this.classList.toggle('active'); document.getElementById('user-dropdown').classList.toggle('active');
         });
         document.addEventListener('click', function(e) {
             const d = document.getElementById('user-dropdown'), t = document.getElementById('user-profile-toggle');
             if (!t.contains(e.target) && !d.contains(e.target)) { t.classList.remove('active'); d.classList.remove('active'); }
         });
-
         function openChangePasswordModal() {
             document.getElementById('change-password-modal').classList.add('active');
             document.getElementById('user-dropdown').classList.remove('active');
             document.getElementById('user-profile-toggle').classList.remove('active');
         }
-        function closeChangePasswordModal() {
-            document.getElementById('change-password-modal').classList.remove('active');
-            document.getElementById('change-password-form').reset();
-        }
+        function closeChangePasswordModal() { document.getElementById('change-password-modal').classList.remove('active'); document.getElementById('change-password-form').reset(); }
         document.getElementById('change-password-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const curr = document.getElementById('current-password').value;
-            const newP = document.getElementById('new-password').value;
-            const conf = document.getElementById('confirm-password').value;
+            const curr = document.getElementById('current-password').value, newP = document.getElementById('new-password').value, conf = document.getElementById('confirm-password').value;
             if (newP !== conf) { showToast('Passwords do not match!', 'warning'); return; }
-            if (newP.length < 6) { showToast('Minimum 6 characters!', 'warning'); return; }
+            if (newP.length < 6) { showToast('Min 6 characters!', 'warning'); return; }
             try {
-                const r = await fetch('/api/change-password', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({current_password: curr, new_password: newP}) });
+                const r = await fetch('/api/change-password', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({current_password:curr, new_password:newP}) });
                 const res = await r.json();
-                if (r.ok) { showToast('Password changed!', 'success'); closeChangePasswordModal(); }
-                else showToast(res.error || 'Error', 'error');
-            } catch(e) { showToast('Error changing password', 'error'); }
+                if (r.ok) { showToast('Password changed!', 'success'); closeChangePasswordModal(); } else showToast(res.error||'Error','error');
+            } catch(e) { showToast('Error','error'); }
         });
 
-        // --- Customer CRUD ---
+        // --- Data Loading ---
         async function loadCustomers() {
             try {
                 const r = await fetch('/api/customers');
                 customers = await r.json();
+                renderKPIs();
                 renderCustomers();
-                updateStats();
             } catch(e) { console.error(e); }
         }
 
-        function updateStats() {
-            const total = customers.length;
-            const totalCreditLimit = customers.reduce((sum, c) => sum + (c.credit_limit || 0), 0);
-            const totalOutstanding = customers.reduce((sum, c) => sum + (c.balance || 0), 0);
-            const withBalance = customers.filter(c => c.balance > 0).length;
+        function renderKPIs() {
+            var totalOutstanding = customers.reduce(function(s,c){ return s + (c.balance || 0); }, 0);
+            var withBalance = customers.filter(function(c){ return c.balance > 0; }).length;
+            var lifetimeSales = customers.reduce(function(s,c){ return s + (c.lifetime_sales || 0); }, 0);
 
-            document.getElementById('stat-total').textContent = total;
-            document.getElementById('stat-wholesale').textContent = `${currencySymbol}${totalCreditLimit.toFixed(2)}`;
-            document.getElementById('stat-outstanding').textContent = `${currencySymbol}${totalOutstanding.toFixed(2)}`;
-            document.getElementById('stat-with-balance').textContent = withBalance;
+            document.getElementById('kpi-customers').textContent = customers.length;
+            document.getElementById('kpi-outstanding').textContent = currencySymbol + totalOutstanding.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+            document.getElementById('kpi-outstanding').className = 'kpi-value' + (totalOutstanding > 0 ? ' danger' : '');
+            document.getElementById('kpi-with-balance').textContent = withBalance;
+            document.getElementById('kpi-lifetime').textContent = currencySymbol + lifetimeSales.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
         }
 
-
         function renderCustomers() {
-            const search = (document.getElementById('customer-search').value || '').toLowerCase();
-            let filtered = customers.filter(c =>
-                c.name.toLowerCase().includes(search) ||
-                (c.phone || '').toLowerCase().includes(search) ||
-                (c.email || '').toLowerCase().includes(search)
-            );
+            var search = (document.getElementById('customer-search').value || '').toLowerCase();
+            var filtered = customers.filter(function(c) {
+                if (currentFilter === 'with-balance' && !(c.balance > 0)) return false;
+                if (currentFilter === 'clear' && c.balance > 0) return false;
+                if (search) {
+                    return c.name.toLowerCase().includes(search) ||
+                        (c.phone || '').toLowerCase().includes(search) ||
+                        (c.email || '').toLowerCase().includes(search);
+                }
+                return true;
+            });
 
-            if (currentFilter === 'with-balance') filtered = filtered.filter(c => c.balance > 0);
-            if (currentFilter === 'zero-balance') filtered = filtered.filter(c => !c.balance || c.balance <= 0);
-
-            // Update results count
-            const countEl = document.getElementById('cust-results-count');
-            if (countEl) {
-                const base = customers.length;
-                countEl.textContent = filtered.length === base ? `${base} customer${base !== 1 ? 's' : ''}` : `${filtered.length} of ${base}`;
-            }
-
-            const tbody = document.getElementById('customers-table');
+            var grid = document.getElementById('customer-grid');
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="padding:0;border:none;"><div class="cust-empty-state"><div class="empty-icon">👥</div><p>No customers found</p><small>Try a different search term or add a new customer</small></div></td></tr>`;
+                grid.innerHTML = '<div class="cust-empty"><div class="empty-icon">👥</div><p>No customers found</p></div>';
                 return;
             }
-            tbody.innerHTML = filtered.map(c => {
-                const balanceColor = c.balance > 0 ? '#e74c3c' : '#27ae60';
-                const hasBalance = c.balance > 0;
-                return `
-                <tr class="${hasBalance ? 'has-balance' : ''}">
-                    <td>
-                        <strong>${escapeHtml(c.name)}</strong>
-                        ${c.notes ? `<div style="font-size:0.78rem;color:#888;margin-top:0.1rem;">${escapeHtml(c.notes).substring(0,60)}${c.notes.length>60?'&hellip;':''}</div>` : ''}
-                    </td>
-                    <td>${c.phone || '<span style="color:#ccc;">—</span>'}</td>
-                    <td>${c.email ? `<a href="mailto:${c.email}" style="color:#3498db;">${escapeHtml(c.email)}</a>` : '<span style="color:#ccc;">—</span>'}</td>
-                    <td>${currencySymbol}${(c.credit_limit || 0).toFixed(2)}</td>
-                    <td style="color:${balanceColor}; font-weight:bold;">${hasBalance ? currencySymbol + c.balance.toFixed(2) : '<span style="color:#27ae60;">✓ Clear</span>'}</td>
-                    <td>${(() => { const avail = (c.credit_limit || 0) - (c.balance || 0); return avail <= 0 ? '<span style="color:#e74c3c; font-weight:bold;">None</span>' : `<span style="color:#27ae60; font-weight:bold;">${currencySymbol}${avail.toFixed(2)}</span>`; })()}</td>
-                    <td>${c.invoice_count || 0}</td>
-                    <td>
-                        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
-                            <button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.55rem;" onclick="viewLedger(${c.id})">Ledger</button>
-                            ${hasBalance ? `<button class="btn btn-success" style="font-size:0.75rem;padding:0.25rem 0.55rem;" onclick="openPayModal(${c.id})">Pay</button>` : ''}
-                            <button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.55rem;" onclick="editCustomer(${c.id})">✏️ Edit</button>
-                            <button class="btn" style="font-size:0.75rem;padding:0.25rem 0.55rem;background:#e74c3c;color:white;" onclick="deleteCustomer(${c.id}, '${c.name.replace(/'/g, "\\'")}')">🗑️</button>
-                        </div>
-                    </td>
-                </tr>`;
+
+            grid.innerHTML = filtered.map(function(c) {
+                var hasBalance = c.balance > 0;
+                var lastPurchase = c.last_purchase_date ? timeAgo(c.last_purchase_date) : 'Never';
+                var lifetime = c.lifetime_sales || 0;
+                var initial = c.name.charAt(0).toUpperCase();
+
+                return '<div class="customer-card ' + (hasBalance ? 'has-balance' : '') + '" onclick="openCustomerDetail(' + c.id + ')">' +
+                    '<div class="customer-card-header">' +
+                        '<div class="customer-card-avatar">' + initial + '</div>' +
+                        '<div>' +
+                            '<div class="customer-card-title">' + escapeHtml(c.name) + '</div>' +
+                            '<div class="customer-card-phone">' + escapeHtml(c.phone || 'No phone') + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="customer-card-stats">' +
+                        '<div class="customer-card-stat"><strong>' + currencySymbol + lifetime.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0}) + '</strong>Lifetime Sales</div>' +
+                        '<div class="customer-card-stat"><strong class="' + (hasBalance ? 'danger' : '') + '">' + (hasBalance ? currencySymbol + c.balance.toFixed(0) : '✓ Clear') + '</strong>Outstanding</div>' +
+                    '</div>' +
+                    '<div class="customer-card-footer">' +
+                        '<div class="customer-card-last">Last purchase: ' + lastPurchase + '</div>' +
+                        '<div class="customer-card-actions" onclick="event.stopPropagation()">' +
+                            (hasBalance ? '<button class="btn-pay" onclick="openPayModal(' + c.id + ')">Pay</button>' : '') +
+                            '<button onclick="editCustomer(' + c.id + ')">Edit</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
             }).join('');
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        function timeAgo(dateStr) {
+            if (!dateStr) return 'Never';
+            var d = parseUTC(dateStr);
+            var now = new Date();
+            var diff = Math.floor((now - d) / 86400000);
+            if (diff === 0) return 'Today';
+            if (diff === 1) return 'Yesterday';
+            if (diff < 7) return diff + ' days ago';
+            if (diff < 30) return Math.floor(diff/7) + ' week' + (Math.floor(diff/7)>1?'s':'') + ' ago';
+            if (diff < 365) return Math.floor(diff/30) + ' month' + (Math.floor(diff/30)>1?'s':'') + ' ago';
+            return d.toLocaleDateString();
+        }
+
+        function escapeHtml(str) { var d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+
+        function setFilter(f) {
+            currentFilter = f;
+            document.querySelectorAll('.cust-pill').forEach(function(el){ el.classList.remove('active'); });
+            if (f === 'all') document.getElementById('filter-all').classList.add('active');
+            else if (f === 'with-balance') document.getElementById('filter-balance').classList.add('active');
+            else document.getElementById('filter-clear').classList.add('active');
+            renderCustomers();
         }
 
         document.getElementById('customer-search').addEventListener('input', renderCustomers);
 
-        function setCustomerFilter(f) {
-            currentFilter = f;
-            const pills = { 'all': 'filter-pill-all', 'with-balance': 'filter-pill-balance', 'zero-balance': 'filter-pill-clear' };
-            Object.entries(pills).forEach(([key, id]) => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.classList.toggle('active', key === f);
-            });
-            renderCustomers();
+        // --- Customer Detail ---
+        async function openCustomerDetail(id) {
+            var c = customers.find(function(x){ return x.id === id; });
+            if (!c) return;
+            document.getElementById('detail-title').textContent = c.name;
+            document.getElementById('customer-detail-content').innerHTML = '<p style="text-align:center;padding:2rem;color:#94a3b8;">Loading...</p>';
+            document.getElementById('customer-detail-modal').classList.add('active');
+
+            try {
+                var r = await fetch('/api/customers/' + id);
+                var data = await r.json();
+                var cust = data.customer;
+                var invoices = data.invoices;
+                var payments = data.payments;
+
+                var lifetime = c.lifetime_sales || 0;
+                var avgOrder = c.invoice_count > 0 ? lifetime / c.invoice_count : 0;
+                var lastPurchase = c.last_purchase_date ? timeAgo(c.last_purchase_date) : 'Never';
+                var creditAvail = (cust.credit_limit || 0) - (cust.balance || 0);
+
+                var html = '';
+
+                // Summary stats
+                html += '<div class="cust-detail-stats">';
+                html += '<div class="cust-detail-stat"><div class="value">' + currencySymbol + lifetime.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0}) + '</div><div class="label">Lifetime Sales</div></div>';
+                html += '<div class="cust-detail-stat"><div class="value' + (cust.balance > 0 ? ' danger' : '') + '">' + currencySymbol + (cust.balance || 0).toFixed(0) + '</div><div class="label">Outstanding</div></div>';
+                html += '<div class="cust-detail-stat"><div class="value">' + (c.invoice_count || 0) + '</div><div class="label">Total Orders</div></div>';
+                html += '<div class="cust-detail-stat"><div class="value">' + lastPurchase + '</div><div class="label">Last Purchase</div></div>';
+                html += '</div>';
+
+                // Contact info
+                html += '<div class="cust-detail-section"><div class="cust-detail-section-title">Contact Information</div>';
+                html += '<div class="cust-detail-info">';
+                html += '<div><div class="label">Phone</div><div class="value">' + escapeHtml(cust.phone || '—') + '</div></div>';
+                html += '<div><div class="label">Email</div><div class="value">' + (cust.email ? '<a href="mailto:'+cust.email+'" style="color:#3b82f6;">'+escapeHtml(cust.email)+'</a>' : '—') + '</div></div>';
+                html += '<div><div class="label">Type</div><div class="value">' + escapeHtml(cust.customer_type || 'walk-in') + '</div></div>';
+                html += '<div><div class="label">Credit Limit</div><div class="value">' + currencySymbol + (cust.credit_limit || 0).toFixed(2) + ' <span style="color:#94a3b8;font-size:0.8rem;">(Avail: ' + currencySymbol + creditAvail.toFixed(2) + ')</span></div></div>';
+                if (cust.address) html += '<div style="grid-column:1/-1;"><div class="label">Address</div><div class="value">' + escapeHtml(cust.address) + '</div></div>';
+                if (cust.notes) html += '<div style="grid-column:1/-1;"><div class="label">Notes</div><div class="value">' + escapeHtml(cust.notes) + '</div></div>';
+                html += '</div></div>';
+
+                // Invoices (Sales History)
+                html += '<div class="cust-detail-section"><div class="cust-detail-section-title">Invoices (' + invoices.length + ')</div>';
+                if (invoices.length === 0) {
+                    html += '<p style="color:#94a3b8;font-size:0.85rem;">No invoices yet</p>';
+                } else {
+                    html += '<div style="max-height:200px;overflow-y:auto;">';
+                    invoices.slice(0, 30).forEach(function(inv) {
+                        var remaining = inv.total_amount - inv.paid_amount;
+                        var statusCls = inv.status === 'paid' ? 'paid' : inv.status === 'partial' ? 'partial' : 'unpaid';
+                        var date = parseUTC(inv.created_at).toLocaleDateString();
+                        html += '<div class="invoice-row">' +
+                            '<div><strong>#' + inv.id + '</strong> <span style="color:#94a3b8;font-size:0.78rem;margin-left:0.4rem;">' + date + '</span></div>' +
+                            '<div style="display:flex;align-items:center;gap:0.5rem;"><span class="invoice-status ' + statusCls + '">' + inv.status + '</span><strong>' + currencySymbol + inv.total_amount.toFixed(2) + '</strong>' +
+                            (remaining > 0 ? '<span style="color:#ef4444;font-size:0.78rem;">Due: ' + currencySymbol + remaining.toFixed(2) + '</span>' : '') +
+                            '</div></div>';
+                    });
+                    html += '</div>';
+                }
+                html += '</div>';
+
+                // Payments
+                html += '<div class="cust-detail-section"><div class="cust-detail-section-title">Payments (' + payments.length + ')</div>';
+                if (payments.length === 0) {
+                    html += '<p style="color:#94a3b8;font-size:0.85rem;">No payments recorded</p>';
+                } else {
+                    html += '<div style="max-height:150px;overflow-y:auto;">';
+                    payments.slice(0, 20).forEach(function(p) {
+                        var date = parseUTC(p.created_at).toLocaleDateString();
+                        html += '<div class="payment-row">' +
+                            '<div><span style="color:#22c55e;font-weight:600;">+' + currencySymbol + p.amount.toFixed(2) + '</span> <span style="color:#94a3b8;font-size:0.78rem;margin-left:0.4rem;">' + date + '</span></div>' +
+                            '<div style="font-size:0.8rem;color:#64748b;">' + (p.payment_method || '') + (p.invoice_id ? ' → Inv #' + p.invoice_id : '') + '</div>' +
+                        '</div>';
+                    });
+                    html += '</div>';
+                }
+                html += '</div>';
+
+                // Actions
+                html += '<div style="display:flex;gap:0.75rem;margin-top:1.25rem;padding-top:1rem;border-top:1px solid #e2e8f0;flex-wrap:wrap;">';
+                if (cust.balance > 0) html += '<button class="btn btn-success" onclick="closeDetailModal();openPayModal(' + id + ')">Record Payment</button>';
+                html += '<button class="btn btn-secondary" onclick="closeDetailModal();editCustomer(' + id + ')">Edit</button>';
+                html += '<button class="btn btn-secondary" onclick="deleteCustomer(' + id + ',\'' + escapeHtml(cust.name).replace(/'/g,"\\'") + '\')" style="margin-left:auto;color:#ef4444;border-color:#fecaca;">Delete</button>';
+                html += '</div>';
+
+                document.getElementById('customer-detail-content').innerHTML = html;
+            } catch(e) {
+                document.getElementById('customer-detail-content').innerHTML = '<p style="color:#ef4444;text-align:center;padding:2rem;">Error loading customer</p>';
+            }
         }
 
-        function exportCustomersCSV() {
-            const search = (document.getElementById('customer-search').value || '').toLowerCase();
-            let rows = customers.filter(c =>
-                c.name.toLowerCase().includes(search) ||
-                (c.phone || '').toLowerCase().includes(search) ||
-                (c.email || '').toLowerCase().includes(search)
-            );
-            if (currentFilter === 'with-balance') rows = rows.filter(c => c.balance > 0);
-            if (currentFilter === 'zero-balance') rows = rows.filter(c => !c.balance || c.balance <= 0);
-            const headers = ['Name', 'Phone', 'Email', 'Credit Limit', 'Balance', 'Avail. Credit', 'Invoices'];
-            const csv = [headers, ...rows.map(c => [
-                c.name, c.phone || '', c.email || '',
-                (c.credit_limit || 0).toFixed(2),
-                (c.balance || 0).toFixed(2),
-                ((c.credit_limit || 0) - (c.balance || 0)).toFixed(2),
-                c.invoice_count || 0
-            ].map(v => `"${String(v).replace(/"/g, '""')}"`))].map(r => r.join(',')).join('\n');
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-            a.download = `customers_${new Date().toISOString().slice(0,10)}.csv`;
-            a.click();
-        }
+        function closeDetailModal() { document.getElementById('customer-detail-modal').classList.remove('active'); }
 
+        // --- Add/Edit Customer ---
         function openAddModal() {
             document.getElementById('modal-title').textContent = 'Add Customer';
             document.getElementById('customer-form').reset();
             document.getElementById('customer-id').value = '';
             document.getElementById('cust-credit-limit').value = '0';
             document.getElementById('customer-modal').classList.add('active');
-            history.replaceState(null, '', '#add');
         }
 
         function editCustomer(id) {
-            const c = customers.find(x => x.id === id);
+            var c = customers.find(function(x){ return x.id === id; });
             if (!c) return;
             document.getElementById('modal-title').textContent = 'Edit Customer';
             document.getElementById('customer-id').value = c.id;
@@ -525,18 +572,14 @@
             document.getElementById('cust-credit-limit').value = c.credit_limit || 0;
             document.getElementById('cust-notes').value = c.notes || '';
             document.getElementById('customer-modal').classList.add('active');
-            history.replaceState(null, '', '#edit-' + id);
         }
 
-        function closeModal() {
-            document.getElementById('customer-modal').classList.remove('active');
-            history.replaceState(null, '', window.location.pathname);
-        }
+        function closeModal() { document.getElementById('customer-modal').classList.remove('active'); }
 
-        document.getElementById('customer-form').addEventListener('submit', async (e) => {
+        document.getElementById('customer-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const id = document.getElementById('customer-id').value;
-            const data = {
+            var id = document.getElementById('customer-id').value;
+            var data = {
                 name: document.getElementById('cust-name').value,
                 customer_type: document.getElementById('cust-type').value,
                 phone: document.getElementById('cust-phone').value,
@@ -546,175 +589,66 @@
                 notes: document.getElementById('cust-notes').value
             };
             try {
-                const url = id ? `/api/customers/${id}` : '/api/customers';
-                const method = id ? 'PUT' : 'POST';
-                const r = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-                if (r.ok) {
-                    showToast(id ? 'Customer updated!' : 'Customer added!', 'success');
-                    closeModal();
-                    loadCustomers();
-                } else {
-                    const res = await r.json();
-                    showToast(res.error || 'Error saving customer', 'error');
-                }
+                var url = id ? '/api/customers/' + id : '/api/customers';
+                var method = id ? 'PUT' : 'POST';
+                var r = await fetch(url, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+                if (r.ok) { showToast(id ? 'Customer updated!' : 'Customer added!', 'success'); closeModal(); loadCustomers(); }
+                else { var res = await r.json(); showToast(res.error || 'Error', 'error'); }
             } catch(e) { showToast('Error saving customer', 'error'); }
         });
 
         async function deleteCustomer(id, name) {
-            if (!confirm(`Delete customer "${name}"?`)) return;
+            if (!confirm('Delete customer "' + name + '"?')) return;
             try {
-                const r = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
-                if (r.ok) { showToast('Customer deleted', 'success'); loadCustomers(); }
-                else { const res = await r.json(); showToast(res.error || 'Error', 'error'); }
-            } catch(e) { showToast('Error deleting customer', 'error'); }
-        }
-
-        // --- Customer Ledger ---
-        async function viewLedger(id) {
-            document.getElementById('ledger-content').innerHTML = '<p style="text-align:center;">Loading...</p>';
-            document.getElementById('ledger-modal').classList.add('active');
-            history.replaceState(null, '', '#ledger-' + id);
-
-            try {
-                const r = await fetch(`/api/customers/${id}`);
-                const data = await r.json();
-                const c = data.customer;
-                const invoices = data.invoices;
-                const payments = data.payments;
-
-                document.getElementById('ledger-title').textContent = `Ledger: ${c.name}`;
-
-                const creditAvail = c.credit_limit - c.balance;
-                let html = `
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
-                    <div style="padding:0.75rem; background:#f8f9fa; border-radius:6px; text-align:center;">
-                        <div style="font-size:0.8rem; color:#7f8c8d;">Credit Limit</div>
-                        <div style="font-size:1.2rem; font-weight:bold;">${currencySymbol}${(c.credit_limit || 0).toFixed(2)}</div>
-                    </div>
-                    <div style="padding:0.75rem; background:#fff5f5; border-radius:6px; text-align:center;">
-                        <div style="font-size:0.8rem; color:#7f8c8d;">Balance Owed</div>
-                        <div style="font-size:1.2rem; font-weight:bold; color:#e74c3c;">${currencySymbol}${(c.balance || 0).toFixed(2)}</div>
-                    </div>
-                    <div style="padding:0.75rem; background:#d4edda; border-radius:6px; text-align:center;">
-                        <div style="font-size:0.8rem; color:#7f8c8d;">Available Credit</div>
-                        <div style="font-size:1.2rem; font-weight:bold; color:#27ae60;">${currencySymbol}${creditAvail.toFixed(2)}</div>
-                    </div>
-                </div>`;
-
-                // Invoices table
-                html += '<h3 style="margin-bottom:0.5rem;">Invoices</h3>';
-                if (invoices.length === 0) {
-                    html += '<p style="color:#7f8c8d;">No invoices</p>';
-                } else {
-                    html += `<div class="report-table-scroll" style="max-height:250px; margin-bottom:1.5rem;">
-                    <table><thead><tr>
-                        <th>Invoice #</th><th>Sale #</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Date</th>
-                    </tr></thead><tbody>`;
-                    invoices.forEach(inv => {
-                        const remaining = inv.total_amount - inv.paid_amount;
-                        const statusBadge = inv.status === 'paid'
-                            ? '<span style="background:#27ae60; color:white; padding:0.1rem 0.4rem; border-radius:8px; font-size:0.75rem;">Paid</span>'
-                            : inv.status === 'partial'
-                            ? '<span style="background:#e67e22; color:white; padding:0.1rem 0.4rem; border-radius:8px; font-size:0.75rem;">Partial</span>'
-                            : '<span style="background:#e74c3c; color:white; padding:0.1rem 0.4rem; border-radius:8px; font-size:0.75rem;">Unpaid</span>';
-                        html += `<tr>
-                            <td>#${inv.id}</td>
-                            <td>#${inv.sale_id}</td>
-                            <td>${currencySymbol}${inv.total_amount.toFixed(2)}</td>
-                            <td>${currencySymbol}${inv.paid_amount.toFixed(2)}</td>
-                            <td style="color:${remaining > 0 ? '#e74c3c' : '#27ae60'}; font-weight:bold;">${currencySymbol}${remaining.toFixed(2)}</td>
-                            <td>${statusBadge}</td>
-                            <td>${parseUTC(inv.created_at).toLocaleDateString()}</td>
-                        </tr>`;
-                    });
-                    html += '</tbody></table></div>';
-                }
-
-                // Payments table
-                html += '<h3 style="margin-bottom:0.5rem;">Payment History</h3>';
-                if (payments.length === 0) {
-                    html += '<p style="color:#7f8c8d;">No payments recorded</p>';
-                } else {
-                    html += `<div class="report-table-scroll" style="max-height:200px;">
-                    <table><thead><tr>
-                        <th>Date</th><th>Amount</th><th>Method</th><th>Invoice</th><th>Received By</th><th>Notes</th>
-                    </tr></thead><tbody>`;
-                    payments.forEach(p => {
-                        html += `<tr>
-                            <td>${new Date(p.created_at).toLocaleDateString()}</td>
-                            <td style="color:#27ae60; font-weight:bold;">${currencySymbol}${p.amount.toFixed(2)}</td>
-                            <td>${p.payment_method}</td>
-                            <td>${p.invoice_id ? '#' + p.invoice_id : 'General'}</td>
-                            <td>${p.received_by_name || '-'}</td>
-                            <td>${p.notes || '-'}</td>
-                        </tr>`;
-                    });
-                    html += '</tbody></table></div>';
-                }
-
-                document.getElementById('ledger-content').innerHTML = html;
-            } catch(e) {
-                document.getElementById('ledger-content').innerHTML = '<p style="color:#e74c3c;">Error loading ledger</p>';
-            }
-        }
-
-        function closeLedgerModal() {
-            document.getElementById('ledger-modal').classList.remove('active');
-            history.replaceState(null, '', window.location.pathname);
+                var r = await fetch('/api/customers/' + id, { method: 'DELETE' });
+                if (r.ok) { showToast('Customer deleted', 'success'); closeDetailModal(); loadCustomers(); }
+                else { var res = await r.json(); showToast(res.error || 'Error', 'error'); }
+            } catch(e) { showToast('Error', 'error'); }
         }
 
         // --- Record Payment ---
         async function openPayModal(customerId) {
-            const c = customers.find(x => x.id === customerId);
+            var c = customers.find(function(x){ return x.id === customerId; });
             if (!c) return;
-            history.replaceState(null, '', '#pay-' + customerId);
-
             document.getElementById('pay-customer-id').value = customerId;
-            document.getElementById('pay-customer-info').innerHTML = `
-                <strong>${escapeHtml(c.name)}</strong> — Balance: <span style="color:#e74c3c; font-weight:bold;">${currencySymbol}${c.balance.toFixed(2)}</span>
-            `;
+            document.getElementById('pay-customer-info').innerHTML = '<strong>' + escapeHtml(c.name) + '</strong> — Balance: <span style="color:#ef4444;font-weight:600;">' + currencySymbol + c.balance.toFixed(2) + '</span>';
             document.getElementById('pay-amount').value = '';
             document.getElementById('pay-amount').max = c.balance;
             document.getElementById('pay-notes').value = '';
             document.getElementById('pay-invoice-id').value = '';
 
-            // Load unpaid invoices for dropdown
-            const select = document.getElementById('pay-invoice-select');
+            var select = document.getElementById('pay-invoice-select');
             select.innerHTML = '<option value="">General payment (oldest first)</option>';
             try {
-                const r = await fetch(`/api/customers/${customerId}`);
-                const data = await r.json();
-                data.invoices.filter(i => i.status !== 'paid').forEach(inv => {
-                    const remaining = inv.total_amount - inv.paid_amount;
-                    select.innerHTML += `<option value="${inv.id}" data-remaining="${remaining}">Invoice #${inv.id} — Due: ${currencySymbol}${remaining.toFixed(2)}</option>`;
+                var r = await fetch('/api/customers/' + customerId);
+                var data = await r.json();
+                data.invoices.filter(function(i){ return i.status !== 'paid'; }).forEach(function(inv) {
+                    var remaining = inv.total_amount - inv.paid_amount;
+                    select.innerHTML += '<option value="' + inv.id + '" data-remaining="' + remaining + '">Invoice #' + inv.id + ' — Due: ' + currencySymbol + remaining.toFixed(2) + '</option>';
                 });
             } catch(e) {}
-
             document.getElementById('payment-modal').classList.add('active');
         }
 
         function onInvoiceSelect() {
-            const sel = document.getElementById('pay-invoice-select');
-            const opt = sel.options[sel.selectedIndex];
+            var sel = document.getElementById('pay-invoice-select');
+            var opt = sel.options[sel.selectedIndex];
             if (opt.value && opt.dataset.remaining) {
                 document.getElementById('pay-amount').max = opt.dataset.remaining;
-                document.getElementById('pay-amount').placeholder = `Max: ${currencySymbol}${parseFloat(opt.dataset.remaining).toFixed(2)}`;
+                document.getElementById('pay-amount').placeholder = 'Max: ' + currencySymbol + parseFloat(opt.dataset.remaining).toFixed(2);
             } else {
-                const c = customers.find(x => x.id == document.getElementById('pay-customer-id').value);
+                var c = customers.find(function(x){ return x.id == document.getElementById('pay-customer-id').value; });
                 if (c) document.getElementById('pay-amount').max = c.balance;
                 document.getElementById('pay-amount').placeholder = 'Payment amount';
             }
             document.getElementById('pay-invoice-id').value = sel.value;
         }
 
-        function closePayModal() {
-            document.getElementById('payment-modal').classList.remove('active');
-            history.replaceState(null, '', window.location.pathname);
-        }
+        function closePayModal() { document.getElementById('payment-modal').classList.remove('active'); }
 
-        document.getElementById('payment-form').addEventListener('submit', async (e) => {
+        document.getElementById('payment-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const data = {
+            var data = {
                 customer_id: parseInt(document.getElementById('pay-customer-id').value),
                 invoice_id: document.getElementById('pay-invoice-id').value ? parseInt(document.getElementById('pay-invoice-id').value) : null,
                 amount: parseFloat(document.getElementById('pay-amount').value),
@@ -722,104 +656,82 @@
                 notes: document.getElementById('pay-notes').value
             };
             if (!data.amount || data.amount <= 0) { showToast('Enter a valid amount', 'warning'); return; }
-
             try {
-                const r = await fetch('/api/payments', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-                if (r.ok) {
-                    showToast('Payment recorded!', 'success');
-                    closePayModal();
-                    loadCustomers();
-                } else {
-                    const res = await r.json();
-                    showToast(res.error || 'Error recording payment', 'error');
-                }
+                var r = await fetch('/api/payments', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+                if (r.ok) { showToast('Payment recorded!', 'success'); closePayModal(); loadCustomers(); }
+                else { var res = await r.json(); showToast(res.error || 'Error recording payment', 'error'); }
             } catch(e) { showToast('Error recording payment', 'error'); }
         });
 
         // --- Aging Report ---
         async function showAgingReport() {
-            document.getElementById('aging-content').innerHTML = '<p style="text-align:center;">Loading...</p>';
+            document.getElementById('aging-content').innerHTML = '<p style="text-align:center;padding:2rem;color:#94a3b8;">Loading...</p>';
             document.getElementById('aging-modal').classList.add('active');
-
             try {
-                const r = await fetch('/api/customers/aging-report');
-                const data = await r.json();
-
+                var r = await fetch('/api/customers/aging-report');
+                var data = await r.json();
                 if (data.length === 0) {
-                    document.getElementById('aging-content').innerHTML = '<p style="text-align:center; color:#27ae60; padding:2rem;">No outstanding balances!</p>';
+                    document.getElementById('aging-content').innerHTML = '<p style="text-align:center;color:#22c55e;padding:2rem;">No outstanding balances!</p>';
                     return;
                 }
+                var totalCurrent = 0, total30 = 0, total60 = 0, total90 = 0, totalAll = 0;
+                data.forEach(function(c){ totalCurrent += c.current; total30 += c.days_30; total60 += c.days_60; total90 += c.days_90_plus; totalAll += c.balance; });
 
-                let totalCurrent = 0, total30 = 0, total60 = 0, total90 = 0, totalAll = 0;
-                data.forEach(c => { totalCurrent += c.current; total30 += c.days_30; total60 += c.days_60; total90 += c.days_90_plus; totalAll += c.balance; });
+                var html = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.6rem;margin-bottom:1.25rem;">';
+                html += '<div style="padding:0.5rem;background:#dcfce7;border-radius:6px;text-align:center;"><div style="font-size:0.72rem;color:#64748b;">Current</div><div style="font-weight:700;">' + currencySymbol + totalCurrent.toFixed(0) + '</div></div>';
+                html += '<div style="padding:0.5rem;background:#fef3c7;border-radius:6px;text-align:center;"><div style="font-size:0.72rem;color:#64748b;">30 Days</div><div style="font-weight:700;">' + currencySymbol + total30.toFixed(0) + '</div></div>';
+                html += '<div style="padding:0.5rem;background:#fed7aa;border-radius:6px;text-align:center;"><div style="font-size:0.72rem;color:#64748b;">60 Days</div><div style="font-weight:700;">' + currencySymbol + total60.toFixed(0) + '</div></div>';
+                html += '<div style="padding:0.5rem;background:#fecaca;border-radius:6px;text-align:center;"><div style="font-size:0.72rem;color:#64748b;">90+ Days</div><div style="font-weight:700;color:#ef4444;">' + currencySymbol + total90.toFixed(0) + '</div></div>';
+                html += '<div style="padding:0.5rem;background:#f1f5f9;border-radius:6px;text-align:center;"><div style="font-size:0.72rem;color:#64748b;">Total</div><div style="font-weight:700;">' + currencySymbol + totalAll.toFixed(0) + '</div></div>';
+                html += '</div>';
 
-                let html = `
-                <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:0.75rem; margin-bottom:1.5rem;">
-                    <div style="padding:0.5rem; background:#d4edda; border-radius:6px; text-align:center;">
-                        <div style="font-size:0.75rem;">Current</div>
-                        <div style="font-weight:bold;">${currencySymbol}${totalCurrent.toFixed(2)}</div>
-                    </div>
-                    <div style="padding:0.5rem; background:#fff3cd; border-radius:6px; text-align:center;">
-                        <div style="font-size:0.75rem;">30 Days</div>
-                        <div style="font-weight:bold;">${currencySymbol}${total30.toFixed(2)}</div>
-                    </div>
-                    <div style="padding:0.5rem; background:#ffeeba; border-radius:6px; text-align:center;">
-                        <div style="font-size:0.75rem;">60 Days</div>
-                        <div style="font-weight:bold;">${currencySymbol}${total60.toFixed(2)}</div>
-                    </div>
-                    <div style="padding:0.5rem; background:#f8d7da; border-radius:6px; text-align:center;">
-                        <div style="font-size:0.75rem;">90+ Days</div>
-                        <div style="font-weight:bold; color:#e74c3c;">${currencySymbol}${total90.toFixed(2)}</div>
-                    </div>
-                    <div style="padding:0.5rem; background:#e2e3e5; border-radius:6px; text-align:center;">
-                        <div style="font-size:0.75rem;">Total</div>
-                        <div style="font-weight:bold;">${currencySymbol}${totalAll.toFixed(2)}</div>
-                    </div>
-                </div>`;
-
-                html += `<div class="report-table-scroll"><table><thead><tr>
-                    <th>Customer</th><th>Phone</th><th>Credit Limit</th><th>Current</th><th>30 Days</th><th>60 Days</th><th>90+ Days</th><th>Total</th><th>Action</th>
-                </tr></thead><tbody>`;
-                data.forEach(c => {
-                    html += `<tr>
-                        <td><strong>${escapeHtml(c.name)}</strong></td>
-                        <td>${c.phone || '-'}</td>
-                        <td>${currencySymbol}${(c.credit_limit || 0).toFixed(2)}</td>
-                        <td>${c.current > 0 ? currencySymbol + c.current.toFixed(2) : '-'}</td>
-                        <td style="color:${c.days_30 > 0 ? '#e67e22' : ''}">${c.days_30 > 0 ? currencySymbol + c.days_30.toFixed(2) : '-'}</td>
-                        <td style="color:${c.days_60 > 0 ? '#d35400' : ''}">${c.days_60 > 0 ? currencySymbol + c.days_60.toFixed(2) : '-'}</td>
-                        <td style="color:${c.days_90_plus > 0 ? '#e74c3c' : ''}; font-weight:${c.days_90_plus > 0 ? 'bold' : ''}">${c.days_90_plus > 0 ? currencySymbol + c.days_90_plus.toFixed(2) : '-'}</td>
-                        <td style="font-weight:bold;">${currencySymbol}${c.balance.toFixed(2)}</td>
-                        <td><button class="btn btn-success" style="font-size:0.75rem; padding:0.2rem 0.4rem;" onclick="document.getElementById('aging-modal').classList.remove('active'); openPayModal(${c.id})">Pay</button></td>
-                    </tr>`;
+                html += '<div style="max-height:350px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;"><table style="width:100%;border-collapse:collapse;font-size:0.85rem;"><thead><tr style="background:#f1f5f9;">';
+                html += '<th style="padding:0.5rem 0.6rem;text-align:left;font-weight:600;font-size:0.75rem;color:#64748b;">Customer</th><th style="padding:0.5rem;text-align:right;">Current</th><th style="padding:0.5rem;text-align:right;">30d</th><th style="padding:0.5rem;text-align:right;">60d</th><th style="padding:0.5rem;text-align:right;">90+</th><th style="padding:0.5rem;text-align:right;">Total</th><th style="padding:0.5rem;"></th>';
+                html += '</tr></thead><tbody>';
+                data.forEach(function(c) {
+                    html += '<tr style="border-bottom:1px solid #f1f5f9;">';
+                    html += '<td style="padding:0.5rem 0.6rem;font-weight:500;">' + escapeHtml(c.name) + '</td>';
+                    html += '<td style="padding:0.5rem;text-align:right;">' + (c.current > 0 ? currencySymbol + c.current.toFixed(0) : '-') + '</td>';
+                    html += '<td style="padding:0.5rem;text-align:right;color:#92400e;">' + (c.days_30 > 0 ? currencySymbol + c.days_30.toFixed(0) : '-') + '</td>';
+                    html += '<td style="padding:0.5rem;text-align:right;color:#c2410c;">' + (c.days_60 > 0 ? currencySymbol + c.days_60.toFixed(0) : '-') + '</td>';
+                    html += '<td style="padding:0.5rem;text-align:right;color:#ef4444;font-weight:600;">' + (c.days_90_plus > 0 ? currencySymbol + c.days_90_plus.toFixed(0) : '-') + '</td>';
+                    html += '<td style="padding:0.5rem;text-align:right;font-weight:700;">' + currencySymbol + c.balance.toFixed(0) + '</td>';
+                    html += '<td style="padding:0.5rem;"><button onclick="document.getElementById(\'aging-modal\').classList.remove(\'active\');openPayModal(' + c.id + ')" style="font-size:0.72rem;padding:0.2rem 0.4rem;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:4px;cursor:pointer;">Pay</button></td>';
+                    html += '</tr>';
                 });
                 html += '</tbody></table></div>';
-
                 document.getElementById('aging-content').innerHTML = html;
             } catch(e) {
-                document.getElementById('aging-content').innerHTML = '<p style="color:#e74c3c;">Error loading report</p>';
+                document.getElementById('aging-content').innerHTML = '<p style="color:#ef4444;text-align:center;">Error loading report</p>';
             }
         }
 
-        // Init
+        // --- Export CSV ---
+        function exportCustomersCSV() {
+            var search = (document.getElementById('customer-search').value || '').toLowerCase();
+            var rows = customers.filter(function(c) {
+                if (currentFilter === 'with-balance' && !(c.balance > 0)) return false;
+                if (currentFilter === 'clear' && c.balance > 0) return false;
+                if (search) return c.name.toLowerCase().includes(search) || (c.phone||'').includes(search);
+                return true;
+            });
+            var headers = ['Name','Phone','Email','Type','Credit Limit','Balance','Lifetime Sales','Orders'];
+            var csv = [headers].concat(rows.map(function(c){
+                return [c.name, c.phone||'', c.email||'', c.customer_type||'', (c.credit_limit||0).toFixed(2), (c.balance||0).toFixed(2), (c.lifetime_sales||0).toFixed(2), c.invoice_count||0]
+                    .map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; });
+            })).map(function(r){ return r.join(','); }).join('\n');
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            a.download = 'customers_' + new Date().toISOString().slice(0,10) + '.csv';
+            a.click();
+        }
+
+        // --- Init ---
         loadUserInfo();
-        loadCustomers().then(() => {
-            // Restore modal state from URL hash on refresh
-            const hash = window.location.hash;
-            if (hash === '#add') {
-                openAddModal();
-            } else if (hash.startsWith('#edit-')) {
-                const id = parseInt(hash.replace('#edit-', ''));
-                if (id) editCustomer(id);
-            } else if (hash.startsWith('#ledger-')) {
-                const id = parseInt(hash.replace('#ledger-', ''));
-                if (id) viewLedger(id);
-            } else if (hash.startsWith('#pay-')) {
-                const id = parseInt(hash.replace('#pay-', ''));
-                if (id) openPayModal(id);
-            }
-        });
-    
+        loadCustomers();
+    </script>
+    <script src="/static/js/session.js"></script>
+    <script>
         async function loadShopSwitcher(activeShopId) {
             try {
                 const resp = await fetch('/api/shops');
@@ -849,7 +761,7 @@
                 window.location.reload();
             } catch (e) { console.error('Failed to switch shop', e); }
         }
-</script>
+    </script>
     </div><!-- /main-wrapper -->
 </body>
 </html>
