@@ -19,7 +19,7 @@ A full-featured Point of Sale (POS) web application for managing one or multiple
 - ✅ **Dashboard with charts** and analytics
 - ✅ **Background scheduler** for automated tasks
 - ✅ **Advanced POS** with category tabs, held carts, refunds, keyboard shortcuts
-- ✅ **Product management toolbar** with row selection, inline editing, bulk operations
+- ✅ **Product management** with master-detail layout, variant grouping, and price overrides
 - ✅ **CSV import/export** for products
 - ✅ **Audit log** tracking all product changes
 - ✅ **Per-product reorder levels** with stock movement charts
@@ -76,25 +76,30 @@ The system has **four roles**, each with distinct permissions:
 - **Sales Attribution**: Track which user made each sale
 
 ### 📦 Product Management (Admin Only)
-- **Toolbar-based actions**: Click a row to select, then use toolbar buttons (Edit, Stock, Delete, History, Audit, Duplicate, Reorder Level)
-- **Double-click to edit**: Opens edit modal directly on any row
-- **Inline quick-edit**: Double-click a cell (Name, Price, Cost Price, Stock) to edit in-place
-- **Keyboard navigation**: Arrow keys to move selection, Enter to edit, Delete to remove
-- Add, edit, and delete products with cost price and sell price
+- **Master-detail layout**: Clean product list with side drawer for details
+- **Product grouping**: Variants (same name, different size/color) are grouped into a single row
+- **5-column product list**: Product, Variants count, Stock, Price, Status
+- **Side drawer**: Click a product to open a detail panel showing:
+  - Summary stats (Total Stock, Sell Price, Profit/Unit)
+  - Variant detail panel (SKU, Stock, Price with override badge)
+  - Variants table with size/color/stock breakdown
+- **Product-level editing**: "Edit Product" changes name, category, cost, price, and description across ALL variants at once
+- **Variant-level actions**: Click a variant row to select it, then use Adjust Stock, History, or Delete for that specific variant
+- **Price override system**: Set custom price per variant (e.g., XXL costs more) — group edits preserve overrides
+  - "Override Price" button in variant detail panel
+  - "Reset to Product Price" to revert to group default
+  - Yellow "Override" badge shows which variants have custom pricing
+- **Variant creation**: Bulk-create variants by selecting sizes and colors (creates all combinations)
 - **Auto-generated SKU**: Leave blank to auto-generate (e.g., SHR-001)
 - **CSV Export**: Download all products as a CSV file
 - **CSV Import**: Upload a CSV to bulk-add or update products (matches by SKU)
-- **Bulk stock update**: Select multiple products and update stock in one operation
 - **Duplicate product**: Clone a product with one click (creates copy with 0 stock)
-- **Per-product reorder level**: Set custom low stock threshold per product (overrides global default)
-- **Audit log**: Track who changed what, when, and see old vs new values
-- **Sortable columns**: Click any column header to sort ascending/descending
-- **Search & filter**: Search by name, SKU, or category with category filter tabs
-- **Pagination**: Choose 25/50/100/All products per page with Prev/Next navigation
-- **Stock status badges**: In Stock (green), Low Stock (orange), Out of Stock (red)
-- **Row highlighting**: Red for out-of-stock, yellow for low stock, blue for selected
-- **Product count summary**: Shows total, low stock, and out-of-stock counts
-- **Stock history with chart**: SVG line chart showing stock level over time
+- **Per-product reorder level**: Set custom low stock threshold per variant (overrides global default)
+- **Audit log**: Track who changed what, when — see old vs new values
+- **Search**: Search by name, SKU, size, color, or category
+- **Stock status dots**: Green (in stock), Orange (low/some out), Red (all out of stock)
+- **Summary cards**: Products count, Units in Stock, Low Stock alerts
+- **Stock history**: View import/export history per variant with timestamps
 - **Custom Categories**: Create your own product categories
 
 ### 📊 Inventory Control

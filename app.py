@@ -791,10 +791,15 @@ def update_product(product_id):
 
     try:
         # Fetch old product for audit log
-        old = cursor.execute('SELECT name, category, cost_price, price, sku, description, low_stock_threshold, size, color FROM products WHERE id=? AND shop_id=?', (product_id, get_current_shop_id())).fetchone()
+        current_shop = get_current_shop_id()
+        if current_shop:
+            old = cursor.execute('SELECT name, category, cost_price, price, sku, description, low_stock_threshold, size, color, shop_id FROM products WHERE id=? AND shop_id=?', (product_id, current_shop)).fetchone()
+        else:
+            old = cursor.execute('SELECT name, category, cost_price, price, sku, description, low_stock_threshold, size, color, shop_id FROM products WHERE id=?', (product_id,)).fetchone()
         if not old:
             return jsonify({'success': False, 'error': 'Product not found'}), 404
 
+        product_shop_id = old['shop_id']
         changes = []
         field_map = {
             'name': ('name', str),
@@ -817,19 +822,155 @@ def update_product(product_id):
         cursor.execute('''
             UPDATE products
             SET name=?, category=?, cost_price=?, price=?, description=?, sku=?, low_stock_threshold=?, size=?, color=?
-            WHERE id=? AND shop_id=?
+            WHERE id=?
         ''', (data['name'], data['category'], data.get('cost_price', 0), data['price'],
               data.get('description', ''), data.get('sku', ''),
               int(data['low_stock_threshold']) if data.get('low_stock_threshold') not in (None, '', 'null') else None,
               data.get('size', '').strip() or None, data.get('color', '').strip() or None,
-              product_id, get_current_shop_id()))
+              product_id))
 
         # Write audit log entries
         for field, old_val, new_val in changes:
             cursor.execute('''
                 INSERT INTO product_audit_log (shop_id, product_id, user_id, username, action, field_name, old_value, new_value)
                 VALUES (?, ?, ?, ?, 'edit', ?, ?, ?)
-            ''', (get_current_shop_id(), product_id, session.get('user_id'), session.get('username'), field, old_val, new_val))
+            ''', (product_shop_id, product_id, session.get('user_id'), session.get('username'), field, old_val, new_val))
+
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+@app.route('/api/products/group-update', methods=['PUT'])
+@login_required
+@admin_required
+def update_product_group():
+    """Update all variants of a product group (same name) at once.
+    Updates: name, category, cost_price, price, description."""
+    data = request.json
+    old_name = data.get('old_name')
+    new_name = data.get('name', '').strip()
+    category = data.get('category', '').strip()
+    cost_price = float(data.get('cost_price', 0))
+    price = float(data.get('price', 0))
+    description = data.get('description', '').strip()
+
+    if not old_name or not new_name or not category:
+        return jsonify({'success': False, 'error': 'Name and Category are required'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        flt_sql, flt_params = shop_filter()
+        # Get all variants in this group
+        variants = cursor.execute(
+            f'SELECT id, shop_id, name, category, cost_price, price, description FROM products WHERE name=? {flt_sql}',
+            [old_name] + flt_params
+        ).fetchall()
+
+        if not variants:
+            return jsonify({'success': False, 'error': 'Product group not found'}), 404
+
+        # Determine old group price (use first variant as reference)
+        old_group_price = float(variants[0]['price'] or 0)
+        old_group_cost = float(variants[0]['cost_price'] or 0)
+
+        # Update name, category, description for ALL variants
+        cursor.execute(
+            f'UPDATE products SET name=?, category=?, description=? WHERE name=? {flt_sql}',
+            [new_name, category, description, old_name] + flt_params
+        )
+
+        # Update price/cost ONLY on non-overridden variants
+        # A variant is "overridden" if its price differs from the old group price
+        for v in variants:
+            v_price = float(v['price'] or 0)
+            v_cost = float(v['cost_price'] or 0)
+            price_matches = abs(v_price - old_group_price) < 0.01
+            cost_matches = abs(v_cost - old_group_cost) < 0.01
+
+            updates = []
+            params = []
+            if price_matches and abs(v_price - price) > 0.001:
+                updates.append('price=?')
+                params.append(price)
+            if cost_matches and abs(v_cost - cost_price) > 0.001:
+                updates.append('cost_price=?')
+                params.append(cost_price)
+            if updates:
+                params.append(v['id'])
+                cursor.execute(f'UPDATE products SET {", ".join(updates)} WHERE id=?', params)
+
+        # Audit log - record changes for first variant (represents the group)
+        first = variants[0]
+        changes = []
+        if first['name'] != new_name:
+            changes.append(('name', first['name'], new_name))
+        if first['category'] != category:
+            changes.append(('category', first['category'], category))
+        if old_group_cost != cost_price:
+            changes.append(('cost_price', str(first['cost_price']), str(cost_price)))
+        if old_group_price != price:
+            changes.append(('price', str(first['price']), str(price)))
+        if (first['description'] or '') != description:
+            changes.append(('description', first['description'] or '', description))
+
+        for field, old_val, new_val in changes:
+            for v in variants:
+                cursor.execute('''
+                    INSERT INTO product_audit_log (shop_id, product_id, user_id, username, action, field_name, old_value, new_value)
+                    VALUES (?, ?, ?, ?, 'group_edit', ?, ?, ?)
+                ''', (v['shop_id'], v['id'], session.get('user_id'), session.get('username'), field, old_val, new_val))
+
+        conn.commit()
+        return jsonify({'success': True, 'updated': len(variants)})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+@app.route('/api/products/<int:product_id>/variant-update', methods=['PUT'])
+@login_required
+@admin_required
+def update_variant_detail(product_id):
+    """Update variant-level fields: sku, low_stock_threshold, price/cost override."""
+    data = request.json
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        flt_sql, flt_params = shop_filter()
+        product = cursor.execute(
+            f'SELECT id, shop_id, sku, low_stock_threshold, cost_price, price FROM products WHERE id=? {flt_sql}',
+            [product_id] + flt_params
+        ).fetchone()
+        if not product:
+            return jsonify({'success': False, 'error': 'Variant not found'}), 404
+
+        updates = []
+        params = []
+
+        if 'sku' in data:
+            updates.append('sku=?')
+            params.append(data['sku'].strip() if data['sku'] else None)
+        if 'low_stock_threshold' in data:
+            updates.append('low_stock_threshold=?')
+            params.append(int(data['low_stock_threshold']) if data['low_stock_threshold'] not in (None, '', 'null') else None)
+        if 'price_override' in data and data['price_override'] is not None:
+            updates.append('price=?')
+            params.append(float(data['price_override']))
+        if 'cost_override' in data and data['cost_override'] is not None:
+            updates.append('cost_price=?')
+            params.append(float(data['cost_override']))
+
+        if updates:
+            params.append(product_id)
+            cursor.execute(f'UPDATE products SET {", ".join(updates)} WHERE id=?', params)
 
         conn.commit()
         return jsonify({'success': True})
@@ -868,13 +1009,14 @@ def update_stock(product_id):
         # Get current stock (scoped to shop)
         flt_sql, flt_params = shop_filter()
         product = cursor.execute(
-            f'SELECT stock_quantity FROM products WHERE id=? {flt_sql}',
+            f'SELECT stock_quantity, shop_id FROM products WHERE id=? {flt_sql}',
             [product_id] + flt_params
         ).fetchone()
         if not product:
             return jsonify({'success': False, 'error': 'Product not found'}), 404
 
         current_stock = product['stock_quantity']
+        product_shop_id = product['shop_id']
         new_stock = current_stock + quantity_change
 
         if new_stock < 0:
@@ -890,7 +1032,7 @@ def update_stock(product_id):
         cursor.execute('''
             INSERT INTO stock_history (shop_id, product_id, quantity_change, action_type, note)
             VALUES (?, ?, ?, ?, ?)
-        ''', (get_current_shop_id(), product_id, quantity_change, action_type, note))
+        ''', (product_shop_id, product_id, quantity_change, action_type, note))
 
         conn.commit()
         return jsonify({'success': True, 'new_stock': new_stock})
