@@ -4600,6 +4600,82 @@ def suppliers_page():
 def purchase_orders_page():
     return render_template('purchase_orders.html')
 
+# --- Product-Supplier Links API ---
+
+@app.route('/api/product-suppliers/<int:product_id>', methods=['GET'])
+@login_required
+@admin_required
+def get_product_suppliers(product_id):
+    """Get all suppliers linked to a product"""
+    conn = get_db_connection()
+    rows = conn.execute('''
+        SELECT ps.*, s.name as supplier_name
+        FROM product_suppliers ps
+        JOIN suppliers s ON ps.supplier_id = s.id
+        WHERE ps.product_id = ?
+        ORDER BY s.name
+    ''', (product_id,)).fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route('/api/product-suppliers', methods=['POST'])
+@login_required
+@admin_required
+def add_product_supplier():
+    """Link a product to a supplier"""
+    data = request.json
+    product_id = data.get('product_id')
+    supplier_id = data.get('supplier_id')
+    if not product_id or not supplier_id:
+        return jsonify({'success': False, 'error': 'product_id and supplier_id required'}), 400
+    conn = get_db_connection()
+    try:
+        conn.execute('''
+            INSERT INTO product_suppliers (product_id, supplier_id, supplier_cost, supplier_sku)
+            VALUES (?, ?, ?, ?)
+        ''', (product_id, supplier_id, data.get('supplier_cost'), data.get('supplier_sku')))
+        conn.commit()
+        return jsonify({'success': True}), 201
+    except Exception as e:
+        conn.rollback()
+        if 'Duplicate' in str(e):
+            return jsonify({'success': False, 'error': 'Already linked'}), 409
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+
+@app.route('/api/product-suppliers/<int:link_id>', methods=['DELETE'])
+@login_required
+@admin_required
+def delete_product_supplier(link_id):
+    """Remove a product-supplier link"""
+    conn = get_db_connection()
+    conn.execute('DELETE FROM product_suppliers WHERE id=?', (link_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/suppliers/<int:supplier_id>/products', methods=['GET'])
+@login_required
+@admin_required
+def get_supplier_products(supplier_id):
+    """Get all products linked to a supplier (for PO creation)"""
+    conn = get_db_connection()
+    flt_sql, flt_params = shop_filter('p')
+    rows = conn.execute(f'''
+        SELECT p.*, ps.supplier_cost, ps.supplier_sku
+        FROM products p
+        JOIN product_suppliers ps ON ps.product_id = p.id
+        WHERE ps.supplier_id = ? {flt_sql}
+        ORDER BY p.name
+    ''', [supplier_id] + flt_params).fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+
 # --- Suppliers API ---
 
 @app.route('/api/suppliers', methods=['GET'])
@@ -4728,7 +4804,7 @@ def get_purchase_orders():
     for o in orders:
         od = dict(o)
         items = conn.execute('''
-            SELECT pi.*, p.name as product_name, p.sku
+            SELECT pi.*, p.name as product_name, p.sku, p.size, p.color
             FROM po_items pi
             LEFT JOIN products p ON pi.product_id = p.id
             WHERE pi.po_id = ?
@@ -4754,11 +4830,21 @@ def create_purchase_order():
     try:
         shop_id = get_current_shop_id()
         total = sum(item['quantity'] * item['unit_cost'] for item in items)
+        status = data.get('status', 'ordered')
+        if status not in ('draft', 'ordered'):
+            status = 'ordered'
+        expected_date = data.get('expected_date') or None
+        reference = (data.get('reference') or '').strip() or None
+
         cursor.execute('''
-            INSERT INTO purchase_orders (shop_id, supplier_id, status, total_amount, notes, created_by)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (shop_id, data['supplier_id'], 'ordered', total, data.get('notes', '').strip(), session.get('user_id')))
+            INSERT INTO purchase_orders (shop_id, supplier_id, status, total_amount, notes, expected_date, reference, created_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (shop_id, data['supplier_id'], status, total, data.get('notes', '').strip(), expected_date, reference, session.get('user_id')))
         po_id = cursor.lastrowid
+
+        # Generate PO number
+        po_number = f'PO-{po_id:05d}'
+        cursor.execute('UPDATE purchase_orders SET po_number=? WHERE id=?', (po_number, po_id))
 
         for item in items:
             if not item.get('product_id') or not item.get('quantity') or item['quantity'] <= 0:
@@ -4769,7 +4855,7 @@ def create_purchase_order():
             ''', (po_id, item['product_id'], item['quantity'], item['unit_cost']))
 
         conn.commit()
-        return jsonify({'success': True, 'id': po_id}), 201
+        return jsonify({'success': True, 'id': po_id, 'po_number': po_number}), 201
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'error': str(e)}), 400
@@ -4794,7 +4880,7 @@ def get_purchase_order(po_id):
         return jsonify({'error': 'Purchase order not found'}), 404
     od = dict(order)
     items = conn.execute('''
-        SELECT pi.*, p.name as product_name, p.sku
+        SELECT pi.*, p.name as product_name, p.sku, p.size, p.color
         FROM po_items pi
         LEFT JOIN products p ON pi.product_id = p.id
         WHERE pi.po_id = ?
@@ -4821,6 +4907,32 @@ def delete_purchase_order(po_id):
     try:
         conn.execute('DELETE FROM po_items WHERE po_id=?', (po_id,))
         conn.execute('DELETE FROM purchase_orders WHERE id=?', (po_id,))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+@app.route('/api/purchase-orders/<int:po_id>/submit', methods=['POST'])
+@login_required
+@admin_required
+def submit_purchase_order(po_id):
+    """Submit a draft PO — changes status from draft to ordered"""
+    conn = get_db_connection()
+    flt_sql, flt_params = shop_filter()
+    order = conn.execute(
+        f'SELECT status FROM purchase_orders WHERE id=? {flt_sql}', [po_id] + flt_params
+    ).fetchone()
+    if not order:
+        conn.close()
+        return jsonify({'error': 'Purchase order not found'}), 404
+    if order['status'] != 'draft':
+        conn.close()
+        return jsonify({'success': False, 'error': 'Only draft POs can be submitted'}), 400
+    try:
+        conn.execute("UPDATE purchase_orders SET status='ordered' WHERE id=?", (po_id,))
         conn.commit()
         return jsonify({'success': True})
     except Exception as e:
