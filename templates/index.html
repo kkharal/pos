@@ -8,57 +8,82 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="/static/js/ui.js"></script>
     <style>
-        /* ===== Table styling (matches reports page) ===== */
-        .report-table-scroll { max-height: 420px; overflow-y: auto; border-radius: 6px; border: 1px solid #e9ecef; }
-        .report-table-scroll table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-        .report-table-scroll thead th {
-            position: sticky; top: 0; z-index: 2;
-            background: #2c3e50; color: white;
-            padding: 0.65rem 1rem; text-align: left;
-            font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.03em;
-            border-bottom: 2px solid #1a252f;
-        }
-        .report-table-scroll tbody tr:nth-child(even) { background: #f8f9fa; }
-        .report-table-scroll tbody tr:hover { background: #e8f4fd; transition: background 0.12s; }
-        .report-table-scroll tbody td { padding: 0.6rem 1rem; border-bottom: 1px solid #edf0f2; vertical-align: middle; }
-        .report-table-scroll tbody tr:last-child td { border-bottom: none; }
+        /* ===== Dashboard Layout ===== */
+        .dash-layout { background: #f8fafc; min-height: calc(100vh - 80px); padding: 1.75rem 2rem; }
 
-        /* ===== Section header accents ===== */
-        .card h2 {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding-left: 0.75rem;
-            border-left: 4px solid #3498db;
-            margin-bottom: 1.25rem;
-            font-size: 1.05rem;
-            color: #2c3e50;
-        }
+        /* ===== Header ===== */
+        .dash-header { margin-bottom: 1.5rem; }
+        .dash-greeting { font-size: 1.35rem; font-weight: 700; color: #1e293b; }
+        .dash-subtitle { font-size: 0.85rem; color: #64748b; margin-top: 0.2rem; }
 
-        /* ===== Stat card hover lift (link cards) ===== */
-        a.stat-card { transition: transform 0.15s, box-shadow 0.15s; }
-        a.stat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(52,152,219,0.2); }
+        /* ===== Quick Actions ===== */
+        .quick-actions { display: flex; gap: 0.6rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .quick-action { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 500; text-decoration: none; border: 1px solid #e2e8f0; transition: all 0.15s; cursor: pointer; }
+        .quick-action.primary { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .quick-action.primary:hover { background: #2563eb; }
+        .quick-action.secondary { background: white; color: #475569; }
+        .quick-action.secondary:hover { background: #f1f5f9; border-color: #cbd5e1; }
 
-        /* ===== Low stock banner ===== */
-        #low-stock-banner {
-            display: none; align-items: center; gap: 0.75rem;
-            background: #fff8e1; border: 1px solid #ffe082; border-left: 4px solid #f39c12;
-            border-radius: 8px; padding: 0.7rem 1rem; margin-bottom: 1.25rem;
-            font-size: 0.9rem; color: #7f5200;
-        }
-        #low-stock-banner a { color: #e67e22; font-weight: 600; text-decoration: none; }
-        #low-stock-banner a:hover { text-decoration: underline; }
-        #low-stock-banner .banner-close { margin-left: auto; cursor: pointer; opacity: 0.45; font-size: 1rem; line-height: 1; }
-        #low-stock-banner .banner-close:hover { opacity: 1; }
+        /* ===== Alert Banner ===== */
+        .alert-banner { display: none; align-items: center; gap: 0.75rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 0.75rem 1.25rem; margin-bottom: 1.5rem; font-size: 0.88rem; color: #92400e; }
+        .alert-banner.show { display: flex; }
+        .alert-banner .alert-icon { font-size: 1.1rem; }
+        .alert-banner .alert-text { flex: 1; font-weight: 500; }
+        .alert-banner .alert-link { color: #d97706; font-weight: 600; text-decoration: none; white-space: nowrap; }
+        .alert-banner .alert-link:hover { text-decoration: underline; }
+        .alert-banner .alert-close { color: #d97706; opacity: 0.5; cursor: pointer; font-size: 1.1rem; line-height: 1; padding: 0.2rem; }
+        .alert-banner .alert-close:hover { opacity: 1; }
 
-        /* ===== Payment method badges ===== */
-        .pay-badge {
-            display: inline-block; font-size: 0.7rem; font-weight: 700;
-            padding: 0.1rem 0.4rem; border-radius: 10px; vertical-align: middle;
-            text-transform: uppercase; letter-spacing: 0.04em;
+        /* ===== KPI Grid ===== */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.75rem; }
+        .kpi-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.1rem 1.25rem; transition: box-shadow 0.15s; }
+        .kpi-card.link { cursor: pointer; text-decoration: none; color: inherit; display: block; }
+        .kpi-card.link:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .kpi-label { font-size: 0.72rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.35rem; }
+        .kpi-value { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
+        .kpi-value.green { color: #16a34a; }
+        .kpi-value.blue { color: #2563eb; }
+        .kpi-value.orange { color: #ea580c; }
+        .kpi-value.red { color: #dc2626; }
+        .kpi-value.purple { color: #7c3aed; }
+        .kpi-change { font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem; }
+        .kpi-change.up { color: #16a34a; }
+        .kpi-change.down { color: #dc2626; }
+
+        /* ===== Content Grid ===== */
+        .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+        @media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
+
+        /* ===== Cards ===== */
+        .dash-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; }
+        .dash-card-title { font-size: 0.88rem; font-weight: 600; color: #1e293b; margin-bottom: 1rem; }
+
+        /* ===== Top Products ===== */
+        .top-product { display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 0; border-bottom: 1px solid #f1f5f9; }
+        .top-product:last-child { border-bottom: none; }
+        .top-product-rank { width: 24px; height: 24px; border-radius: 6px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; color: #64748b; flex-shrink: 0; }
+        .top-product-rank.gold { background: #fef3c7; color: #92400e; }
+        .top-product-rank.silver { background: #f1f5f9; color: #475569; }
+        .top-product-rank.bronze { background: #ffedd5; color: #9a3412; }
+        .top-product-name { flex: 1; font-size: 0.84rem; font-weight: 500; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .top-product-stat { font-size: 0.82rem; font-weight: 600; color: #475569; white-space: nowrap; }
+
+        /* ===== Activity Feed ===== */
+        .activity-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid #f1f5f9; }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+        .activity-icon.sale { background: #dcfce7; }
+        .activity-icon.stock { background: #e0e7ff; }
+        .activity-detail { flex: 1; min-width: 0; }
+        .activity-title { font-size: 0.84rem; color: #1e293b; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .activity-time { font-size: 0.72rem; color: #94a3b8; }
+        .activity-amount { font-size: 0.85rem; font-weight: 600; color: #16a34a; white-space: nowrap; }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .dash-layout { padding: 1rem; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
         }
-        .pay-badge.cash   { background: #d4edda; color: #155724; }
-        .pay-badge.credit { background: #fff3cd; color: #856404; }
-        .pay-badge.card   { background: #cce5ff; color: #004085; }
-        .pay-badge.other  { background: #e9ecef; color: #495057; }
     </style>
 </head>
 <body class="has-sidebar">
@@ -75,7 +100,7 @@
             <a href="/pos" class="sidebar-item"><span class="sidebar-icon">&#128722;</span><span class="sidebar-label">Point of Sale</span></a>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Sales</div>
-            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">&#128203;</span><span class="sidebar-label">Sales History</span></a>
+            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">&#128203;</span><span class="sidebar-label">Orders</span></a>
             <a href="/reports" class="sidebar-item"><span class="sidebar-icon">&#128200;</span><span class="sidebar-label">Reports</span></a>
             <div class="sidebar-divider admin-only"></div>
             <div class="sidebar-section-title admin-only">Inventory</div>
@@ -127,161 +152,86 @@
             </div>
         </header>
 
-
-    <div class="container">
-        <h1 style="font-size:1.35rem; font-weight:700; color:#2c3e50; margin-bottom:0.25rem;">Dashboard</h1>
-        <p id="greeting" style="color: #7f8c8d; margin-bottom: 1rem; font-size: 0.95rem;"></p>
-
-        <!-- Quick Actions Bar -->
-        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-            <a href="/pos" class="btn btn-success" style="text-decoration: none; display: inline-block;">
-                🛒 New Sale
-            </a>
-            <a href="/products" class="btn btn-primary admin-only" style="text-decoration: none; display: inline-block;">
-                + Add Product
-            </a>
-            <a href="/reports" class="btn btn-secondary" style="text-decoration: none; display: inline-block;">
-                📊 View Reports
-            </a>
-        </div>
-
-        <!-- Low Stock Banner -->
-        <div id="low-stock-banner">
-            <span>⚠️</span>
-            <span id="low-stock-banner-text"></span>
-            <a href="/products?stock=low">View Products →</a>
-            <span class="banner-close" onclick="this.parentElement.style.display='none'" title="Dismiss">✕</span>
-        </div>
-
-        <!-- Key Metrics -->
-        <div class="stats-grid">
-            <a href="/products" class="stat-card" style="text-decoration: none; color: inherit; cursor: pointer;">
-                <h3>Total Products</h3>
-                <div class="value" id="total-products">0</div>
-            </a>
-            <a href="/products?stock=low" class="stat-card" style="text-decoration: none; color: inherit; cursor: pointer;">
-                <h3>Low Stock Items</h3>
-                <div class="value" style="color: #e67e22;" id="low-stock">0</div>
-            </a>
-            <a href="/products?stock=out" class="stat-card" style="text-decoration: none; color: inherit; cursor: pointer;">
-                <h3>Out of Stock</h3>
-                <div class="value" style="color: #e74c3c;" id="out-of-stock">0</div>
-            </a>
-            <div class="stat-card">
-                <h3>Today's Sales</h3>
-                <div class="value" id="today-sales">$0.00</div>
+        <div class="dash-layout">
+            <!-- Header -->
+            <div class="dash-header">
+                <div class="dash-greeting" id="greeting">Good evening 👋</div>
+                <div class="dash-subtitle">Here's your store overview</div>
             </div>
-            <div class="stat-card admin-only">
-                <h3>Today's Profit</h3>
-                <div class="value" style="color: #27ae60;" id="today-profit">$0.00</div>
-            </div>
-            <div class="stat-card">
-                <h3>Transactions Today</h3>
-                <div class="value" id="today-count">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>Avg Transaction</h3>
-                <div class="value" style="color: #3498db;" id="avg-transaction">$0.00</div>
-            </div>
-            <div class="stat-card">
-                <h3>Discounts Today</h3>
-                <div class="value" style="color: #f39c12;" id="total-discount">$0.00</div>
-            </div>
-        </div>
 
-        <!-- Cash Flow Overview (Admin Only) -->
-        <div class="card admin-only" style="margin-top: 1.5rem;">
-            <h2>💰 Cash Flow Overview</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div style="background: #eafaf1; padding: 1rem; border-radius: 8px; border-left: 4px solid #27ae60;">
-                    <div style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 0.3rem;">Cash Collected Today</div>
-                    <div style="font-size: 1.4rem; font-weight: bold; color: #27ae60;" id="cash-collected-today">$0.00</div>
-                </div>
-                <div style="background: #fef9e7; padding: 1rem; border-radius: 8px; border-left: 4px solid #f39c12;">
-                    <div style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 0.3rem;">Credit Sales Today</div>
-                    <div style="font-size: 1.4rem; font-weight: bold; color: #f39c12;" id="credit-sales-today">$0.00</div>
-                </div>
-                <div style="background: #fdedec; padding: 1rem; border-radius: 8px; border-left: 4px solid #e74c3c;">
-                    <div style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 0.3rem;">Total Outstanding</div>
-                    <div style="font-size: 1.4rem; font-weight: bold; color: #e74c3c;" id="total-outstanding">$0.00</div>
-                </div>
-                <div style="background: #f4ecf7; padding: 1rem; border-radius: 8px; border-left: 4px solid #8e44ad;">
-                    <div style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 0.3rem;">Overdue</div>
-                    <div style="font-size: 1.4rem; font-weight: bold; color: #8e44ad;" id="overdue-amount">$0.00</div>
-                    <div style="font-size: 0.8rem; color: #7f8c8d;" id="overdue-count"></div>
-                </div>
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <a href="/pos" class="quick-action primary">🛒 New Sale</a>
+                <a href="/products" class="quick-action secondary admin-only">+ Add Product</a>
+                <a href="/reports" class="quick-action secondary">📊 Reports</a>
+                <a href="/sales" class="quick-action secondary">📋 Orders</a>
             </div>
-        </div>
 
-        <!-- Today vs Yesterday Comparison -->
-        <div class="card">
-            <h2 style="margin-bottom: 1rem;">📈 Today vs Yesterday</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px;">
-                    <div style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 0.5rem;">Sales</div>
-                    <div style="font-size: 1.3rem; font-weight: bold;" id="sales-comparison">-</div>
-                    <div style="font-size: 0.85rem; margin-top: 0.3rem;" id="sales-change">-</div>
-                </div>
-                <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px;">
-                    <div style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 0.5rem;">Transactions</div>
-                    <div style="font-size: 1.3rem; font-weight: bold;" id="transactions-comparison">-</div>
-                    <div style="font-size: 0.85rem; margin-top: 0.3rem;" id="transactions-change">-</div>
-                </div>
-                <div class="admin-only" style="background: #f8f9fa; padding: 1rem; border-radius: 6px;">
-                    <div style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 0.5rem;">Profit</div>
-                    <div style="font-size: 1.3rem; font-weight: bold;" id="profit-comparison">-</div>
-                    <div style="font-size: 0.85rem; margin-top: 0.3rem;" id="profit-change">-</div>
-                </div>
+            <!-- Alert Banner -->
+            <div class="alert-banner" id="low-stock-banner">
+                <span class="alert-icon">⚠️</span>
+                <span class="alert-text" id="low-stock-text">4 items running low on stock</span>
+                <a href="/products?stock=low" class="alert-link">View Products →</a>
+                <span class="alert-close" onclick="this.parentElement.classList.remove('show')" title="Dismiss">✕</span>
             </div>
-        </div>
 
-        <!-- Sales Trend Chart -->
-        <div class="card">
-            <h2 style="margin-bottom: 1rem;">📊 7-Day Sales Trend</h2>
-            <canvas id="salesTrendChart" style="max-height: 300px;"></canvas>
-        </div>
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">Today's Sales</div>
+                    <div class="kpi-value" id="today-sales">$0.00</div>
+                    <div class="kpi-change" id="sales-change"></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Transactions</div>
+                    <div class="kpi-value blue" id="today-count">0</div>
+                    <div class="kpi-change" id="trans-change"></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Avg Order</div>
+                    <div class="kpi-value purple" id="avg-transaction">$0.00</div>
+                </div>
+                <div class="kpi-card admin-only">
+                    <div class="kpi-label">Today's Profit</div>
+                    <div class="kpi-value green" id="today-profit">$0.00</div>
+                    <div class="kpi-change" id="profit-change"></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Discounts</div>
+                    <div class="kpi-value orange" id="total-discount">$0.00</div>
+                </div>
+                <a href="/customers" class="kpi-card link admin-only" style="text-decoration:none; color:inherit;">
+                    <div class="kpi-label">Outstanding</div>
+                    <div class="kpi-value red" id="total-outstanding">$0.00</div>
+                </a>
+            </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
-            <!-- Best Selling Products -->
-            <div class="card">
-                <h2 style="margin-bottom: 1rem;">🏆 Best Sellers (Last 7 Days)</h2>
-                <div id="best-sellers-list">
-                    <p style="text-align: center; color: #7f8c8d; padding: 2rem;">Loading...</p>
+            <!-- Main Content Grid: Chart + Top Products -->
+            <div class="dash-grid">
+                <!-- Sales Trend -->
+                <div class="dash-card">
+                    <div class="dash-card-title">Sales Trend (7 days)</div>
+                    <canvas id="salesTrendChart" style="max-height: 220px;"></canvas>
+                </div>
+
+                <!-- Top Products -->
+                <div class="dash-card">
+                    <div class="dash-card-title">Top Products (7 days)</div>
+                    <div id="best-sellers-list">
+                        <p style="text-align:center; color:#94a3b8; padding:2rem 0; font-size:0.85rem;">Loading...</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Recent Sales Activity -->
-            <div class="card">
-                <h2 style="margin-bottom: 1rem;">💰 Recent Sales</h2>
-                <div id="recent-sales-list">
-                    <p style="text-align: center; color: #7f8c8d; padding: 2rem;">Loading...</p>
+            <!-- Recent Activity -->
+            <div class="dash-card">
+                <div class="dash-card-title">Recent Activity</div>
+                <div id="recent-activity">
+                    <p style="text-align:center; color:#94a3b8; padding:1.5rem 0; font-size:0.85rem;">Loading...</p>
                 </div>
             </div>
-        </div>
 
-        <!-- Stock Activity (Admin Only) -->
-        <div class="card admin-only">
-            <h2>Recent Stock Activity</h2>
-            <div class="report-table-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>Action</th>
-                        <th>Quantity</th>
-                        <th>Note</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody id="stock-history">
-                    <tr>
-                        <td colspan="5" style="text-align: center;">Loading...</td>
-                    </tr>
-                </tbody>
-            </table>
-            </div>
-        </div>
-    </div>
+        </div><!-- /dash-layout -->
 
     <!-- Change Password Modal -->
     <div id="change-password-modal" class="modal">
@@ -312,131 +262,104 @@
     </div>
 
     <script>
-        let currencySymbol = '$'; // Default, will be updated from API
+        var currencySymbol = '$';
+        var salesChart = null;
 
-        // Load dashboard stats
-        let salesChart = null;
+        // ── Greeting ──────────────────────────────────────────────
+        function setGreeting() {
+            var hour = new Date().getHours();
+            var greeting = 'Good evening 👋';
+            if (hour < 12) greeting = 'Good morning 👋';
+            else if (hour < 17) greeting = 'Good afternoon 👋';
+            document.getElementById('greeting').textContent = greeting;
+        }
 
+        // ── Dashboard Stats ───────────────────────────────────────
         async function loadDashboardStats() {
             try {
-                const response = await fetch('/api/dashboard-stats');
-                const stats = await response.json();
+                var response = await fetch('/api/dashboard-stats');
+                var stats = await response.json();
 
-                // Update basic stats
-                document.getElementById('total-products').textContent = stats.total_products;
-                document.getElementById('low-stock').textContent = stats.low_stock_items;
-
-                // Show low stock warning banner
-                if (stats.low_stock_items > 0) {
-                    const n = stats.low_stock_items;
-                    document.getElementById('low-stock-banner-text').textContent =
-                        `${n} item${n > 1 ? 's are' : ' is'} running low on stock.`;
-                    document.getElementById('low-stock-banner').style.display = 'flex';
-                }
-
-                document.getElementById('today-sales').textContent = `${currencySymbol}${stats.today_sales.toFixed(2)}`;
+                // KPIs
+                document.getElementById('today-sales').textContent = currencySymbol + stats.today_sales.toFixed(2);
                 document.getElementById('today-count').textContent = stats.today_sales_count;
-                document.getElementById('out-of-stock').textContent = stats.out_of_stock_items || 0;
-                document.getElementById('avg-transaction').textContent = `${currencySymbol}${stats.avg_transaction.toFixed(2)}`;
-                document.getElementById('total-discount').textContent = `${currencySymbol}${stats.total_discount_today.toFixed(2)}`;
+                document.getElementById('avg-transaction').textContent = currencySymbol + stats.avg_transaction.toFixed(2);
+                document.getElementById('total-discount').textContent = currencySymbol + stats.total_discount_today.toFixed(2);
 
                 if (stats.today_profit !== undefined) {
-                    document.getElementById('today-profit').textContent = `${currencySymbol}${stats.today_profit.toFixed(2)}`;
+                    document.getElementById('today-profit').textContent = currencySymbol + stats.today_profit.toFixed(2);
                 }
 
-                // Update cash flow cards (admin only)
+                // Outstanding
                 if (stats.cash_flow) {
-                    document.getElementById('cash-collected-today').textContent = `${currencySymbol}${stats.cash_flow.cash_collected_today.toFixed(2)}`;
-                    document.getElementById('credit-sales-today').textContent = `${currencySymbol}${stats.cash_flow.credit_sales_today.toFixed(2)}`;
-                    document.getElementById('total-outstanding').textContent = `${currencySymbol}${stats.cash_flow.total_outstanding.toFixed(2)}`;
-                    document.getElementById('overdue-amount').textContent = `${currencySymbol}${stats.cash_flow.overdue_amount.toFixed(2)}`;
-                    document.getElementById('overdue-count').textContent = stats.cash_flow.overdue_count > 0 ? `${stats.cash_flow.overdue_count} invoice(s)` : '';
+                    document.getElementById('total-outstanding').textContent = currencySymbol + stats.cash_flow.total_outstanding.toFixed(2);
                 }
 
-                // Update comparison cards
-                updateComparison(stats);
+                // Low stock alert
+                if (stats.low_stock_items > 0) {
+                    var n = stats.low_stock_items;
+                    document.getElementById('low-stock-text').textContent = n + ' item' + (n > 1 ? 's' : '') + ' running low on stock';
+                    document.getElementById('low-stock-banner').classList.add('show');
+                }
 
-                // Update sales trend chart
+                // Comparison changes (vs yesterday)
+                renderChange('sales-change', stats.today_sales, stats.yesterday_sales, true);
+                renderChange('trans-change', stats.today_sales_count, stats.yesterday_count, false);
+                if (stats.today_profit !== undefined) {
+                    renderChange('profit-change', stats.today_profit, stats.yesterday_profit, true);
+                }
+
+                // Chart
                 updateSalesTrendChart(stats.sales_trend);
 
-                // Update best sellers
+                // Best sellers
                 updateBestSellers(stats.best_sellers);
 
-                // Update recent sales
-                updateRecentSales(stats.recent_sales);
+                // Recent activity (sales + stock combined)
+                updateRecentActivity(stats.recent_sales);
 
             } catch (error) {
-                console.error('Error loading stats:', error);
+                console.error('Error loading dashboard:', error);
             }
         }
 
-        function updateComparison(stats) {
-            // Sales comparison
-            const salesChange = stats.today_sales - stats.yesterday_sales;
-            const salesPercent = stats.yesterday_sales > 0
-                ? ((salesChange / stats.yesterday_sales) * 100).toFixed(1)
-                : 0;
-            document.getElementById('sales-comparison').innerHTML =
-                `<span>Today: ${currencySymbol}${stats.today_sales.toFixed(2)}</span><br><span style="font-size:0.85rem; color:#7f8c8d;">Yesterday: ${currencySymbol}${stats.yesterday_sales.toFixed(2)}</span>`;
-            document.getElementById('sales-change').innerHTML =
-                salesChange >= 0
-                ? `<span style="color: #27ae60;">↑ ${currencySymbol}${Math.abs(salesChange).toFixed(2)} (${Math.abs(salesPercent)}%)</span>`
-                : `<span style="color: #e74c3c;">↓ ${currencySymbol}${Math.abs(salesChange).toFixed(2)} (${Math.abs(salesPercent)}%)</span>`;
-
-            // Transactions comparison
-            const transChange = stats.today_sales_count - stats.yesterday_count;
-            const transPercent = stats.yesterday_count > 0
-                ? ((transChange / stats.yesterday_count) * 100).toFixed(1)
-                : 0;
-            document.getElementById('transactions-comparison').innerHTML =
-                `<span>Today: ${stats.today_sales_count}</span><br><span style="font-size:0.85rem; color:#7f8c8d;">Yesterday: ${stats.yesterday_count}</span>`;
-            document.getElementById('transactions-change').innerHTML =
-                transChange >= 0
-                ? `<span style="color: #27ae60;">↑ ${transChange} (${Math.abs(transPercent)}%)</span>`
-                : `<span style="color: #e74c3c;">↓ ${Math.abs(transChange)} (${Math.abs(transPercent)}%)</span>`;
-
-            // Profit comparison (admin only)
-            if (stats.today_profit !== undefined) {
-                const profitChange = stats.today_profit - stats.yesterday_profit;
-                const profitPercent = stats.yesterday_profit > 0
-                    ? ((profitChange / stats.yesterday_profit) * 100).toFixed(1)
-                    : 0;
-                document.getElementById('profit-comparison').innerHTML =
-                    `<span>Today: ${currencySymbol}${stats.today_profit.toFixed(2)}</span><br><span style="font-size:0.85rem; color:#7f8c8d;">Yesterday: ${currencySymbol}${stats.yesterday_profit.toFixed(2)}</span>`;
-                document.getElementById('profit-change').innerHTML =
-                    profitChange >= 0
-                    ? `<span style="color: #27ae60;">↑ ${currencySymbol}${Math.abs(profitChange).toFixed(2)} (${Math.abs(profitPercent)}%)</span>`
-                    : `<span style="color: #e74c3c;">↓ ${currencySymbol}${Math.abs(profitChange).toFixed(2)} (${Math.abs(profitPercent)}%)</span>`;
-            }
+        function renderChange(elId, today, yesterday, isCurrency) {
+            var el = document.getElementById(elId);
+            if (!el || yesterday === undefined) return;
+            var diff = today - yesterday;
+            var pct = yesterday > 0 ? ((diff / yesterday) * 100).toFixed(0) : 0;
+            if (diff === 0 && today === 0) { el.textContent = ''; return; }
+            var arrow = diff >= 0 ? '↑' : '↓';
+            var cls = diff >= 0 ? 'up' : 'down';
+            var val = isCurrency ? currencySymbol + Math.abs(diff).toFixed(2) : Math.abs(diff);
+            el.className = 'kpi-change ' + cls;
+            el.textContent = arrow + ' ' + val + ' (' + Math.abs(pct) + '%) vs yesterday';
         }
 
+        // ── Sales Trend Chart ─────────────────────────────────────
         function updateSalesTrendChart(trendData) {
-            const ctx = document.getElementById('salesTrendChart').getContext('2d');
-            const gradient = ctx.createLinearGradient(0, 0, 0, 280);
-            gradient.addColorStop(0, 'rgba(52, 152, 219, 0.35)');
-            gradient.addColorStop(1, 'rgba(52, 152, 219, 0)');
+            var ctx = document.getElementById('salesTrendChart').getContext('2d');
+            var gradient = ctx.createLinearGradient(0, 0, 0, 200);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.15)');
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
 
-            // Fill in missing days with 0
-            const last7Days = [];
-            const salesData = [];
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
+            var last7Days = [];
+            var salesData = [];
+            for (var i = 6; i >= 0; i--) {
+                var date = new Date();
                 date.setDate(date.getDate() - i);
-                const dateStr = date.toISOString().split('T')[0];
+                var dateStr = date.toISOString().split('T')[0];
                 last7Days.push(dateStr);
-
-                const dayData = trendData.find(d => d.date === dateStr);
+                var dayData = trendData.find(function(d) { return d.date === dateStr; });
                 salesData.push(dayData ? dayData.total_sales : 0);
             }
 
-            const labels = last7Days.map(d => {
-                const date = new Date(d);
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            var labels = last7Days.map(function(d) {
+                var dt = new Date(d);
+                return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             });
 
-            if (salesChart) {
-                salesChart.destroy();
-            }
+            if (salesChart) salesChart.destroy();
 
             salesChart = new Chart(ctx, {
                 type: 'line',
@@ -445,13 +368,16 @@
                     datasets: [{
                         label: 'Sales',
                         data: salesData,
-                        borderColor: '#3498db',
+                        borderColor: '#3b82f6',
                         backgroundColor: gradient,
                         tension: 0.4,
-                        pointBackgroundColor: '#3498db',
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2,
                         pointRadius: 4,
                         pointHoverRadius: 6,
-                        fill: true
+                        fill: true,
+                        borderWidth: 2.5,
                     }]
                 },
                 options: {
@@ -460,150 +386,115 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleFont: { size: 12 },
+                            bodyFont: { size: 12 },
+                            padding: 10,
+                            cornerRadius: 8,
                             callbacks: {
-                                label: function(ctx) {
-                                    return ' ' + currencySymbol + ctx.parsed.y.toFixed(2);
-                                }
+                                label: function(ctx) { return ' ' + currencySymbol + ctx.parsed.y.toFixed(2); }
                             }
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            grid: { color: '#f1f5f9' },
+                            border: { display: false },
                             ticks: {
-                                callback: function(value) {
-                                    return currencySymbol + value;
-                                }
+                                font: { size: 11 },
+                                color: '#94a3b8',
+                                callback: function(v) { return currencySymbol + v; }
                             }
                         },
-                        x: { grid: { display: false } }
+                        x: {
+                            grid: { display: false },
+                            border: { display: false },
+                            ticks: { font: { size: 11 }, color: '#94a3b8' }
+                        }
                     }
                 }
             });
         }
 
+        // ── Best Sellers ──────────────────────────────────────────
         function updateBestSellers(bestSellers) {
-            const container = document.getElementById('best-sellers-list');
-
-            if (bestSellers.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 2rem;">No sales data yet</p>';
+            var container = document.getElementById('best-sellers-list');
+            if (!bestSellers || bestSellers.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:2rem 0; font-size:0.85rem;">No sales data yet</p>';
                 return;
             }
 
-            const medals = ['🥇', '🥈', '🥉'];
-            const maxSold = bestSellers[0].total_sold || 1;
-
-            container.innerHTML = bestSellers.map((product, index) => {
-                const rankLabel = index < 3
-                    ? `<span style="font-size:1.1rem;">${medals[index]}</span>`
-                    : `<span style="display:inline-flex;align-items:center;justify-content:center;width:1.4rem;height:1.4rem;background:#e9ecef;border-radius:50%;font-size:0.75rem;font-weight:700;color:#6c757d;">${index + 1}</span>`;
-                const barPct = Math.round((product.total_sold / maxSold) * 100);
-                return `
-                <div style="padding: 0.7rem 0.75rem; background: ${index % 2 === 0 ? '#f8f9fa' : 'white'}; border-radius: 6px; margin-bottom: 0.4rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            ${rankLabel}
-                            <div>
-                                <div style="font-weight: 600; font-size: 0.9rem;">${product.name}</div>
-                                <div style="font-size: 0.78rem; color: #7f8c8d;">${product.sku || 'N/A'} &middot; ${currencySymbol}${product.price.toFixed(2)} each</div>
-                            </div>
-                        </div>
-                        <div style="font-weight: bold; color: #3498db; white-space: nowrap;">${product.total_sold} sold</div>
-                    </div>
-                    <div style="height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
-                        <div style="height: 100%; width: ${barPct}%; background: ${index === 0 ? '#f1c40f' : index === 1 ? '#95a5a6' : index === 2 ? '#cd7f32' : '#3498db'}; border-radius: 2px; transition: width 0.4s;"></div>
-                    </div>
-                </div>`;
+            var rankClasses = ['gold', 'silver', 'bronze'];
+            container.innerHTML = bestSellers.slice(0, 8).map(function(product, i) {
+                var rankCls = i < 3 ? rankClasses[i] : '';
+                return '<div class="top-product">' +
+                    '<div class="top-product-rank ' + rankCls + '">' + (i + 1) + '</div>' +
+                    '<div class="top-product-name">' + product.name + '</div>' +
+                    '<div class="top-product-stat">' + product.total_sold + ' sold</div>' +
+                '</div>';
             }).join('');
         }
 
-        function updateRecentSales(recentSales) {
-            const container = document.getElementById('recent-sales-list');
-
-            if (recentSales.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 2rem;">No recent sales</p>';
+        // ── Recent Activity ───────────────────────────────────────
+        function updateRecentActivity(recentSales) {
+            var container = document.getElementById('recent-activity');
+            if (!recentSales || recentSales.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:1.5rem 0; font-size:0.85rem;">No recent activity</p>';
                 return;
             }
 
-            container.innerHTML = recentSales.map(sale => {
-                const date = parseUTC(sale.sale_date);
-                const timeAgo = getTimeAgo(date);
-                const hasDiscount = sale.discount_amount > 0;
-                const pm = (sale.payment_method || '').toLowerCase();
-                const pmBadge = pm ? `<span class="pay-badge ${['cash','credit','card'].includes(pm) ? pm : 'other'}">${pm || 'sale'}</span> ` : '';
-
-                return `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0.75rem; border-bottom: 1px solid #ecf0f1;">
-                        <div>
-                            <div style="font-weight: 600;">${pmBadge}#${sale.id}</div>
-                            <div style="font-size: 0.82rem; color: #7f8c8d;">
-                                ${sale.username || 'N/A'} &middot; ${timeAgo}
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-weight: bold; color: #27ae60;">${currencySymbol}${sale.total_amount.toFixed(2)}</div>
-                            ${hasDiscount ? `<div style="font-size: 0.8rem; color: #f39c12;">-${currencySymbol}${sale.discount_amount.toFixed(2)} disc.</div>` : ''}
-                        </div>
-                    </div>
-                `;
+            container.innerHTML = recentSales.slice(0, 8).map(function(sale) {
+                var date = parseUTC(sale.sale_date);
+                var timeAgo = getTimeAgo(date);
+                var pm = (sale.payment_method || 'cash');
+                return '<div class="activity-item">' +
+                    '<div class="activity-icon sale">💰</div>' +
+                    '<div class="activity-detail">' +
+                        '<div class="activity-title">INV-' + sale.id + ' · ' + (sale.customer_name || 'Walk-in') + '</div>' +
+                        '<div class="activity-time">' + pm.charAt(0).toUpperCase() + pm.slice(1) + ' · ' + timeAgo + '</div>' +
+                    '</div>' +
+                    '<div class="activity-amount">' + currencySymbol + sale.total_amount.toFixed(2) + '</div>' +
+                '</div>';
             }).join('');
         }
 
         function getTimeAgo(date) {
-            const seconds = Math.floor((new Date() - date) / 1000);
+            var seconds = Math.floor((new Date() - date) / 1000);
             if (seconds < 60) return 'Just now';
             if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
             if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
             return Math.floor(seconds / 86400) + 'd ago';
         }
 
-        // Load user info
+        // ── User Info ─────────────────────────────────────────────
         async function loadUserInfo() {
             try {
-                const response = await fetch('/api/current-user');
-                const user = await response.json();
+                var response = await fetch('/api/current-user');
+                var user = await response.json();
+                if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
+                if (user.shop_icon) { var bi = document.querySelector('.navbar-brand-icon'); if (bi) bi.textContent = user.shop_icon; }
+                if (user.currency) currencySymbol = user.currency;
 
-                // Set shop name
-                if (user.shop_name) {
-                    document.getElementById('shop-name-title').textContent = user.shop_name;
-                }
-                if (user.shop_icon) {
-                    const bi = document.querySelector('.navbar-brand-icon');
-                    if (bi) bi.textContent = user.shop_icon;
-                }
-
-                // Set currency symbol
-                if (user.currency) {
-                    currencySymbol = user.currency;
-                }
-
-                // Set user icon (first letter of name)
-                const initial = (user.full_name || user.username).charAt(0).toUpperCase();
+                var initial = (user.full_name || user.username).charAt(0).toUpperCase();
                 document.getElementById('user-icon').textContent = initial;
-
-                // Set user name
                 document.getElementById('user-name').textContent = user.full_name || user.username;
 
-                // Set user role badge
-                const roleBadge = document.getElementById('role-badge');
+                var roleBadge = document.getElementById('role-badge');
                 roleBadge.textContent = getRoleLabel(user.role);
                 roleBadge.className = getRoleBadgeClass(user.role);
 
-                // Show/hide admin-only elements
-                const adminElements = document.querySelectorAll('.admin-only');
+                var adminElements = document.querySelectorAll('.admin-only');
                 if (isAdminRole(user.role)) {
-                    adminElements.forEach(el => el.style.display = '');
+                    adminElements.forEach(function(el) { el.style.display = ''; });
                 } else {
-                    adminElements.forEach(el => el.style.display = 'none');
+                    adminElements.forEach(function(el) { el.style.display = 'none'; });
                 }
-
-                // Show super_admin only elements and shop switcher
                 if (user.role === 'super_admin') {
-                    document.querySelectorAll('.super-admin-only').forEach(el => el.style.display = '');
-                    await loadShopSwitcher(user.active_shop_id);
+                    document.querySelectorAll('.super-admin-only').forEach(function(el) { el.style.display = ''; });
+                    loadShopSwitcher(user.active_shop_id);
                 } else if (user.role === 'shop_owner') {
-                    await loadShopSwitcher(user.active_shop_id);
+                    loadShopSwitcher(user.active_shop_id);
                 }
             } catch (error) {
                 console.error('Error loading user info:', error);
@@ -612,13 +503,13 @@
 
         async function loadShopSwitcher(activeShopId) {
             try {
-                const resp = await fetch('/api/shops');
-                const shops = await resp.json();
-                const switcher = document.getElementById('shop-switcher');
-                const sel = document.getElementById('shop-select');
+                var resp = await fetch('/api/shops');
+                var shops = await resp.json();
+                var switcher = document.getElementById('shop-switcher');
+                var sel = document.getElementById('shop-select');
                 sel.innerHTML = '<option value="">All Shops</option>';
-                shops.forEach(s => {
-                    const opt = document.createElement('option');
+                shops.forEach(function(s) {
+                    var opt = document.createElement('option');
                     opt.value = s.id;
                     opt.textContent = (s.icon || '🛒') + ' ' + s.name;
                     if (activeShopId && String(s.id) === String(activeShopId)) opt.selected = true;
@@ -640,119 +531,54 @@
             } catch (e) { console.error('Failed to switch shop', e); }
         }
 
-        // Toggle user dropdown
+        // User dropdown
         document.getElementById('user-profile-toggle').addEventListener('click', function(e) {
             e.stopPropagation();
             this.classList.toggle('active');
             document.getElementById('user-dropdown').classList.toggle('active');
         });
-
-        // Close dropdown when clicking outside
         document.addEventListener('click', function(e) {
-            const dropdown = document.getElementById('user-dropdown');
-            const toggle = document.getElementById('user-profile-toggle');
+            var dropdown = document.getElementById('user-dropdown');
+            var toggle = document.getElementById('user-profile-toggle');
             if (!toggle.contains(e.target) && !dropdown.contains(e.target)) {
                 toggle.classList.remove('active');
                 dropdown.classList.remove('active');
             }
         });
 
-        // Load recent stock history
-        async function loadStockHistory() {
-            try {
-                const response = await fetch('/api/stock-history');
-                const history = await response.json();
-
-                const tbody = document.getElementById('stock-history');
-                if (history.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No stock activity yet</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = history.slice(0, 10).map(item => `
-                    <tr>
-                        <td>${item.product_name}</td>
-                        <td><span style="text-transform: capitalize;">${item.action_type}</span></td>
-                        <td>${item.quantity_change > 0 ? '+' : ''}${item.quantity_change}</td>
-                        <td>${item.note || '-'}</td>
-                        <td>${parseUTC(item.created_at).toLocaleString()}</td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                console.error('Error loading stock history:', error);
-            }
-        }
-
-        // Change password modal
+        // Change password
         function openChangePasswordModal() {
             document.getElementById('change-password-modal').classList.add('active');
             document.getElementById('user-dropdown').classList.remove('active');
             document.getElementById('user-profile-toggle').classList.remove('active');
         }
-
         function closeChangePasswordModal() {
             document.getElementById('change-password-modal').classList.remove('active');
             document.getElementById('change-password-form').reset();
         }
-
-        // Handle password change
-        document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+        document.getElementById('change-password-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-
-            const currentPassword = document.getElementById('current-password').value;
-            const newPassword = document.getElementById('new-password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-
-            // Validate passwords match
-            if (newPassword !== confirmPassword) {
-                showToast('New passwords do not match!', 'warning');
-                return;
-            }
-
-            // Validate password length
-            if (newPassword.length < 6) {
-                showToast('New password must be at least 6 characters!', 'warning');
-                return;
-            }
-
+            var currentPassword = document.getElementById('current-password').value;
+            var newPassword = document.getElementById('new-password').value;
+            var confirmPassword = document.getElementById('confirm-password').value;
+            if (newPassword !== confirmPassword) { showToast('New passwords do not match!', 'warning'); return; }
+            if (newPassword.length < 6) { showToast('New password must be at least 6 characters!', 'warning'); return; }
             try {
-                const response = await fetch('/api/change-password', {
+                var response = await fetch('/api/change-password', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        current_password: currentPassword,
-                        new_password: newPassword
-                    })
+                    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
                 });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showToast('Password changed successfully!', 'success');
-                    closeChangePasswordModal();
-                } else {
-                    showToast(result.error || 'Error changing password', 'error');
-                }
-            } catch (error) {
-                console.error('Error changing password:', error);
-                showToast('Error changing password', 'error');
-            }
+                var result = await response.json();
+                if (response.ok) { showToast('Password changed successfully!', 'success'); closeChangePasswordModal(); }
+                else { showToast(result.error || 'Error changing password', 'error'); }
+            } catch (error) { showToast('Error changing password', 'error'); }
         });
 
-        // Greeting
-        function setGreeting() {
-            const hour = new Date().getHours();
-            let greeting = 'Good evening';
-            if (hour < 12) greeting = 'Good morning';
-            else if (hour < 17) greeting = 'Good afternoon';
-            document.getElementById('greeting').textContent = `${greeting}! Here's your store overview.`;
-        }
-
-        // Initialize
+        // ── Initialize ────────────────────────────────────────────
         setGreeting();
         loadUserInfo();
         loadDashboardStats();
-        loadStockHistory();
     </script>
     <script src="/static/js/session.js"></script>
     </div><!-- /main-wrapper -->
