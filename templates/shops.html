@@ -3,46 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop Management - POS System</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <script src="/static/js/ui.js"></script>
+    <title>Shops - POS System</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=4">
+    <script src="/static/js/ui.js?v=4"></script>
     <style>
-        /* ===== Table styling ===== */
-        .report-table-scroll { overflow-y: auto; border-radius: 6px; border: 1px solid #e9ecef; }
-        .report-table-scroll table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-        .report-table-scroll thead th {
-            position: sticky; top: 0; z-index: 2;
-            background: #2c3e50; color: white;
-            padding: 0.65rem 1rem; text-align: left;
-            font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;
-            border-bottom: 2px solid #1a252f;
-        }
-        .report-table-scroll tbody tr:nth-child(even) { background: #f8f9fa; }
-        .report-table-scroll tbody tr:hover { background: #e8f4fd; transition: background 0.1s; }
-        .report-table-scroll tbody td { padding: 0.65rem 1rem; border-bottom: 1px solid #edf0f2; vertical-align: middle; }
-        .report-table-scroll tbody tr:last-child td { border-bottom: none; }
+        /* ===== Page Header ===== */
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        .page-header h1 { font-size: 1.4rem; color: #1e293b; margin: 0; font-weight: 700; }
+        .page-header-sub { font-size: 0.88rem; color: #64748b; margin-top: 0.2rem; }
 
-        /* ===== Page header accent ===== */
-        .page-title {
-            padding-left: 0.75rem;
-            border-left: 4px solid #3498db;
-        }
-        .page-title h2 { margin-bottom: 0.25rem; color: #2c3e50; }
-        .page-title p  { color: #7f8c8d; font-size: 0.92rem; margin: 0; }
+        /* ===== Shop Cards Grid ===== */
+        .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem; }
+        .shop-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; position: relative; transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s; cursor: pointer; }
+        .shop-card:hover { border-color: #93c5fd; box-shadow: 0 8px 24px rgba(59,130,246,0.1); transform: translateY(-2px); }
+        .shop-card.active-shop { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
 
-        /* ===== Card header accent ===== */
-        .card h2, .card h3 {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding-left: 0.75rem;
-            border-left: 4px solid #3498db;
-            font-size: 1.05rem; color: #2c3e50; margin: 0;
-        }
+        .shop-card-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .shop-card-icon { width: 52px; height: 52px; background: #f1f5f9; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; }
+        .shop-card-title { font-size: 1.1rem; font-weight: 700; color: #1e293b; line-height: 1.3; }
+        .shop-card-location { font-size: 0.82rem; color: #64748b; margin-top: 0.15rem; display: flex; align-items: center; gap: 0.3rem; }
 
-        /* ===== Empty state ===== */
-        .shops-empty-state { text-align: center; padding: 4rem 2rem; }
-        .shops-empty-state .empty-icon { font-size: 3rem; opacity: 0.35; margin-bottom: 0.75rem; }
-        .shops-empty-state p { font-size: 0.95rem; color: #868e96; margin: 0 0 0.25rem; }
-        .shops-empty-state small { font-size: 0.82rem; color: #adb5bd; }
+        .shop-card-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 1rem 0; padding: 0.8rem 0; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; }
+        .shop-card-stat { text-align: center; }
+        .shop-card-stat .stat-value { font-size: 1.05rem; font-weight: 700; color: #1e293b; }
+        .shop-card-stat .stat-label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.03em; margin-top: 0.1rem; }
+
+        .shop-card-meta { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.8rem; }
+        .shop-meta-badge { font-size: 0.75rem; padding: 0.2rem 0.55rem; border-radius: 6px; background: #f1f5f9; color: #475569; display: flex; align-items: center; gap: 0.25rem; }
+
+        .shop-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid #f1f5f9; }
+        .shop-card-actions { display: flex; gap: 0.4rem; }
+        .shop-card-actions button { font-size: 0.75rem; padding: 0.35rem 0.7rem; border-radius: 6px; border: 1px solid #e2e8f0; background: white; color: #475569; cursor: pointer; transition: background 0.1s; }
+        .shop-card-actions button:hover { background: #f1f5f9; }
+        .shop-card-actions button.btn-enter { background: #3b82f6; color: white; border-color: #3b82f6; font-weight: 600; }
+        .shop-card-actions button.btn-enter:hover { background: #2563eb; }
+        .shop-card-actions button.btn-archive { color: #ef4444; border-color: #fecaca; }
+
+        .shop-active-badge { position: absolute; top: 1rem; right: 1rem; font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 10px; background: #dcfce7; color: #166534; font-weight: 600; }
+
+        /* ===== Empty State ===== */
+        .shop-empty { text-align: center; padding: 4rem 2rem; }
+        .shop-empty .empty-icon { font-size: 3rem; opacity: 0.35; margin-bottom: 0.75rem; }
+        .shop-empty p { color: #94a3b8; margin: 0; font-size: 0.95rem; }
+        .shop-empty small { font-size: 0.82rem; color: #cbd5e1; }
+
+        /* ===== Shop Detail Modal ===== */
+        .shop-detail-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0; }
+        .shop-detail-icon { width: 60px; height: 60px; background: #f1f5f9; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        .shop-detail-title { font-size: 1.3rem; font-weight: 700; color: #1e293b; }
+        .shop-detail-sub { font-size: 0.85rem; color: #64748b; margin-top: 0.15rem; }
+
+        .shop-detail-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; margin-bottom: 1.5rem; }
+        .shop-detail-stat { text-align: center; padding: 0.75rem 0.5rem; background: #f8fafc; border-radius: 8px; }
+        .shop-detail-stat .value { font-size: 1.2rem; font-weight: 700; color: #1e293b; }
+        .shop-detail-stat .label { font-size: 0.72rem; color: #64748b; margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.03em; }
+
+        .shop-detail-section { margin-top: 1.25rem; }
+        .shop-detail-section-title { font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; margin-bottom: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid #e2e8f0; }
+        .shop-detail-info { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 1.5rem; font-size: 0.88rem; }
+        .shop-detail-info .label { color: #64748b; font-size: 0.76rem; font-weight: 600; text-transform: uppercase; }
+        .shop-detail-info .value { color: #1e293b; margin-bottom: 0.5rem; }
+
+        .shop-nav-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 1rem; }
+        .shop-nav-link { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 0.8rem 0.5rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; text-decoration: none; color: #1e293b; font-size: 0.8rem; font-weight: 500; transition: background 0.1s, border-color 0.1s; }
+        .shop-nav-link:hover { background: #eff6ff; border-color: #93c5fd; }
+        .shop-nav-link .nav-icon { font-size: 1.3rem; }
     </style>
 </head>
 <body class="has-sidebar">
@@ -99,66 +124,58 @@
                         </div>
                     </div>
                     <div class="dropdown-menu">
-                        <a href="#" onclick="openOwnPasswordModal(); return false;" class="dropdown-item">Change Password</a>
+                        <a href="#" onclick="openChangePasswordModal(); return false;" class="dropdown-item">Change Password</a>
                         <a href="/logout" class="dropdown-item">Logout</a>
                     </div>
                 </div>
             </div>
         </header>
 
-
     <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-            <div class="page-title">
-                <h2>Shop Management</h2>
-                <p>Manage all shops in the system</p>
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h1>🏪 Shops</h1>
+                <div class="page-header-sub">Your workspaces — each shop is a self-contained business unit</div>
             </div>
-            <button class="btn btn-primary" onclick="openAddShopModal()">+ Add New Shop</button>
+            <button class="btn btn-primary" onclick="openAddShopModal()">+ New Shop</button>
         </div>
 
-        <div id="message-area" style="margin-bottom: 1rem;"></div>
+        <!-- Shop Cards -->
+        <div class="shop-grid" id="shop-grid">
+            <div class="shop-empty"><div class="empty-icon">🏪</div><p>Loading...</p></div>
+        </div>
+    </div>
 
-        <div class="card">
-            <div class="report-table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width:60px;">Icon</th>
-                            <th>Name</th>
-                            <th>Currency</th>
-                            <th>Low Stock</th>
-                            <th>Address</th>
-                            <th>Phone</th>
-                            <th>Users</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="shops-table">
-                        <tr><td colspan="8" style="text-align:center;padding:2rem;color:#adb5bd;">Loading...</td></tr>
-                    </tbody>
-                </table>
+    <!-- Shop Detail Modal -->
+    <div id="shop-detail-modal" class="modal">
+        <div class="modal-content" style="max-width:650px;">
+            <div class="modal-header">
+                <h2 id="detail-modal-title">Shop</h2>
+                <button class="close-btn" onclick="closeDetailModal()">&times;</button>
             </div>
+            <div id="shop-detail-content"></div>
         </div>
     </div>
 
     <!-- Add/Edit Shop Modal -->
     <div id="shop-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width:500px;">
             <div class="modal-header">
-                <h2 id="shop-modal-title">Add New Shop</h2>
+                <h2 id="shop-modal-title">New Shop</h2>
                 <button class="close-btn" onclick="closeShopModal()">&times;</button>
             </div>
             <form id="shop-form">
                 <input type="hidden" id="shop-id">
                 <div class="form-group">
                     <label>Shop Name *</label>
-                    <input type="text" id="shop-name" required placeholder="e.g., Main Branch">
+                    <input type="text" id="shop-name" required placeholder="e.g., Main Branch" maxlength="200">
                 </div>
                 <div class="form-group">
                     <label>Icon</label>
                     <div style="display:flex; gap:0.5rem; align-items:center;">
                         <span id="shop-icon-preview" style="font-size:1.8rem; min-width:2rem;">🛒</span>
-                        <select id="shop-icon" style="flex:1;">
+                        <select id="shop-icon" style="flex:1;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);height:36px;box-sizing:border-box;">
                             <option value="🛒">🛒  Shopping Cart</option>
                             <option value="🏪">🏪  Convenience Store</option>
                             <option value="🏬">🏬  Department Store</option>
@@ -183,54 +200,51 @@
                             <option value="__custom__">✏️  Custom…</option>
                         </select>
                     </div>
-                    <input type="text" id="shop-icon-custom" placeholder="Paste any emoji or text" maxlength="8"
-                        style="display:none; margin-top:0.5rem; width:100%;">
+                    <input type="text" id="shop-icon-custom" placeholder="Paste any emoji" maxlength="8" style="display:none; margin-top:0.5rem; width:100%;">
                 </div>
-                <div class="form-group">
-                    <label>Currency</label>
-                    <select id="shop-currency">
-                        <option value="$">$ — US Dollar (USD)</option>
-                        <option value="€">€ — Euro (EUR)</option>
-                        <option value="£">£ — British Pound (GBP)</option>
-                        <option value="¥">¥ — Japanese Yen / Chinese Yuan</option>
-                        <option value="₹">₹ — Indian Rupee (INR)</option>
-                        <option value="₱">₱ — Philippine Peso (PHP)</option>
-                        <option value="₩">₩ — South Korean Won (KRW)</option>
-                        <option value="฿">฿ — Thai Baht (THB)</option>
-                        <option value="Rp">Rp — Indonesian Rupiah (IDR)</option>
-                        <option value="RM">RM — Malaysian Ringgit (MYR)</option>
-                        <option value="S$">S$ — Singapore Dollar (SGD)</option>
-                        <option value="A$">A$ — Australian Dollar (AUD)</option>
-                        <option value="C$">C$ — Canadian Dollar (CAD)</option>
-                        <option value="CHF">CHF — Swiss Franc</option>
-                        <option value="د.إ">د.إ — UAE Dirham (AED)</option>
-                        <option value="﷼">﷼ — Saudi Riyal (SAR)</option>
-                        <option value="₺">₺ — Turkish Lira (TRY)</option>
-                        <option value="R">R — South African Rand (ZAR)</option>
-                        <option value="₦">₦ — Nigerian Naira (NGN)</option>
-                        <option value="KSh">KSh — Kenyan Shilling (KES)</option>
-                        <option value="₲">₲ — Paraguayan Guaraní (PYG)</option>
-                        <option value="R$">R$ — Brazilian Real (BRL)</option>
-                        <option value="$MX">$MX — Mexican Peso (MXN)</option>
-                        <option value="CLP">CLP — Chilean Peso</option>
-                        <option value="PKR">PKR — Pakistani Rupee</option>
-                        <option value="৳">৳ — Bangladeshi Taka (BDT)</option>
-                        <option value="__custom__">✏️  Custom…</option>
-                    </select>
-                    <input type="text" id="shop-currency-custom" placeholder="Enter custom symbol (e.g. ₫)" maxlength="8"
-                        style="display:none; margin-top:0.5rem; width:100%;">
-                </div>
-                <div class="form-group">
-                    <label>Low Stock Threshold</label>
-                    <input type="number" id="shop-low-stock" placeholder="5" min="0">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <select id="shop-currency" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);height:36px;box-sizing:border-box;">
+                            <option value="$">$ — USD</option>
+                            <option value="€">€ — EUR</option>
+                            <option value="£">£ — GBP</option>
+                            <option value="¥">¥ — JPY/CNY</option>
+                            <option value="₹">₹ — INR</option>
+                            <option value="₱">₱ — PHP</option>
+                            <option value="₩">₩ — KRW</option>
+                            <option value="฿">฿ — THB</option>
+                            <option value="Rp">Rp — IDR</option>
+                            <option value="RM">RM — MYR</option>
+                            <option value="S$">S$ — SGD</option>
+                            <option value="A$">A$ — AUD</option>
+                            <option value="C$">C$ — CAD</option>
+                            <option value="CHF">CHF</option>
+                            <option value="د.إ">د.إ — AED</option>
+                            <option value="﷼">﷼ — SAR</option>
+                            <option value="₺">₺ — TRY</option>
+                            <option value="R">R — ZAR</option>
+                            <option value="₦">₦ — NGN</option>
+                            <option value="KSh">KSh — KES</option>
+                            <option value="R$">R$ — BRL</option>
+                            <option value="PKR">PKR</option>
+                            <option value="৳">৳ — BDT</option>
+                            <option value="__custom__">✏️ Custom…</option>
+                        </select>
+                        <input type="text" id="shop-currency-custom" placeholder="e.g. ₫" maxlength="8" style="display:none; margin-top:0.5rem; width:100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>Low Stock Threshold</label>
+                        <input type="number" id="shop-low-stock" placeholder="5" min="0" value="5">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Address</label>
-                    <input type="text" id="shop-address" placeholder="e.g., 123 Main St">
+                    <input type="text" id="shop-address" placeholder="123 Main St, City">
                 </div>
                 <div class="form-group">
                     <label>Phone</label>
-                    <input type="text" id="shop-phone" placeholder="e.g., +1 234 567 8900">
+                    <input type="text" id="shop-phone" placeholder="+1 234 567 8900">
                 </div>
                 <div style="display: flex; gap: 1rem;">
                     <button type="submit" class="btn btn-primary" id="shop-submit-btn">Create Shop</button>
@@ -240,117 +254,214 @@
         </div>
     </div>
 
-    <!-- Change Own Password Modal -->
-    <div id="own-password-modal" class="modal">
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="modal">
         <div class="modal-content" style="max-width: 400px;">
-            <div class="modal-header">
-                <h2>Change Password</h2>
-                <button class="close-btn" onclick="document.getElementById('own-password-modal').classList.remove('active')">&times;</button>
-            </div>
-            <form id="own-password-form">
-                <div class="form-group">
-                    <label>Current Password</label>
-                    <input type="password" name="current_password" required>
-                </div>
-                <div class="form-group">
-                    <label>New Password</label>
-                    <input type="password" name="new_password" required minlength="6">
-                </div>
-                <div class="form-group">
-                    <label>Confirm New Password</label>
-                    <input type="password" name="confirm_password" required minlength="6">
-                </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary">Change Password</button>
-                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('own-password-modal').classList.remove('active')">Cancel</button>
-                </div>
+            <div class="modal-header"><h2>Change Password</h2><button class="close-btn" onclick="closeChangePasswordModal()">&times;</button></div>
+            <form id="change-password-form">
+                <div class="form-group"><label>Current Password</label><input type="password" id="cp-current" required></div>
+                <div class="form-group"><label>New Password</label><input type="password" id="cp-new" required minlength="6"></div>
+                <div class="form-group"><label>Confirm</label><input type="password" id="cp-confirm" required minlength="6"></div>
+                <button type="submit" class="btn btn-primary">Update Password</button>
             </form>
         </div>
     </div>
 
-    <script>
-        let shops = [];
+    </div><!-- /main-wrapper -->
 
+    <script src="/static/js/session.js?v=4"></script>
+    <script>
+        var shops = [];
+        var activeShopId = null;
+
+        // ── User Info ──
+        async function loadUserInfo() {
+            try {
+                var resp = await fetch('/api/current-user');
+                var user = await resp.json();
+                activeShopId = user.active_shop_id || null;
+                if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
+                if (user.shop_icon) { var bi = document.querySelector('.navbar-brand-icon'); if (bi) bi.textContent = user.shop_icon; }
+                var initial = (user.full_name || user.username).charAt(0).toUpperCase();
+                document.getElementById('user-icon').textContent = initial;
+                document.getElementById('user-name').textContent = user.full_name || user.username;
+                var roleBadge = document.getElementById('role-badge');
+                roleBadge.textContent = getRoleLabel(user.role); roleBadge.className = getRoleBadgeClass(user.role);
+                document.querySelectorAll('.admin-only').forEach(function(el){ el.style.display = isAdminRole(user.role) ? '' : 'none'; });
+                if (user.role === 'super_admin') document.querySelectorAll('.super-admin-only').forEach(function(el){ el.style.display = ''; });
+            } catch(e) { console.error(e); }
+        }
+
+        document.getElementById('user-profile-toggle').addEventListener('click', function(e) {
+            e.stopPropagation(); this.classList.toggle('active'); document.getElementById('user-dropdown').classList.toggle('active');
+        });
+        document.addEventListener('click', function(e) {
+            var d = document.getElementById('user-dropdown'), t = document.getElementById('user-profile-toggle');
+            if (!t.contains(e.target) && !d.contains(e.target)) { t.classList.remove('active'); d.classList.remove('active'); }
+        });
+        function openChangePasswordModal() { document.getElementById('change-password-modal').classList.add('active'); document.getElementById('user-dropdown').classList.remove('active'); }
+        function closeChangePasswordModal() { document.getElementById('change-password-modal').classList.remove('active'); document.getElementById('change-password-form').reset(); }
+        document.getElementById('change-password-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var curr = document.getElementById('cp-current').value, newP = document.getElementById('cp-new').value, conf = document.getElementById('cp-confirm').value;
+            if (newP !== conf) { showToast('Passwords do not match!', 'warning'); return; }
+            try {
+                var r = await fetch('/api/change-password', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({current_password:curr, new_password:newP}) });
+                var res = await r.json();
+                if (r.ok) { showToast('Password changed!', 'success'); closeChangePasswordModal(); } else showToast(res.error||'Error','error');
+            } catch(e) { showToast('Error','error'); }
+        });
+
+        // ── Load Shops with Stats ──
         async function loadShops() {
             try {
-                const resp = await fetch('/api/shops');
+                var resp = await fetch('/api/shops?stats=1');
                 shops = await resp.json();
                 renderShops();
-            } catch (e) {
-                showMessage('Failed to load shops', 'error');
-            }
+            } catch(e) { console.error(e); }
         }
 
         function renderShops() {
-            const tbody = document.getElementById('shops-table');
-            if (shops.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="padding:0;border:none;"><div class="shops-empty-state"><div class="empty-icon">🏪</div><p>No shops yet</p><small>Click <strong>+ Add New Shop</strong> to get started</small></div></td></tr>`;
+            var grid = document.getElementById('shop-grid');
+            if (!shops.length) {
+                grid.innerHTML = '<div class="shop-empty"><div class="empty-icon">🏪</div><p>No shops yet</p><small>Click <strong>+ New Shop</strong> to create your first workspace</small></div>';
                 return;
             }
-            tbody.innerHTML = shops.map(s => `
-                <tr>
-                    <td style="text-align:center;">
-                        <div style="width:2.4rem;height:2.4rem;border-radius:8px;background:#eaf4fd;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin:0 auto;">${s.icon || '🛒'}</div>
-                    </td>
-                    <td><strong>${s.name}</strong>${s.address ? `<div style="font-size:0.78rem;color:#888;margin-top:0.1rem;">${s.address}</div>` : ''}</td>
-                    <td><span style="font-size:1rem;font-weight:600;color:#2c3e50;">${s.currency_symbol || '$'}</span></td>
-                    <td><span style="background:#fff3cd;color:#856404;padding:0.15rem 0.5rem;border-radius:20px;font-size:0.8rem;font-weight:600;">${s.low_stock_threshold || 5}</span></td>
-                    <td style="font-size:0.85rem;color:#6c757d;">${s.address || '<span style="color:#ccc;">—</span>'}</td>
-                    <td style="font-size:0.85rem;">${s.phone || '<span style="color:#ccc;">—</span>'}</td>
-                    <td><span style="background:#eaf4fd;color:#2980b9;padding:0.15rem 0.55rem;border-radius:20px;font-size:0.82rem;font-weight:600;">👤 ${s.user_count || 0}</span></td>
-                    <td>
-                        <div style="display:flex;gap:0.3rem;">
-                            <button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="openEditShopModal(${s.id})">✏️ Edit</button>
-                            <button class="btn btn-danger" style="font-size:0.75rem;padding:0.25rem 0.6rem;" onclick="deleteShop(${s.id}, '${s.name.replace(/'/g, "\\'")}')">🗑️ Delete</button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+            grid.innerHTML = shops.map(function(s) {
+                var isActive = activeShopId && s.id === activeShopId;
+                var products = s.product_count || 0;
+                var users = s.user_count || 0;
+                var sales = s.month_sales || 0;
+
+                return '<div class="shop-card ' + (isActive ? 'active-shop' : '') + '" onclick="openShopDetail(' + s.id + ')">' +
+                    (isActive ? '<span class="shop-active-badge">Active</span>' : '') +
+                    '<div class="shop-card-header">' +
+                        '<div class="shop-card-icon">' + (s.icon || '🛒') + '</div>' +
+                        '<div>' +
+                            '<div class="shop-card-title">' + escHtml(s.name) + '</div>' +
+                            (s.address ? '<div class="shop-card-location">📍 ' + escHtml(s.address) + '</div>' : '') +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="shop-card-stats">' +
+                        '<div class="shop-card-stat"><div class="stat-value">' + products + '</div><div class="stat-label">Products</div></div>' +
+                        '<div class="shop-card-stat"><div class="stat-value">' + users + '</div><div class="stat-label">Users</div></div>' +
+                        '<div class="shop-card-stat"><div class="stat-value">' + (s.currency_symbol || '$') + sales.toLocaleString() + '</div><div class="stat-label">This Month</div></div>' +
+                    '</div>' +
+                    '<div class="shop-card-meta">' +
+                        '<span class="shop-meta-badge">💰 ' + (s.currency_symbol || '$') + '</span>' +
+                        '<span class="shop-meta-badge">📦 Low: ' + (s.low_stock_threshold || 5) + '</span>' +
+                        (s.phone ? '<span class="shop-meta-badge">📞 ' + escHtml(s.phone) + '</span>' : '') +
+                    '</div>' +
+                    '<div class="shop-card-footer">' +
+                        '<div class="shop-card-actions" onclick="event.stopPropagation()">' +
+                            '<button class="btn-enter" onclick="enterShop(' + s.id + ')">Enter →</button>' +
+                            '<button onclick="openEditShopModal(' + s.id + ')">Edit</button>' +
+                            '<button class="btn-archive" onclick="archiveShop(' + s.id + ', \'' + escHtml(s.name).replace(/'/g, "\\'") + '\')">Delete</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
         }
 
+        // ── Enter Shop (switch context) ──
+        async function enterShop(shopId) {
+            try {
+                await fetch('/api/shops/switch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({shop_id: shopId}) });
+                window.location.href = '/';
+            } catch(e) { showToast('Failed to switch shop', 'error'); }
+        }
+
+        // ── Shop Detail Modal ──
+        function openShopDetail(id) {
+            var s = shops.find(function(x){ return x.id === id; });
+            if (!s) return;
+
+            document.getElementById('detail-modal-title').textContent = s.name;
+            var products = s.product_count || 0;
+            var users = s.user_count || 0;
+            var sales = s.month_sales || 0;
+            var customers = s.customer_count || 0;
+
+            var html = '<div class="shop-detail-header">' +
+                '<div class="shop-detail-icon">' + (s.icon || '🛒') + '</div>' +
+                '<div><div class="shop-detail-title">' + escHtml(s.name) + '</div>' +
+                (s.address ? '<div class="shop-detail-sub">📍 ' + escHtml(s.address) + '</div>' : '<div class="shop-detail-sub" style="color:#94a3b8;">No address set</div>') +
+                '</div></div>';
+
+            html += '<div class="shop-detail-stats">' +
+                '<div class="shop-detail-stat"><div class="value">' + products + '</div><div class="label">Products</div></div>' +
+                '<div class="shop-detail-stat"><div class="value">' + users + '</div><div class="label">Users</div></div>' +
+                '<div class="shop-detail-stat"><div class="value">' + customers + '</div><div class="label">Customers</div></div>' +
+                '<div class="shop-detail-stat"><div class="value">' + (s.currency_symbol || '$') + sales.toLocaleString() + '</div><div class="label">Sales (Month)</div></div>' +
+            '</div>';
+
+            html += '<div class="shop-detail-section"><div class="shop-detail-section-title">Configuration</div>';
+            html += '<div class="shop-detail-info">';
+            html += '<div><div class="label">Currency</div><div class="value">' + (s.currency_symbol || '$') + '</div></div>';
+            html += '<div><div class="label">Low Stock Alert</div><div class="value">' + (s.low_stock_threshold || 5) + ' units</div></div>';
+            html += '<div><div class="label">Phone</div><div class="value">' + escHtml(s.phone || '—') + '</div></div>';
+            html += '<div><div class="label">Address</div><div class="value">' + escHtml(s.address || '—') + '</div></div>';
+            html += '</div></div>';
+
+            html += '<div class="shop-detail-section"><div class="shop-detail-section-title">Quick Navigation</div>';
+            html += '<div class="shop-nav-links">' +
+                '<a href="javascript:void(0)" onclick="enterShopAndGo(' + s.id + ',\'/products\')" class="shop-nav-link"><span class="nav-icon">📦</span>Products</a>' +
+                '<a href="javascript:void(0)" onclick="enterShopAndGo(' + s.id + ',\'/sales\')" class="shop-nav-link"><span class="nav-icon">📋</span>Sales</a>' +
+                '<a href="javascript:void(0)" onclick="enterShopAndGo(' + s.id + ',\'/customers\')" class="shop-nav-link"><span class="nav-icon">👥</span>Customers</a>' +
+                '<a href="javascript:void(0)" onclick="enterShopAndGo(' + s.id + ',\'/users\')" class="shop-nav-link"><span class="nav-icon">👤</span>Users</a>' +
+                '<a href="javascript:void(0)" onclick="enterShopAndGo(' + s.id + ',\'/expenses\')" class="shop-nav-link"><span class="nav-icon">💰</span>Expenses</a>' +
+                '<a href="javascript:void(0)" onclick="enterShopAndGo(' + s.id + ',\'/settings\')" class="shop-nav-link"><span class="nav-icon">⚙️</span>Settings</a>' +
+            '</div></div>';
+
+            html += '<div style="display:flex;gap:0.75rem;margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e2e8f0;flex-wrap:wrap;">';
+            html += '<button class="btn btn-primary" onclick="closeDetailModal();enterShop(' + s.id + ')">Enter Shop →</button>';
+            html += '<button class="btn btn-secondary" onclick="closeDetailModal();openEditShopModal(' + s.id + ')">Edit</button>';
+            html += '<button class="btn btn-secondary" style="margin-left:auto;color:#ef4444;border-color:#fecaca;" onclick="archiveShop(' + s.id + ',\'' + escHtml(s.name).replace(/'/g, "\\'") + '\')">Delete Shop</button>';
+            html += '</div>';
+
+            document.getElementById('shop-detail-content').innerHTML = html;
+            document.getElementById('shop-detail-modal').classList.add('active');
+        }
+
+        function closeDetailModal() { document.getElementById('shop-detail-modal').classList.remove('active'); }
+
+        async function enterShopAndGo(shopId, path) {
+            try {
+                await fetch('/api/shops/switch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({shop_id: shopId}) });
+                window.location.href = path;
+            } catch(e) { showToast('Failed', 'error'); }
+        }
+
+        // ── Add/Edit Shop ──
         function getIconValue() {
-            const sel = document.getElementById('shop-icon');
+            var sel = document.getElementById('shop-icon');
             if (sel.value === '__custom__') return document.getElementById('shop-icon-custom').value.trim();
             return sel.value;
         }
-
         function getCurrencyValue() {
-            const sel = document.getElementById('shop-currency');
+            var sel = document.getElementById('shop-currency');
             if (sel.value === '__custom__') return document.getElementById('shop-currency-custom').value.trim();
             return sel.value;
         }
-
         function setIconValue(val) {
-            const sel = document.getElementById('shop-icon');
-            const customInput = document.getElementById('shop-icon-custom');
+            var sel = document.getElementById('shop-icon');
+            var customInput = document.getElementById('shop-icon-custom');
             sel.value = val;
             if (!sel.value || sel.value === '__custom__') {
-                // Value not in list — use custom
-                sel.value = '__custom__';
-                customInput.value = val;
-                customInput.style.display = '';
+                sel.value = '__custom__'; customInput.value = val; customInput.style.display = '';
                 document.getElementById('shop-icon-preview').textContent = val || '?';
-            } else {
-                customInput.style.display = 'none';
-                document.getElementById('shop-icon-preview').textContent = val;
-            }
+            } else { customInput.style.display = 'none'; document.getElementById('shop-icon-preview').textContent = val; }
         }
-
         function setCurrencyValue(val) {
-            const sel = document.getElementById('shop-currency');
-            const customInput = document.getElementById('shop-currency-custom');
+            var sel = document.getElementById('shop-currency');
+            var customInput = document.getElementById('shop-currency-custom');
             sel.value = val;
-            if (!sel.value || sel.value === '__custom__') {
-                sel.value = '__custom__';
-                customInput.value = val;
-                customInput.style.display = '';
-            } else {
-                customInput.style.display = 'none';
-            }
+            if (!sel.value || sel.value === '__custom__') { sel.value = '__custom__'; customInput.value = val; customInput.style.display = ''; }
+            else customInput.style.display = 'none';
         }
 
         function openAddShopModal() {
-            document.getElementById('shop-modal-title').textContent = 'Add New Shop';
+            document.getElementById('shop-modal-title').textContent = 'New Shop';
             document.getElementById('shop-submit-btn').textContent = 'Create Shop';
             document.getElementById('shop-id').value = '';
             document.getElementById('shop-form').reset();
@@ -359,33 +470,31 @@
             document.getElementById('shop-icon').value = '🛒';
             document.getElementById('shop-icon-preview').textContent = '🛒';
             document.getElementById('shop-currency').value = '$';
+            document.getElementById('shop-low-stock').value = '5';
             document.getElementById('shop-modal').classList.add('active');
         }
 
         function openEditShopModal(id) {
-            const shop = shops.find(s => s.id === id);
-            if (!shop) return;
+            var s = shops.find(function(x){ return x.id === id; });
+            if (!s) return;
             document.getElementById('shop-modal-title').textContent = 'Edit Shop';
             document.getElementById('shop-submit-btn').textContent = 'Save Changes';
-            document.getElementById('shop-id').value = shop.id;
-            document.getElementById('shop-name').value = shop.name || '';
-            setIconValue(shop.icon || '🛒');
-            setCurrencyValue(shop.currency_symbol || '$');
-            document.getElementById('shop-low-stock').value = shop.low_stock_threshold || '';
-            document.getElementById('shop-address').value = shop.address || '';
-            document.getElementById('shop-phone').value = shop.phone || '';
+            document.getElementById('shop-id').value = s.id;
+            document.getElementById('shop-name').value = s.name || '';
+            setIconValue(s.icon || '🛒');
+            setCurrencyValue(s.currency_symbol || '$');
+            document.getElementById('shop-low-stock').value = s.low_stock_threshold || 5;
+            document.getElementById('shop-address').value = s.address || '';
+            document.getElementById('shop-phone').value = s.phone || '';
             document.getElementById('shop-modal').classList.add('active');
         }
 
-        function closeShopModal() {
-            document.getElementById('shop-modal').classList.remove('active');
-            document.getElementById('shop-form').reset();
-        }
+        function closeShopModal() { document.getElementById('shop-modal').classList.remove('active'); }
 
         document.getElementById('shop-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const id = document.getElementById('shop-id').value;
-            const data = {
+            var id = document.getElementById('shop-id').value;
+            var data = {
                 name: document.getElementById('shop-name').value.trim(),
                 icon: getIconValue(),
                 currency_symbol: getCurrencyValue(),
@@ -393,165 +502,44 @@
                 address: document.getElementById('shop-address').value.trim(),
                 phone: document.getElementById('shop-phone').value.trim()
             };
-
             try {
-                let resp;
-                if (id) {
-                    resp = await fetch(`/api/shops/${id}`, {
-                        method: 'PUT',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(data)
-                    });
-                } else {
-                    resp = await fetch('/api/shops', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(data)
-                    });
-                }
-                const result = await resp.json();
-                if (result.success) {
-                    showMessage(id ? 'Shop updated successfully' : 'Shop created successfully', 'success');
-                    closeShopModal();
-                    loadShops();
-                } else {
-                    showMessage(result.error || 'Failed to save shop', 'error');
-                }
-            } catch (err) {
-                showMessage('Error saving shop', 'error');
-            }
+                var url = id ? '/api/shops/' + id : '/api/shops';
+                var method = id ? 'PUT' : 'POST';
+                var resp = await fetch(url, { method: method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+                var result = await resp.json();
+                if (result.success) { showToast(id ? 'Shop updated' : 'Shop created!', 'success'); closeShopModal(); loadShops(); }
+                else showToast(result.error || 'Failed', 'error');
+            } catch(e) { showToast('Error saving shop', 'error'); }
         });
 
-        async function deleteShop(id, name) {
-            if (!confirm(`Delete shop "${name}"? This cannot be undone.`)) return;
+        async function archiveShop(id, name) {
+            if (!confirm('Delete shop "' + name + '"? This cannot be undone.')) return;
             try {
-                const resp = await fetch(`/api/shops/${id}`, {method: 'DELETE'});
-                const result = await resp.json();
-                if (result.success) {
-                    showMessage('Shop deleted', 'success');
-                    loadShops();
-                } else {
-                    showMessage(result.error || 'Failed to delete shop', 'error');
-                }
-            } catch (err) {
-                showMessage('Error deleting shop', 'error');
-            }
+                var resp = await fetch('/api/shops/' + id, { method: 'DELETE' });
+                var result = await resp.json();
+                if (result.success) { showToast('Shop deleted', 'success'); closeDetailModal(); loadShops(); }
+                else showToast(result.error || 'Failed', 'error');
+            } catch(e) { showToast('Error', 'error'); }
         }
 
-        function showMessage(msg, type) {
-            const area = document.getElementById('message-area');
-            area.innerHTML = `<div class="alert alert-${type === 'error' ? 'danger' : 'success'}">${msg}</div>`;
-            setTimeout(() => area.innerHTML = '', 4000);
-        }
-
-        // User info
-        async function loadUserInfo() {
-            try {
-                const resp = await fetch('/api/current-user');
-                const user = await resp.json();
-
-                if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
-                if (user.shop_icon) {
-                    const bi = document.querySelector('.navbar-brand-icon');
-                    if (bi) bi.textContent = user.shop_icon;
-                }
-
-                const initial = (user.full_name || user.username).charAt(0).toUpperCase();
-                document.getElementById('user-icon').textContent = initial;
-                document.getElementById('user-name').textContent = user.full_name || user.username;
-
-                const roleBadge = document.getElementById('role-badge');
-                roleBadge.textContent = getRoleLabel(user.role);
-                roleBadge.className = getRoleBadgeClass(user.role);
-
-                const adminEls = document.querySelectorAll('.admin-only');
-                if (isAdminRole(user.role)) {
-                    adminEls.forEach(el => el.style.display = '');
-                } else {
-                    adminEls.forEach(el => el.style.display = 'none');
-                }
-                if (user.role === 'super_admin') {
-                    document.querySelectorAll('.super-admin-only').forEach(el => el.style.display = '');
-                }
-            } catch (e) {
-                console.error('Error loading user info', e);
-            }
-        }
-
-        // Icon live preview
+        // ── Icon/Currency interactivity ──
         document.getElementById('shop-icon').addEventListener('change', function() {
-            const customInput = document.getElementById('shop-icon-custom');
-            if (this.value === '__custom__') {
-                customInput.style.display = '';
-                customInput.focus();
-                document.getElementById('shop-icon-preview').textContent = customInput.value || '?';
-            } else {
-                customInput.style.display = 'none';
-                document.getElementById('shop-icon-preview').textContent = this.value;
-            }
+            var customInput = document.getElementById('shop-icon-custom');
+            if (this.value === '__custom__') { customInput.style.display = ''; customInput.focus(); document.getElementById('shop-icon-preview').textContent = customInput.value || '?'; }
+            else { customInput.style.display = 'none'; document.getElementById('shop-icon-preview').textContent = this.value; }
         });
-        document.getElementById('shop-icon-custom').addEventListener('input', function() {
-            document.getElementById('shop-icon-preview').textContent = this.value || '?';
-        });
-
-        // Currency custom toggle
+        document.getElementById('shop-icon-custom').addEventListener('input', function() { document.getElementById('shop-icon-preview').textContent = this.value || '?'; });
         document.getElementById('shop-currency').addEventListener('change', function() {
-            const customInput = document.getElementById('shop-currency-custom');
-            if (this.value === '__custom__') {
-                customInput.style.display = '';
-                customInput.focus();
-            } else {
-                customInput.style.display = 'none';
-            }
+            var customInput = document.getElementById('shop-currency-custom');
+            if (this.value === '__custom__') { customInput.style.display = ''; customInput.focus(); } else customInput.style.display = 'none';
         });
 
-        // User dropdown
-        document.getElementById('user-profile-toggle').addEventListener('click', function(e) {
-            e.stopPropagation();
-            this.classList.toggle('active');
-            document.getElementById('user-dropdown').classList.toggle('active');
-        });
-        document.addEventListener('click', function(e) {
-            const d = document.getElementById('user-dropdown');
-            const t = document.getElementById('user-profile-toggle');
-            if (!t.contains(e.target) && !d.contains(e.target)) {
-                t.classList.remove('active'); d.classList.remove('active');
-            }
-        });
+        // ── Utility ──
+        function escHtml(str) { var d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 
-        function openOwnPasswordModal() {
-            document.getElementById('own-password-modal').classList.add('active');
-        }
-
-        document.getElementById('own-password-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const fd = new FormData(this);
-            const data = Object.fromEntries(fd);
-            if (data.new_password !== data.confirm_password) {
-                showMessage('Passwords do not match', 'error'); return;
-            }
-            try {
-                const resp = await fetch('/api/users/change-own-password', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
-                });
-                const result = await resp.json();
-                if (result.success) {
-                    showMessage('Password changed', 'success');
-                    document.getElementById('own-password-modal').classList.remove('active');
-                    this.reset();
-                } else {
-                    showMessage(result.error || 'Failed to change password', 'error');
-                }
-            } catch (err) {
-                showMessage('Error changing password', 'error');
-            }
-        });
-
+        // ── Init ──
         loadUserInfo();
         loadShops();
     </script>
-    </div><!-- /main-wrapper -->
 </body>
 </html>
