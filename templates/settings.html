@@ -8,27 +8,78 @@
     <script src="/static/js/currency.js"></script>
     <script src="/static/js/ui.js"></script>
     <style>
-        /* ===== Page title accent ===== */
-        .page-title {
-            padding-left: 0.75rem;
-            border-left: 4px solid #3498db;
-            margin-bottom: 1.5rem;
-        }
-        .page-title h2 { margin: 0 0 0.2rem; color: #2c3e50; }
-        .page-title p  { margin: 0; color: #7f8c8d; font-size: 0.92rem; }
+        /* ===== Settings Layout ===== */
+        .settings-layout { display: grid; grid-template-columns: 260px 1fr; gap: 0; min-height: calc(100vh - 80px); }
+        .settings-nav { background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 1.5rem 0; }
+        .settings-nav-title { font-size: 1.3rem; font-weight: 700; color: #1e293b; padding: 0 1.25rem 1.25rem; border-bottom: 1px solid #e2e8f0; margin-bottom: 0.5rem; }
+        .settings-nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.25rem; cursor: pointer; color: #475569; font-size: 0.9rem; font-weight: 500; transition: all 0.15s; border-left: 3px solid transparent; }
+        .settings-nav-item:hover { background: #f1f5f9; color: #1e293b; }
+        .settings-nav-item.active { background: white; color: #3b82f6; border-left-color: #3b82f6; font-weight: 600; }
+        .settings-nav-item .nav-icon { font-size: 1.1rem; width: 24px; text-align: center; }
+        .settings-nav-item .nav-label { flex: 1; }
+        .settings-nav-item .nav-arrow { color: #94a3b8; font-size: 0.7rem; }
 
-        /* ===== Info / warning banners ===== */
-        .settings-info-banner {
-            display: flex; align-items: flex-start; gap: 0.6rem;
-            background: #eaf4fd; border-left: 4px solid #3498db;
-            border-radius: 6px; padding: 0.75rem 1rem;
-            margin-bottom: 1.5rem; font-size: 0.88rem; color: #1a5276;
-        }
-        .settings-warn-banner {
-            display: flex; align-items: flex-start; gap: 0.6rem;
-            background: #fff3cd; border-left: 4px solid #ffc107;
-            border-radius: 6px; padding: 0.75rem 1rem;
-            margin-bottom: 1.5rem; font-size: 0.88rem; color: #856404;
+        .settings-content { padding: 2rem 2.5rem; max-width: 720px; }
+        .settings-content-title { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 0.35rem; }
+        .settings-content-desc { color: #64748b; font-size: 0.88rem; margin-bottom: 2rem; }
+
+        .settings-panel { display: none; }
+        .settings-panel.active { display: block; }
+
+        /* ===== Settings Cards ===== */
+        .s-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }
+        .s-card-title { font-size: 0.95rem; font-weight: 600; color: #1e293b; margin-bottom: 0.35rem; }
+        .s-card-desc { font-size: 0.82rem; color: #64748b; margin-bottom: 1.25rem; }
+        .s-card hr { border: none; border-top: 1px solid #f1f5f9; margin: 1.5rem 0; }
+
+        /* ===== Form Overrides ===== */
+        .settings-content .form-group { margin-bottom: 1.1rem; }
+        .settings-content .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; }
+        .settings-content .form-group input,
+        .settings-content .form-group select { width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.88rem; background: white; box-sizing: border-box; height: 38px; }
+        .settings-content .form-group input:focus,
+        .settings-content .form-group select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.08); }
+        .settings-content .form-group small { display: block; margin-top: 0.3rem; font-size: 0.78rem; color: #94a3b8; }
+        .settings-content .form-group select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; padding-right: 2rem; }
+
+        /* ===== Buttons ===== */
+        .s-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+        .s-btn-primary { background: #3b82f6; color: white; }
+        .s-btn-primary:hover { background: #2563eb; }
+        .s-btn-secondary { background: white; color: #475569; border: 1px solid #e2e8f0; }
+        .s-btn-secondary:hover { background: #f8fafc; border-color: #cbd5e1; }
+        .s-btn-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .s-btn-danger:hover { background: #fee2e2; }
+        .s-btn-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .s-btn-success:hover { background: #dcfce7; }
+
+        /* ===== Info/Warning Banners ===== */
+        .s-banner { display: flex; align-items: flex-start; gap: 0.6rem; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.84rem; line-height: 1.5; }
+        .s-banner-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+        .s-banner-warn { background: #fefce8; border: 1px solid #fde047; color: #854d0e; }
+
+        /* ===== Icon Picker ===== */
+        .icon-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
+        .icon-grid button { width: 38px; height: 38px; font-size: 1.2rem; border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+        .icon-grid button.selected { border-color: #3b82f6; background: #eff6ff; transform: scale(1.08); }
+        .icon-grid button:hover { border-color: #94a3b8; }
+
+        /* ===== Preview ===== */
+        .shop-preview { display: inline-flex; align-items: center; gap: 0.5rem; background: #1e293b; color: white; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.88rem; }
+        .shop-preview .preview-icon { font-size: 1.1rem; }
+        .shop-preview .preview-name { font-weight: 600; }
+
+        /* ===== Scheduler ===== */
+        .scheduler-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.6rem; }
+        .scheduler-row input[type="time"] { padding: 0.45rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.88rem; height: 36px; }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .settings-layout { grid-template-columns: 1fr; }
+            .settings-nav { border-right: none; border-bottom: 1px solid #e2e8f0; padding: 1rem 0 0.5rem; }
+            .settings-nav-title { padding: 0 1rem 0.75rem; font-size: 1.1rem; }
+            .settings-nav-item { padding: 0.55rem 1rem; }
+            .settings-content { padding: 1.5rem 1rem; }
         }
     </style>
 </head>
@@ -98,331 +149,269 @@
             </div>
         </header>
 
-
-    <div class="container">
-        <div class="page-title">
-            <h2>System Settings</h2>
-            <p>Configure shop, security, and notification preferences</p>
-        </div>
-
-        <div id="message-area"></div>
-
-        <!-- ===== STORE SECTION ===== -->
-        <div class="settings-section-label">
-            <span>🏬</span> Store
-        </div>
-
-        <!-- Brand Name Settings -->
-        <div class="settings-card collapsed" id="brand-name-card">
-            <div class="settings-card-header" onclick="toggleSettingsCard('brand-name-card')">
-                <div class="settings-card-title">
-                    <span class="settings-card-icon">🏷️</span>
-                    <h3>Brand Name</h3>
-                </div>
-                <div class="settings-card-status">
-                    <span class="settings-card-status-text" id="brand-name-status">Not loaded</span>
-                    <span class="settings-card-toggle">▼</span>
-                </div>
+    <div class="settings-layout">
+        <!-- ===== Left Navigation ===== -->
+        <nav class="settings-nav">
+            <div class="settings-nav-title">Settings</div>
+            <div class="settings-nav-item active" onclick="switchPanel('shop')">
+                <span class="nav-icon">🏪</span>
+                <span class="nav-label">Shop</span>
+                <span class="nav-arrow">›</span>
             </div>
-            <div class="settings-card-body">
-                <p style="color: #7f8c8d; margin-bottom: 1.5rem;">
-                    Your business brand name. This is shown on the login page and represents your overall business (across all shops).
-                </p>
-                <form id="brand-name-form">
-                    <div class="form-group">
-                        <label>Brand Name *</label>
-                        <input type="text" id="brand-name-input" required placeholder="e.g. Kharal Fashion, ABC Clothing" maxlength="100">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Save Brand Name</button>
-                </form>
+            <div class="settings-nav-item" onclick="switchPanel('inventory')">
+                <span class="nav-icon">📦</span>
+                <span class="nav-label">Inventory</span>
+                <span class="nav-arrow">›</span>
             </div>
-        </div>
+            <div class="settings-nav-item" onclick="switchPanel('notifications')">
+                <span class="nav-icon">🔔</span>
+                <span class="nav-label">Notifications</span>
+                <span class="nav-arrow">›</span>
+            </div>
+            <div class="settings-nav-item" onclick="switchPanel('security')">
+                <span class="nav-icon">🔒</span>
+                <span class="nav-label">Security</span>
+                <span class="nav-arrow">›</span>
+            </div>
+            <div class="settings-nav-item admin-only" onclick="switchPanel('backup')">
+                <span class="nav-icon">🗄️</span>
+                <span class="nav-label">Backup & Restore</span>
+                <span class="nav-arrow">›</span>
+            </div>
+        </nav>
 
-        <!-- Shop Name Settings -->
-        <div class="settings-card collapsed" id="shop-name-card">
-            <div class="settings-card-header" onclick="toggleSettingsCard('shop-name-card')">
-                <div class="settings-card-title">
-                    <span class="settings-card-icon">🏪</span>
-                    <h3>Shop Name</h3>
-                </div>
-                <div class="settings-card-status">
-                    <span class="settings-card-status-text" id="shop-name-status">Not loaded</span>
-                    <span class="settings-card-toggle">▼</span>
-                </div>
-            </div>
-            <div class="settings-card-body">
-                <p style="color: #7f8c8d; margin-bottom: 1.5rem;">
-                    Customize your shop name and icon. This will appear throughout the system and on receipts.
-                </p>
-                <form id="shop-name-form">
-                    <div class="form-group">
-                        <label>Shop Icon</label>
-                        <div id="icon-picker" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <!-- ===== Right Content ===== -->
+        <div class="settings-content">
+            <div id="message-area"></div>
+
+            <!-- ========== SHOP PANEL ========== -->
+            <div class="settings-panel active" id="panel-shop">
+                <h2 class="settings-content-title">Shop</h2>
+                <p class="settings-content-desc">Manage your store identity, branding, and regional preferences.</p>
+
+                <!-- Brand Name -->
+                <div class="s-card">
+                    <div class="s-card-title">Brand Name</div>
+                    <div class="s-card-desc">Your business brand shown on the login page. Represents your overall business across all shops.</div>
+                    <form id="brand-name-form">
+                        <div class="form-group">
+                            <label>Brand Name</label>
+                            <input type="text" id="brand-name-input" required placeholder="e.g. Kharal Fashion, ABC Clothing" maxlength="100">
                         </div>
-                        <input type="hidden" id="shop-icon-input" value="🛒">
-                    </div>
-                    <div class="form-group">
-                        <label>Shop Name *</label>
-                        <input type="text" id="shop-name-input" required placeholder="Enter your shop name" maxlength="100">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding: 0.75rem; background: var(--lighter); border-radius: var(--radius); border: 1px solid var(--border);">
-                        <span style="font-size: 0.85rem; color: var(--muted);">Preview:</span>
-                        <div style="display: flex; align-items: center; gap: 0.5rem; background: var(--dark); color: white; padding: 0.4rem 0.8rem; border-radius: var(--radius);">
-                            <span id="icon-preview" style="font-size: 1.1rem;">🛒</span>
-                            <span id="name-preview" style="font-size: 0.9rem; font-weight: 600;">Clothing Shop POS</span>
+                        <button type="submit" class="s-btn s-btn-primary">Save</button>
+                    </form>
+                </div>
+
+                <!-- Shop Name & Icon -->
+                <div class="s-card">
+                    <div class="s-card-title">Shop Name & Icon</div>
+                    <div class="s-card-desc">Customize your shop name and icon. Appears throughout the system and on receipts.</div>
+                    <form id="shop-name-form">
+                        <div class="form-group">
+                            <label>Shop Icon</label>
+                            <div class="icon-grid" id="icon-picker"></div>
+                            <input type="hidden" id="shop-icon-input" value="🛒">
                         </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Save Shop Name</button>
-                </form>
-            </div>
-        </div>
+                        <div class="form-group">
+                            <label>Shop Name</label>
+                            <input type="text" id="shop-name-input" required placeholder="Enter your shop name" maxlength="100">
+                        </div>
+                        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem;">
+                            <span style="font-size:0.8rem;color:#94a3b8;">Preview:</span>
+                            <div class="shop-preview">
+                                <span class="preview-icon" id="icon-preview">🛒</span>
+                                <span class="preview-name" id="name-preview">Shop Name</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="s-btn s-btn-primary">Save</button>
+                    </form>
+                </div>
 
-        <!-- Currency Settings -->
-        <div class="settings-card collapsed" id="currency-card">
-            <div class="settings-card-header" onclick="toggleSettingsCard('currency-card')">
-                <div class="settings-card-title">
-                    <span class="settings-card-icon">💰</span>
-                    <h3>Currency Settings</h3>
-                </div>
-                <div class="settings-card-status">
-                    <span class="settings-card-status-text" id="currency-status">Not loaded</span>
-                    <span class="settings-card-toggle">▼</span>
-                </div>
-            </div>
-            <div class="settings-card-body">
-                <p style="color: #7f8c8d; margin-bottom: 1.5rem;">
-                    Choose your preferred currency symbol. This will be displayed throughout the entire system.
-                </p>
-                <form id="currency-form">
-                <div class="form-group">
-                    <label>Currency Symbol *</label>
-                    <select id="currency-symbol" required>
-                        <option value="$">$ - Dollar (USD, CAD, AUD)</option>
-                        <option value="€">€ - Euro</option>
-                        <option value="£">£ - British Pound</option>
-                        <option value="¥">¥ - Japanese Yen / Chinese Yuan</option>
-                        <option value="₹">₹ - Indian Rupee</option>
-                        <option value="₨">₨ - Pakistani Rupee</option>
-                        <option value="฿">฿ - Thai Baht</option>
-                        <option value="₽">₽ - Russian Ruble</option>
-                        <option value="R$">R$ - Brazilian Real</option>
-                        <option value="kr">kr - Swedish Krona</option>
-                        <option value="Fr">Fr - Swiss Franc</option>
-                        <option value="zł">zł - Polish Zloty</option>
-                        <option value="₺">₺ - Turkish Lira</option>
-                        <option value="₩">₩ - South Korean Won</option>
-                        <option value="₱">₱ - Philippine Peso</option>
-                        <option value="RM">RM - Malaysian Ringgit</option>
-                        <option value="Rp">Rp - Indonesian Rupiah</option>
-                        <option value="₪">₪ - Israeli Shekel</option>
-                        <option value="R">R - South African Rand</option>
-                        <option value="K">K - Myanmar Kyat</option>
-                        <option value="custom">Custom Symbol...</option>
-                    </select>
-                </div>
-                <div class="form-group" id="custom-currency-group" style="display: none;">
-                    <label>Custom Currency Symbol *</label>
-                    <input type="text" id="custom-currency" placeholder="Enter your currency symbol" maxlength="10">
-                </div>
-                <button type="submit" class="btn btn-primary">Save Currency</button>
-            </form>
-            </div>
-        </div>
-
-        <!-- ===== SECURITY SECTION ===== -->
-        <div class="settings-section-label">
-            <span>🔒</span> Security
-        </div>
-
-        <!-- Session Timeout Settings -->
-        <div class="settings-card collapsed" id="session-timeout-card">
-            <div class="settings-card-header" onclick="toggleSettingsCard('session-timeout-card')">
-                <div class="settings-card-title">
-                    <span class="settings-card-icon">⏱️</span>
-                    <h3>Session Timeout</h3>
-                </div>
-                <div class="settings-card-status">
-                    <span class="settings-card-status-text" id="session-timeout-status">Not loaded</span>
-                    <span class="settings-card-toggle">▼</span>
+                <!-- Currency -->
+                <div class="s-card">
+                    <div class="s-card-title">Currency</div>
+                    <div class="s-card-desc">Choose the currency symbol displayed throughout the system.</div>
+                    <form id="currency-form">
+                        <div class="form-group">
+                            <label>Currency Symbol</label>
+                            <select id="currency-symbol" required>
+                                <option value="$">$ — Dollar (USD, CAD, AUD)</option>
+                                <option value="€">€ — Euro</option>
+                                <option value="£">£ — British Pound</option>
+                                <option value="¥">¥ — Yen / Yuan</option>
+                                <option value="₹">₹ — Indian Rupee</option>
+                                <option value="₨">₨ — Pakistani Rupee</option>
+                                <option value="฿">฿ — Thai Baht</option>
+                                <option value="₽">₽ — Russian Ruble</option>
+                                <option value="R$">R$ — Brazilian Real</option>
+                                <option value="kr">kr — Swedish Krona</option>
+                                <option value="Fr">Fr — Swiss Franc</option>
+                                <option value="zł">zł — Polish Zloty</option>
+                                <option value="₺">₺ — Turkish Lira</option>
+                                <option value="₩">₩ — South Korean Won</option>
+                                <option value="₱">₱ — Philippine Peso</option>
+                                <option value="RM">RM — Malaysian Ringgit</option>
+                                <option value="Rp">Rp — Indonesian Rupiah</option>
+                                <option value="₪">₪ — Israeli Shekel</option>
+                                <option value="R">R — South African Rand</option>
+                                <option value="K">K — Myanmar Kyat</option>
+                                <option value="custom">Custom Symbol...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="custom-currency-group" style="display:none;">
+                            <label>Custom Currency Symbol</label>
+                            <input type="text" id="custom-currency" placeholder="Enter your currency symbol" maxlength="10">
+                        </div>
+                        <button type="submit" class="s-btn s-btn-primary">Save</button>
+                    </form>
                 </div>
             </div>
-            <div class="settings-card-body">
-                <p style="color: #7f8c8d; margin-bottom: 1.5rem;">
-                    Configure automatic logout after period of inactivity. Users will be logged out if they don't interact with the system.
-                </p>
-                <form id="session-timeout-form">
-                <div class="form-group">
-                    <label>Timeout Duration *</label>
-                    <select id="session-timeout-select" required>
-                        <option value="300">5 minutes</option>
-                        <option value="600">10 minutes</option>
-                        <option value="900">15 minutes</option>
-                        <option value="1800">30 minutes (recommended)</option>
-                        <option value="3600">1 hour</option>
-                        <option value="7200">2 hours</option>
-                        <option value="14400">4 hours</option>
-                        <option value="28800">8 hours</option>
-                        <option value="custom">Custom...</option>
-                    </select>
-                </div>
-                <div class="form-group" id="custom-timeout-group" style="display: none;">
-                    <label>Custom Timeout (minutes) *</label>
-                    <input type="number" id="custom-timeout" placeholder="Enter minutes (5-1440)" min="5" max="1440">
-                    <small style="color: #7f8c8d;">Minimum: 5 minutes, Maximum: 24 hours (1440 minutes)</small>
-                </div>
-                <button type="submit" class="btn btn-primary">Save Session Timeout</button>
-            </form>
-            </div>
-        </div>
 
-        <!-- Database Backup & Restore (Admin Only) -->
-        <div class="settings-card collapsed admin-only" id="backup-card">
-            <div class="settings-card-header" onclick="toggleSettingsCard('backup-card')">
-                <div class="settings-card-title">
-                    <span class="settings-card-icon">🗄️</span>
-                    <h3>Database Backup & Restore</h3>
-                </div>
-                <span class="settings-card-toggle">▼</span>
-            </div>
-            <div class="settings-card-body">
-                <div class="settings-warn-banner">
-                    <span>⚠️</span><span><strong>Admin only.</strong> Backup runs live without stopping the app. Restore will <strong>replace all data</strong> and cannot be undone.</span>
-                </div>
-
-                <!-- Backup -->
-                <div style="margin-bottom:1.5rem;">
-                    <h4 style="margin-bottom:0.5rem; color:#2c3e50;">📥 Create Backup</h4>
-                    <p style="color:#7f8c8d; font-size:0.9rem; margin-bottom:0.75rem;">Downloads a complete MySQL dump of your database. Safe to run while the app is live.</p>
-                    <button class="btn btn-primary" onclick="downloadBackup()" id="backup-btn">⬇ Download Backup</button>
-                </div>
-
-                <hr style="border:none; border-top:1px solid var(--border); margin-bottom:1.5rem;">
-
-                <!-- Restore -->
-                <div>
-                    <h4 style="margin-bottom:0.5rem; color:#2c3e50;">📤 Restore from Backup</h4>
-                    <p style="color:#7f8c8d; font-size:0.9rem; margin-bottom:0.75rem;">Upload a <code>.sql</code> backup file. This will <strong>drop and recreate</strong> the database with the backup data.</p>
-                    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
-                        <input type="file" id="restore-file" accept=".sql" style="font-size:0.9rem;">
-                        <button class="btn" style="background:#e74c3c; color:white;" onclick="confirmRestore()">🔄 Restore</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ===== NOTIFICATIONS SECTION ===== -->
-        <div class="settings-section-label">
-            <span>🔔</span> Notifications
-        </div>
-
-        <!-- Email Configuration -->
-        <div class="settings-card collapsed" id="email-card">
-            <div class="settings-card-header" onclick="toggleSettingsCard('email-card')">
-                <div class="settings-card-title">
-                    <span class="settings-card-icon">📧</span>
-                    <h3>Email Configuration</h3>
-                </div>
-                <div class="settings-card-status">
-                    <span class="settings-card-status-text" id="email-status">Not loaded</span>
-                    <span class="settings-card-toggle">▼</span>
-                </div>
-            </div>
-            <div class="settings-card-body">
-                <p style="color: #7f8c8d; margin-bottom: 1.5rem;">
-                    Configure SMTP settings for sending email alerts. These settings are used by the low stock alert system.
-                </p>
-                <form id="email-settings-form">
-                    <div class="form-group">
-                        <label>SMTP Server *</label>
-                        <input type="text" id="smtp-server" required placeholder="e.g., smtp.gmail.com">
-                        <small style="color: #7f8c8d;">Your email provider's SMTP server address</small>
-                    </div>
-                    <div class="form-group">
-                        <label>SMTP Port *</label>
-                        <input type="number" id="smtp-port" required placeholder="587" min="1" max="65535">
-                        <small style="color: #7f8c8d;">Usually 587 for TLS or 465 for SSL</small>
-                    </div>
-                    <div class="form-group">
-                        <label>SMTP Username (Email) *</label>
-                        <input type="email" id="smtp-username" required placeholder="your-email@example.com">
-                        <small style="color: #7f8c8d;">Your email address for SMTP authentication</small>
-                    </div>
-                    <div class="form-group">
-                        <label>SMTP Password</label>
-                        <input type="password" id="smtp-password" placeholder="Enter new password (leave blank to keep current)">
-                        <small style="color: #7f8c8d;">
-                            For Gmail, use an App Password (no spaces), not your regular password.
-                            <span id="password-status" style="display: none; font-weight: bold;"></span>
-                        </small>
-                    </div>
-                    <div class="form-group">
-                        <label>Alert Email Address *</label>
-                        <input type="email" id="alert-email" required placeholder="admin@example.com, other@example.com" multiple>
-                        <small style="color: #7f8c8d;">Email address(es) to receive low stock alerts. You can enter multiple addresses separated by commas.</small>
-                    </div>
-                    <div style="display: flex; gap: 1rem;">
-                        <button type="submit" class="btn btn-primary">Save Email Settings</button>
-                        <button type="button" class="btn btn-secondary" onclick="sendTestEmail()">Send Test Email</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Low Stock Alerts & Scheduler -->
-        <div class="settings-card collapsed" id="alerts-card">
-            <div class="settings-card-header" onclick="toggleSettingsCard('alerts-card')">
-                <div class="settings-card-title">
-                    <span class="settings-card-icon">🔔</span>
-                    <h3>Low Stock Alerts & Scheduler</h3>
-                </div>
-                <div class="settings-card-status">
-                    <span class="settings-card-status-text" id="alerts-status">Not loaded</span>
-                    <span class="settings-card-toggle">▼</span>
-                </div>
-            </div>
-            <div class="settings-card-body">
-                <p style="color: #7f8c8d; margin-bottom: 1rem;">
-                    Configure low stock threshold and automatic email alert schedule.
-                </p>
-
-                <!-- Scheduler Status -->
-                <div id="scheduler-status" class="settings-info-banner">
-                    <span>🕐</span><span><strong>Automatic Email Alerts:</strong> Loading...</span>
-                </div>
+            <!-- ========== INVENTORY PANEL ========== -->
+            <div class="settings-panel" id="panel-inventory">
+                <h2 class="settings-content-title">Inventory</h2>
+                <p class="settings-content-desc">Configure stock monitoring thresholds and automatic alert schedules.</p>
 
                 <!-- Low Stock Threshold -->
-                <form id="threshold-form">
-                    <div class="form-group">
-                        <label>Low Stock Threshold *</label>
-                        <input type="number" id="low-stock-threshold" required placeholder="5" min="0">
-                        <small style="color: #7f8c8d;">Alert when product stock falls below this number</small>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Save Threshold</button>
-                </form>
-
-                <hr style="margin: 2rem 0; border: none; border-top: 1px solid #dee2e6;">
-
-                <!-- Scheduler Configuration -->
-                <h4 style="margin-bottom: 1rem; color: #2c3e50;">Automatic Alert Schedule</h4>
-                <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 1rem;">
-                    Configure when automatic low stock checks should run. Enter times in 24-hour format (HH:MM).
-                </p>
-
-                <div id="scheduler-times-list" style="margin-bottom: 1rem;">
-                    <!-- Dynamically populated -->
+                <div class="s-card">
+                    <div class="s-card-title">Low Stock Threshold</div>
+                    <div class="s-card-desc">Products with stock below this number will trigger low-stock alerts.</div>
+                    <form id="threshold-form">
+                        <div class="form-group">
+                            <label>Threshold Quantity</label>
+                            <input type="number" id="low-stock-threshold" required placeholder="5" min="0" style="max-width:160px;">
+                            <small>Alert when product stock falls below this number</small>
+                        </div>
+                        <button type="submit" class="s-btn s-btn-primary">Save Threshold</button>
+                    </form>
                 </div>
 
-                <button type="button" class="btn btn-success" onclick="addSchedulerTime()" style="margin-bottom: 1rem;">
-                    + Add Check Time
-                </button>
+                <!-- Alert Schedule -->
+                <div class="s-card">
+                    <div class="s-card-title">Automatic Alert Schedule</div>
+                    <div class="s-card-desc">Configure when automatic low-stock checks run. Times are in 24-hour format.</div>
 
-                <div style="display: flex; gap: 1rem;">
-                    <button type="button" class="btn btn-primary" onclick="saveSchedulerTimes()">Save Schedule</button>
-                    <button type="button" class="btn" style="background-color: #e74c3c; color: white;" onclick="checkLowStock()">Check Low Stock Now</button>
+                    <div id="scheduler-status" class="s-banner s-banner-info">
+                        <span>🕐</span><span><strong>Automatic Email Alerts:</strong> Loading...</span>
+                    </div>
+
+                    <div id="scheduler-times-list"></div>
+
+                    <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
+                        <button type="button" class="s-btn s-btn-secondary" onclick="addSchedulerTime()">+ Add Time</button>
+                    </div>
+
+                    <div style="display:flex;gap:0.75rem;margin-top:1.25rem;">
+                        <button type="button" class="s-btn s-btn-primary" onclick="saveSchedulerTimes()">Save Schedule</button>
+                        <button type="button" class="s-btn s-btn-danger" onclick="checkLowStock()">Check Low Stock Now</button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
+
+            <!-- ========== NOTIFICATIONS PANEL ========== -->
+            <div class="settings-panel" id="panel-notifications">
+                <h2 class="settings-content-title">Notifications</h2>
+                <p class="settings-content-desc">Configure how and where alert emails are delivered.</p>
+
+                <!-- Email / SMTP -->
+                <div class="s-card">
+                    <div class="s-card-title">Email Configuration (SMTP)</div>
+                    <div class="s-card-desc">These settings are used to send low-stock alerts and system notifications.</div>
+                    <form id="email-settings-form">
+                        <div class="form-group">
+                            <label>SMTP Server</label>
+                            <input type="text" id="smtp-server" required placeholder="e.g. smtp.gmail.com">
+                            <small>Your email provider's SMTP server address</small>
+                        </div>
+                        <div class="form-group">
+                            <label>SMTP Port</label>
+                            <input type="number" id="smtp-port" required placeholder="587" min="1" max="65535" style="max-width:120px;">
+                            <small>Usually 587 (TLS) or 465 (SSL)</small>
+                        </div>
+                        <div class="form-group">
+                            <label>SMTP Username (Email)</label>
+                            <input type="email" id="smtp-username" required placeholder="your-email@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label>SMTP Password</label>
+                            <input type="password" id="smtp-password" placeholder="Enter new password (leave blank to keep current)">
+                            <small>For Gmail, use an App Password. <span id="password-status" style="display:none;font-weight:600;"></span></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Alert Recipients</label>
+                            <input type="email" id="alert-email" required placeholder="admin@example.com, other@example.com" multiple>
+                            <small>Comma-separated email addresses to receive alerts</small>
+                        </div>
+                        <div style="display:flex;gap:0.75rem;">
+                            <button type="submit" class="s-btn s-btn-primary">Save Email Settings</button>
+                            <button type="button" class="s-btn s-btn-secondary" onclick="sendTestEmail()">Send Test Email</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ========== SECURITY PANEL ========== -->
+            <div class="settings-panel" id="panel-security">
+                <h2 class="settings-content-title">Security</h2>
+                <p class="settings-content-desc">Control session behavior and access policies.</p>
+
+                <!-- Session Timeout -->
+                <div class="s-card">
+                    <div class="s-card-title">Session Timeout</div>
+                    <div class="s-card-desc">Automatically log out users after a period of inactivity.</div>
+                    <form id="session-timeout-form">
+                        <div class="form-group">
+                            <label>Timeout Duration</label>
+                            <select id="session-timeout-select" required>
+                                <option value="300">5 minutes</option>
+                                <option value="600">10 minutes</option>
+                                <option value="900">15 minutes</option>
+                                <option value="1800">30 minutes (recommended)</option>
+                                <option value="3600">1 hour</option>
+                                <option value="7200">2 hours</option>
+                                <option value="14400">4 hours</option>
+                                <option value="28800">8 hours</option>
+                                <option value="custom">Custom...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="custom-timeout-group" style="display:none;">
+                            <label>Custom Timeout (minutes)</label>
+                            <input type="number" id="custom-timeout" placeholder="Enter minutes (5-1440)" min="5" max="1440" style="max-width:180px;">
+                            <small>Minimum: 5 minutes, Maximum: 24 hours</small>
+                        </div>
+                        <button type="submit" class="s-btn s-btn-primary">Save</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ========== BACKUP & RESTORE PANEL ========== -->
+            <div class="settings-panel" id="panel-backup">
+                <h2 class="settings-content-title">Backup & Restore</h2>
+                <p class="settings-content-desc">Manage database backups and disaster recovery.</p>
+
+                <!-- Backup -->
+                <div class="s-card">
+                    <div class="s-card-title">Create Backup</div>
+                    <div class="s-card-desc">Downloads a complete MySQL dump. Safe to run while the app is live.</div>
+                    <button class="s-btn s-btn-primary" onclick="downloadBackup()" id="backup-btn">⬇ Download Backup</button>
+                </div>
+
+                <!-- Restore -->
+                <div class="s-card">
+                    <div class="s-card-title">Restore from Backup</div>
+                    <div class="s-card-desc">Upload a <code>.sql</code> backup file. This will drop and recreate the database with the backup data.</div>
+                    <div class="s-banner s-banner-warn">
+                        <span>⚠️</span><span><strong>Destructive action.</strong> Restore will replace all data and cannot be undone. You will be logged out after restore completes.</span>
+                    </div>
+                    <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+                        <input type="file" id="restore-file" accept=".sql" style="font-size:0.85rem;">
+                        <button class="s-btn s-btn-danger" onclick="confirmRestore()">🔄 Restore</button>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /settings-content -->
+    </div><!-- /settings-layout -->
 
     <!-- Restore Confirmation Modal -->
     <div id="restore-modal" class="modal">
@@ -431,80 +420,83 @@
                 <h2>⚠️ Confirm Restore</h2>
                 <button class="close-btn" onclick="closeRestoreModal()">&times;</button>
             </div>
-            <p style="margin-bottom:1rem; color:#7f8c8d;">This will <strong>permanently replace all current data</strong> with the contents of the uploaded backup. You will be logged out after the restore completes.</p>
+            <p style="margin-bottom:1rem;color:#64748b;">This will <strong>permanently replace all current data</strong> with the uploaded backup. You will be logged out after restore.</p>
             <p style="margin-bottom:1rem;">Type <strong>CONFIRM</strong> to proceed:</p>
             <input type="text" id="restore-confirm-input" placeholder="Type CONFIRM here"
-                style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius); margin-bottom:1rem; font-size:1rem;">
-            <div style="display:flex; gap:1rem;">
-                <button class="btn" style="background:#e74c3c; color:white;" onclick="executeRestore()">Restore Database</button>
-                <button class="btn btn-secondary" onclick="closeRestoreModal()">Cancel</button>
+                style="width:100%;padding:0.5rem;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:1rem;font-size:0.9rem;">
+            <div style="display:flex;gap:0.75rem;">
+                <button class="s-btn s-btn-danger" onclick="executeRestore()">Restore Database</button>
+                <button class="s-btn s-btn-secondary" onclick="closeRestoreModal()">Cancel</button>
             </div>
         </div>
     </div>
+
+    <!-- Change Password Modal -->
     <div id="change-password-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width:420px;">
             <div class="modal-header">
                 <h2>Change Password</h2>
                 <button class="close-btn" onclick="closeChangePasswordModal()">&times;</button>
             </div>
             <form id="change-password-form">
                 <div class="form-group">
-                    <label>Current Password *</label>
+                    <label>Current Password</label>
                     <input type="password" id="current-password" required placeholder="Enter current password">
                 </div>
                 <div class="form-group">
-                    <label>New Password *</label>
+                    <label>New Password</label>
                     <input type="password" id="new-password" required placeholder="Minimum 6 characters" minlength="6">
                 </div>
                 <div class="form-group">
-                    <label>Confirm New Password *</label>
+                    <label>Confirm New Password</label>
                     <input type="password" id="confirm-password" required placeholder="Re-enter new password" minlength="6">
                 </div>
-                <div style="display: flex; gap: 1rem;">
-                    <button type="submit" class="btn btn-primary">Change Password</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+                <div style="display:flex;gap:0.75rem;">
+                    <button type="submit" class="s-btn s-btn-primary">Change Password</button>
+                    <button type="button" class="s-btn s-btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        // Load user info
+        // ── Panel Navigation ─────────────────────────────────────────────
+        function switchPanel(name) {
+            document.querySelectorAll('.settings-nav-item').forEach(function(item) { item.classList.remove('active'); });
+            event.currentTarget.classList.add('active');
+            document.querySelectorAll('.settings-panel').forEach(function(p) { p.classList.remove('active'); });
+            var panel = document.getElementById('panel-' + name);
+            if (panel) panel.classList.add('active');
+        }
+
+        // ── User Info ────────────────────────────────────────────────────
         async function loadUserInfo() {
             try {
-                const response = await fetch('/api/current-user');
-                const user = await response.json();
+                var response = await fetch('/api/current-user');
+                var user = await response.json();
 
-                // Set shop name
-                if (user.shop_name) {
-                    document.getElementById('shop-name-title').textContent = user.shop_name;
-                }
+                if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
                 if (user.shop_icon) {
-                    const bi = document.querySelector('.navbar-brand-icon');
+                    var bi = document.querySelector('.navbar-brand-icon');
                     if (bi) bi.textContent = user.shop_icon;
                 }
 
-                // Set user icon (first letter of name)
-                const initial = (user.full_name || user.username).charAt(0).toUpperCase();
+                var initial = (user.full_name || user.username).charAt(0).toUpperCase();
                 document.getElementById('user-icon').textContent = initial;
-
-                // Set user name
                 document.getElementById('user-name').textContent = user.full_name || user.username;
 
-                // Set user role badge
-                const roleBadge = document.getElementById('role-badge');
+                var roleBadge = document.getElementById('role-badge');
                 roleBadge.textContent = getRoleLabel(user.role);
                 roleBadge.className = getRoleBadgeClass(user.role);
 
-                // Show/hide admin-only elements
-                const adminEls = document.querySelectorAll('.admin-only');
+                var adminEls = document.querySelectorAll('.admin-only');
                 if (isAdminRole(user.role)) {
-                    adminEls.forEach(el => el.style.display = '');
+                    adminEls.forEach(function(el) { el.style.display = ''; });
                 } else {
-                    adminEls.forEach(el => el.style.display = 'none');
+                    adminEls.forEach(function(el) { el.style.display = 'none'; });
                 }
                 if (user.role === 'super_admin') {
-                    document.querySelectorAll('.super-admin-only').forEach(el => el.style.display = '');
+                    document.querySelectorAll('.super-admin-only').forEach(function(el) { el.style.display = ''; });
                     loadShopSwitcher(user.active_shop_id);
                 } else if (user.role === 'shop_owner') {
                     loadShopSwitcher(user.active_shop_id);
@@ -514,815 +506,434 @@
             }
         }
 
-        // Toggle user dropdown
+        // ── User Dropdown ────────────────────────────────────────────────
         document.getElementById('user-profile-toggle').addEventListener('click', function(e) {
             e.stopPropagation();
             this.classList.toggle('active');
             document.getElementById('user-dropdown').classList.toggle('active');
         });
-
-        // Close dropdown when clicking outside
         document.addEventListener('click', function(e) {
-            const dropdown = document.getElementById('user-dropdown');
-            const toggle = document.getElementById('user-profile-toggle');
+            var dropdown = document.getElementById('user-dropdown');
+            var toggle = document.getElementById('user-profile-toggle');
             if (!toggle.contains(e.target) && !dropdown.contains(e.target)) {
                 toggle.classList.remove('active');
                 dropdown.classList.remove('active');
             }
         });
 
-        // Change password modal
+        // ── Change Password ──────────────────────────────────────────────
         function openChangePasswordModal() {
             document.getElementById('change-password-modal').classList.add('active');
             document.getElementById('user-dropdown').classList.remove('active');
             document.getElementById('user-profile-toggle').classList.remove('active');
         }
-
         function closeChangePasswordModal() {
             document.getElementById('change-password-modal').classList.remove('active');
             document.getElementById('change-password-form').reset();
         }
-
-        // Handle password change
-        document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+        document.getElementById('change-password-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            var currentPassword = document.getElementById('current-password').value;
+            var newPassword = document.getElementById('new-password').value;
+            var confirmPassword = document.getElementById('confirm-password').value;
 
-            const currentPassword = document.getElementById('current-password').value;
-            const newPassword = document.getElementById('new-password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-
-            if (newPassword !== confirmPassword) {
-                showToast('New passwords do not match!', 'warning');
-                return;
-            }
-
-            if (newPassword.length < 6) {
-                showToast('New password must be at least 6 characters!', 'warning');
-                return;
-            }
+            if (newPassword !== confirmPassword) { showToast('New passwords do not match!', 'warning'); return; }
+            if (newPassword.length < 6) { showToast('Password must be at least 6 characters!', 'warning'); return; }
 
             try {
-                const response = await fetch('/api/change-password', {
+                var response = await fetch('/api/change-password', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        current_password: currentPassword,
-                        new_password: newPassword
-                    })
+                    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
                 });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showToast('Password changed successfully!', 'success');
-                    closeChangePasswordModal();
-                } else {
-                    showToast(result.error || 'Error changing password', 'error');
-                }
-            } catch (error) {
-                console.error('Error changing password:', error);
-                showToast('Error changing password', 'error');
-            }
+                var result = await response.json();
+                if (response.ok) { showToast('Password changed successfully!', 'success'); closeChangePasswordModal(); }
+                else { showToast(result.error || 'Error changing password', 'error'); }
+            } catch (error) { showToast('Error changing password', 'error'); }
         });
 
-        // Show custom currency input when "custom" is selected
-        document.getElementById('currency-symbol').addEventListener('change', function() {
-            const customGroup = document.getElementById('custom-currency-group');
-            if (this.value === 'custom') {
-                customGroup.style.display = 'block';
-                document.getElementById('custom-currency').required = true;
-            } else {
-                customGroup.style.display = 'none';
-                document.getElementById('custom-currency').required = false;
-            }
-        });
-
-        // Load current shop name
-        const SHOP_ICONS = [
-            '🛒','🏪','👕','👗','🧥','👔','👠','👟','🎽','👜',
-            '💼','🛍️','🧢','👒','🕶️','💎','⌚','🎀','🧵','✂️',
-            '🏬','🏠','☕','🍕','🍔','🎂','🌸','🎨','📦','💰',
-            '⭐','🔥','💡','🎯','🚀','💫','🏆','❤️','🌈','✨'
-        ];
-
-        function initIconPicker() {
-            const picker = document.getElementById('icon-picker');
-            const currentIcon = document.getElementById('shop-icon-input').value;
-            picker.innerHTML = SHOP_ICONS.map(icon => `
-                <button type="button" class="icon-pick-btn${icon === currentIcon ? ' selected' : ''}"
-                    onclick="selectShopIcon(this, '${icon}')"
-                    style="width:40px; height:40px; font-size:1.3rem; border:2px solid var(--border); border-radius:var(--radius); background:white; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s;">${icon}</button>
-            `).join('');
+        // ── Show Message ─────────────────────────────────────────────────
+        function showMessage(type, message) {
+            var messageArea = document.getElementById('message-area');
+            var bg = type === 'success' ? '#dcfce7' : '#fee2e2';
+            var color = type === 'success' ? '#166534' : '#991b1b';
+            messageArea.innerHTML = '<div style="margin-bottom:1rem;padding:0.75rem 1rem;border-radius:8px;background:' + bg + ';color:' + color + ';font-size:0.88rem;">' + message + '</div>';
+            setTimeout(function() { messageArea.innerHTML = ''; }, 3000);
         }
 
+        // ── SHOP: Brand Name ─────────────────────────────────────────────
+        async function loadBrandName() {
+            try {
+                var response = await fetch('/api/settings/brand');
+                var data = await response.json();
+                document.getElementById('brand-name-input').value = data.brand_name || '';
+            } catch (error) { console.error('Error loading brand name:', error); }
+        }
+        document.getElementById('brand-name-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var brandName = document.getElementById('brand-name-input').value.trim();
+            if (!brandName) { showMessage('error', 'Brand name cannot be empty'); return; }
+            try {
+                var response = await fetch('/api/settings/brand', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ brand_name: brandName })
+                });
+                var data = await response.json();
+                if (data.success) { showMessage('success', 'Brand name updated!'); }
+                else { showMessage('error', data.error || 'Error saving brand name'); }
+            } catch (error) { showMessage('error', 'Error saving brand name'); }
+        });
+
+        // ── SHOP: Shop Name & Icon ───────────────────────────────────────
+        var SHOP_ICONS = ['🛒','🏪','👕','👗','🧥','👔','👠','👟','🎽','👜','💼','🛍️','🧢','👒','🕶️','💎','⌚','🎀','🧵','✂️','🏬','🏠','☕','🍕','🍔','🎂','🌸','🎨','📦','💰','⭐','🔥','💡','🎯','🚀','💫','🏆','❤️','🌈','✨'];
+
+        function initIconPicker() {
+            var picker = document.getElementById('icon-picker');
+            var currentIcon = document.getElementById('shop-icon-input').value;
+            picker.innerHTML = SHOP_ICONS.map(function(icon) {
+                return '<button type="button" class="' + (icon === currentIcon ? 'selected' : '') + '" onclick="selectShopIcon(this,\'' + icon + '\')">' + icon + '</button>';
+            }).join('');
+        }
         function selectShopIcon(btn, icon) {
-            document.querySelectorAll('#icon-picker .icon-pick-btn').forEach(b => {
-                b.classList.remove('selected');
-                b.style.borderColor = 'var(--border)';
-                b.style.background = 'white';
-                b.style.transform = 'scale(1)';
-            });
+            document.querySelectorAll('#icon-picker button').forEach(function(b) { b.classList.remove('selected'); });
             btn.classList.add('selected');
-            btn.style.borderColor = 'var(--primary)';
-            btn.style.background = 'var(--lighter)';
-            btn.style.transform = 'scale(1.1)';
             document.getElementById('shop-icon-input').value = icon;
             document.getElementById('icon-preview').textContent = icon;
         }
-
         document.getElementById('shop-name-input').addEventListener('input', function() {
             document.getElementById('name-preview').textContent = this.value || 'Shop Name';
         });
 
-        // ── Brand Name ─────────────────────────────────────────────────
-        async function loadBrandName() {
-            try {
-                const response = await fetch('/api/settings/brand');
-                const data = await response.json();
-                document.getElementById('brand-name-input').value = data.brand_name || '';
-                document.getElementById('brand-name-status').textContent = data.brand_name || 'Not set';
-            } catch (error) {
-                console.error('Error loading brand name:', error);
-                document.getElementById('brand-name-status').textContent = 'Error loading';
-            }
-        }
-
-        document.getElementById('brand-name-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const brandName = document.getElementById('brand-name-input').value.trim();
-            if (!brandName) { showMessage('Brand name cannot be empty', 'error'); return; }
-            try {
-                const response = await fetch('/api/settings/brand', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ brand_name: brandName })
-                });
-                const data = await response.json();
-                if (data.success) {
-                    showMessage('Brand name updated successfully!', 'success');
-                    document.getElementById('brand-name-status').textContent = brandName;
-                } else {
-                    showMessage(data.error || 'Error saving brand name', 'error');
-                }
-            } catch (error) {
-                showMessage('Error saving brand name', 'error');
-            }
-        });
-
         async function loadShopName() {
             try {
-                const response = await fetch('/api/settings/shop-name');
-                const data = await response.json();
+                var response = await fetch('/api/settings/shop-name');
+                var data = await response.json();
                 document.getElementById('shop-name-input').value = data.shop_name;
-                document.getElementById('shop-name-status').textContent = data.shop_name;
                 document.getElementById('name-preview').textContent = data.shop_name;
                 if (data.shop_icon) {
                     document.getElementById('shop-icon-input').value = data.shop_icon;
                     document.getElementById('icon-preview').textContent = data.shop_icon;
                 }
                 initIconPicker();
-            } catch (error) {
-                console.error('Error loading shop name:', error);
-                document.getElementById('shop-name-status').textContent = 'Error loading';
-                initIconPicker();
-            }
+            } catch (error) { console.error('Error loading shop name:', error); initIconPicker(); }
         }
+        document.getElementById('shop-name-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var shopName = document.getElementById('shop-name-input').value.trim();
+            var shopIcon = document.getElementById('shop-icon-input').value;
+            if (!shopName) { showMessage('error', 'Please enter a shop name'); return; }
+            try {
+                var response = await fetch('/api/settings/shop-name', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ shop_name: shopName, shop_icon: shopIcon })
+                });
+                var result = await response.json();
+                if (response.ok) {
+                    document.getElementById('shop-name-title').textContent = shopName;
+                    var brandIcon = document.querySelector('.navbar-brand-icon');
+                    if (brandIcon) brandIcon.textContent = shopIcon;
+                    showMessage('success', 'Shop name updated!');
+                } else { showMessage('error', result.error || 'Error updating shop name'); }
+            } catch (error) { showMessage('error', 'Error updating shop name'); }
+        });
 
-        // Load current currency
+        // ── SHOP: Currency ───────────────────────────────────────────────
+        document.getElementById('currency-symbol').addEventListener('change', function() {
+            var customGroup = document.getElementById('custom-currency-group');
+            if (this.value === 'custom') { customGroup.style.display = 'block'; document.getElementById('custom-currency').required = true; }
+            else { customGroup.style.display = 'none'; document.getElementById('custom-currency').required = false; }
+        });
         async function loadCurrency() {
             try {
-                const response = await fetch('/api/settings/currency');
-                const data = await response.json();
-                const currencySelect = document.getElementById('currency-symbol');
-
-                // Try to find the currency in the dropdown
-                let found = false;
-                for (let option of currencySelect.options) {
-                    if (option.value === data.currency) {
-                        currencySelect.value = data.currency;
-                        found = true;
-                        break;
-                    }
+                var response = await fetch('/api/settings/currency');
+                var data = await response.json();
+                var currencySelect = document.getElementById('currency-symbol');
+                var found = false;
+                for (var i = 0; i < currencySelect.options.length; i++) {
+                    if (currencySelect.options[i].value === data.currency) { currencySelect.value = data.currency; found = true; break; }
                 }
-
-                // If not found, it's a custom currency
                 if (!found) {
                     currencySelect.value = 'custom';
                     document.getElementById('custom-currency-group').style.display = 'block';
                     document.getElementById('custom-currency').value = data.currency;
                     document.getElementById('custom-currency').required = true;
                 }
-
-                // Update status
-                document.getElementById('currency-status').textContent = data.currency || '$';
-            } catch (error) {
-                console.error('Error loading currency:', error);
-                document.getElementById('currency-status').textContent = 'Error loading';
-            }
+            } catch (error) { console.error('Error loading currency:', error); }
         }
-
-        // Show message
-        function showMessage(type, message) {
-            const messageArea = document.getElementById('message-area');
-            messageArea.innerHTML = `
-                <div class="alert alert-${type}" style="margin-bottom: 1rem; padding: 1rem; border-radius: 4px; background-color: ${type === 'success' ? '#d4edda' : '#f8d7da'}; color: ${type === 'success' ? '#155724' : '#721c24'};">
-                    ${message}
-                </div>
-            `;
-            setTimeout(() => {
-                messageArea.innerHTML = '';
-            }, 3000);
-        }
-
-        // Handle shop name form submission
-        document.getElementById('shop-name-form').addEventListener('submit', async (e) => {
+        document.getElementById('currency-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-
-            const shopName = document.getElementById('shop-name-input').value.trim();
-            const shopIcon = document.getElementById('shop-icon-input').value;
-
-            if (!shopName) {
-                showMessage('error', 'Please enter a shop name');
-                return;
-            }
-
+            var currencySelect = document.getElementById('currency-symbol');
+            var currency = currencySelect.value === 'custom' ? document.getElementById('custom-currency').value.trim() : currencySelect.value;
+            if (!currency) { showMessage('error', 'Please select or enter a currency symbol'); return; }
             try {
-                const response = await fetch('/api/settings/shop-name', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ shop_name: shopName, shop_icon: shopIcon })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    document.getElementById('shop-name-title').textContent = shopName;
-                    const brandIcon = document.querySelector('.navbar-brand-icon');
-                    if (brandIcon) brandIcon.textContent = shopIcon;
-                    document.getElementById('shop-name-status').textContent = shopName;
-                    showMessage('success', 'Shop name and icon updated successfully!');
-                } else {
-                    showMessage('error', result.error || 'Error updating shop name');
-                }
-            } catch (error) {
-                console.error('Error updating shop name:', error);
-                showMessage('error', 'Error updating shop name');
-            }
-        });
-
-        // Handle currency form submission
-        document.getElementById('currency-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const currencySelect = document.getElementById('currency-symbol');
-            let currency;
-
-            if (currencySelect.value === 'custom') {
-                currency = document.getElementById('custom-currency').value.trim();
-            } else {
-                currency = currencySelect.value;
-            }
-
-            if (!currency) {
-                showMessage('error', 'Please select or enter a currency symbol');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/settings/currency', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                var response = await fetch('/api/settings/currency', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ currency: currency })
                 });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showMessage('success', 'Currency settings updated successfully!');
-                    // Update the live currency symbol without a page refresh
-                    currencySymbol = currency;
-                    const statusEl = document.getElementById('currency-status');
-                    if (statusEl) statusEl.textContent = currency;
-                } else {
-                    showMessage('error', result.error || 'Error updating currency settings');
-                }
-            } catch (error) {
-                console.error('Error updating currency:', error);
-                showMessage('error', 'Error updating currency settings');
-            }
+                var result = await response.json();
+                if (response.ok) { showMessage('success', 'Currency updated!'); currencySymbol = currency; }
+                else { showMessage('error', result.error || 'Error updating currency'); }
+            } catch (error) { showMessage('error', 'Error updating currency'); }
         });
 
-        // Show custom timeout input when "custom" is selected
+        // ── SECURITY: Session Timeout ────────────────────────────────────
         document.getElementById('session-timeout-select').addEventListener('change', function() {
-            const customGroup = document.getElementById('custom-timeout-group');
-            if (this.value === 'custom') {
-                customGroup.style.display = 'block';
-                document.getElementById('custom-timeout').required = true;
-            } else {
-                customGroup.style.display = 'none';
-                document.getElementById('custom-timeout').required = false;
-            }
+            var customGroup = document.getElementById('custom-timeout-group');
+            if (this.value === 'custom') { customGroup.style.display = 'block'; document.getElementById('custom-timeout').required = true; }
+            else { customGroup.style.display = 'none'; document.getElementById('custom-timeout').required = false; }
         });
-
-        // Load current session timeout
         async function loadSessionTimeout() {
             try {
-                const response = await fetch('/api/settings/session-timeout');
-                const data = await response.json();
-                const timeoutSelect = document.getElementById('session-timeout-select');
-                const timeoutValue = data.session_timeout;
-
-                // Try to find the timeout in the dropdown
-                let found = false;
-                for (let option of timeoutSelect.options) {
-                    if (option.value === String(timeoutValue)) {
-                        timeoutSelect.value = String(timeoutValue);
-                        found = true;
-                        break;
-                    }
+                var response = await fetch('/api/settings/session-timeout');
+                var data = await response.json();
+                var timeoutSelect = document.getElementById('session-timeout-select');
+                var timeoutValue = data.session_timeout;
+                var found = false;
+                for (var i = 0; i < timeoutSelect.options.length; i++) {
+                    if (timeoutSelect.options[i].value === String(timeoutValue)) { timeoutSelect.value = String(timeoutValue); found = true; break; }
                 }
-
-                // If not found, it's a custom timeout
                 if (!found) {
                     timeoutSelect.value = 'custom';
                     document.getElementById('custom-timeout-group').style.display = 'block';
                     document.getElementById('custom-timeout').value = Math.floor(timeoutValue / 60);
                     document.getElementById('custom-timeout').required = true;
                 }
-
-                // Update status
-                const minutes = Math.floor(timeoutValue / 60);
-                const statusText = minutes < 60 ? `${minutes} minutes` :
-                                   minutes === 60 ? '1 hour' : `${Math.floor(minutes/60)} hours`;
-                document.getElementById('session-timeout-status').textContent = statusText;
-            } catch (error) {
-                console.error('Error loading session timeout:', error);
-                document.getElementById('session-timeout-status').textContent = 'Error loading';
-            }
+            } catch (error) { console.error('Error loading session timeout:', error); }
         }
-
-        // Handle session timeout form submission
-        document.getElementById('session-timeout-form').addEventListener('submit', async (e) => {
+        document.getElementById('session-timeout-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-
-            const timeoutSelect = document.getElementById('session-timeout-select');
-            let timeout;
-
+            var timeoutSelect = document.getElementById('session-timeout-select');
+            var timeout;
             if (timeoutSelect.value === 'custom') {
-                const customMinutes = parseInt(document.getElementById('custom-timeout').value);
-                if (customMinutes < 5 || customMinutes > 1440) {
-                    showMessage('error', 'Timeout must be between 5 minutes and 24 hours (1440 minutes)');
-                    return;
-                }
+                var customMinutes = parseInt(document.getElementById('custom-timeout').value);
+                if (customMinutes < 5 || customMinutes > 1440) { showMessage('error', 'Timeout must be between 5 and 1440 minutes'); return; }
                 timeout = customMinutes * 60;
-            } else {
-                timeout = parseInt(timeoutSelect.value);
-            }
-
+            } else { timeout = parseInt(timeoutSelect.value); }
             try {
-                const response = await fetch('/api/settings/session-timeout', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                var response = await fetch('/api/settings/session-timeout', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ session_timeout: timeout })
                 });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showMessage('success', 'Session timeout updated successfully!');
-                    // Update the status badge live
-                    const minutes = Math.floor(timeout / 60);
-                    const statusText = minutes < 60 ? `${minutes} minutes` :
-                                       minutes === 60 ? '1 hour' : `${Math.floor(minutes/60)} hours`;
-                    document.getElementById('session-timeout-status').textContent = statusText;
-                } else {
-                    showMessage('error', result.error || 'Error updating session timeout');
-                }
-            } catch (error) {
-                console.error('Error updating session timeout:', error);
-                showMessage('error', 'Error updating session timeout');
-            }
+                var result = await response.json();
+                if (response.ok) { showMessage('success', 'Session timeout updated!'); }
+                else { showMessage('error', result.error || 'Error updating timeout'); }
+            } catch (error) { showMessage('error', 'Error updating session timeout'); }
         });
 
-        // Load email settings
+        // ── NOTIFICATIONS: Email ─────────────────────────────────────────
         async function loadEmailSettings() {
             try {
-                const response = await fetch('/api/settings/email');
-                const data = await response.json();
-
+                var response = await fetch('/api/settings/email');
+                var data = await response.json();
                 document.getElementById('smtp-server').value = data.smtp_server || '';
                 document.getElementById('smtp-port').value = data.smtp_port || '587';
                 document.getElementById('smtp-username').value = data.smtp_username || '';
                 document.getElementById('alert-email').value = data.alert_email || '';
                 document.getElementById('low-stock-threshold').value = data.low_stock_threshold || '5';
 
-                // Show password status indicator (never show actual password for security)
-                const passwordStatus = document.getElementById('password-status');
+                var passwordStatus = document.getElementById('password-status');
                 if (data.password_set) {
                     passwordStatus.style.display = 'inline';
-                    passwordStatus.style.color = '#27ae60';
-                    passwordStatus.textContent = '✓ Password is configured';
+                    passwordStatus.style.color = '#16a34a';
+                    passwordStatus.textContent = '✓ Password configured';
                     document.getElementById('smtp-password').placeholder = '••••••••••••••••';
                 } else {
                     passwordStatus.style.display = 'inline';
-                    passwordStatus.style.color = '#e74c3c';
+                    passwordStatus.style.color = '#dc2626';
                     passwordStatus.textContent = '⚠ No password set';
                 }
-
-                // Update email card status
-                if (data.smtp_server && data.alert_email && data.password_set) {
-                    document.getElementById('email-status').textContent = '✓ Configured';
-                    document.getElementById('email-status').style.color = '#27ae60';
-                } else {
-                    document.getElementById('email-status').textContent = '⚠ Not configured';
-                    document.getElementById('email-status').style.color = '#e74c3c';
-                }
-
-                // Update alerts card status (threshold)
-                const threshold = data.low_stock_threshold || '5';
-                document.getElementById('alerts-status').textContent = `Threshold: ${threshold}`;
-            } catch (error) {
-                console.error('Error loading email settings:', error);
-                document.getElementById('email-status').textContent = 'Error loading';
-                document.getElementById('alerts-status').textContent = 'Error loading';
-            }
+            } catch (error) { console.error('Error loading email settings:', error); }
         }
-
-        // Handle email settings form submission
-        document.getElementById('email-settings-form').addEventListener('submit', async (e) => {
+        document.getElementById('email-settings-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-
-            const emailData = {
+            var emailData = {
                 smtp_server: document.getElementById('smtp-server').value.trim(),
                 smtp_port: document.getElementById('smtp-port').value,
                 smtp_username: document.getElementById('smtp-username').value.trim(),
                 alert_email: document.getElementById('alert-email').value.trim(),
                 low_stock_threshold: document.getElementById('low-stock-threshold').value
             };
-
-            // Only include password if it's not empty
-            const password = document.getElementById('smtp-password').value;
-            if (password) {
-                emailData.smtp_password = password;
-            }
-
+            var password = document.getElementById('smtp-password').value;
+            if (password) emailData.smtp_password = password;
             try {
-                const response = await fetch('/api/settings/email', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                var response = await fetch('/api/settings/email', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(emailData)
                 });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showMessage('success', 'Email settings saved successfully!');
-                    // Clear password field
-                    document.getElementById('smtp-password').value = '';
-                    // Reload to update status
-                    loadEmailSettings();
-                } else {
-                    showMessage('error', result.error || 'Error saving email settings');
-                }
-            } catch (error) {
-                console.error('Error saving email settings:', error);
-                showMessage('error', 'Error saving email settings');
-            }
+                var result = await response.json();
+                if (response.ok) { showMessage('success', 'Email settings saved!'); document.getElementById('smtp-password').value = ''; loadEmailSettings(); }
+                else { showMessage('error', result.error || 'Error saving email settings'); }
+            } catch (error) { showMessage('error', 'Error saving email settings'); }
         });
 
-        // Handle threshold form submission
-        document.getElementById('threshold-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const threshold = document.getElementById('low-stock-threshold').value;
-
+        async function sendTestEmail() {
+            if (!confirm('Send a test email to verify configuration?')) return;
             try {
-                // First, fetch current email settings
-                const currentResponse = await fetch('/api/settings/email');
-                const currentSettings = await currentResponse.json();
+                showMessage('success', 'Sending test email...');
+                var response = await fetch('/api/alerts/test-email', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                var result = await response.json();
+                if (response.ok) { showMessage('success', 'Test email sent! Check your inbox.'); }
+                else { showMessage('error', result.error || 'Failed to send test email'); }
+            } catch (error) { showMessage('error', 'Error sending test email'); }
+        }
 
-                // Update only the threshold, keep other settings unchanged
-                const response = await fetch('/api/settings/email', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+        // ── INVENTORY: Threshold ─────────────────────────────────────────
+        document.getElementById('threshold-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var threshold = document.getElementById('low-stock-threshold').value;
+            try {
+                var currentResponse = await fetch('/api/settings/email');
+                var currentSettings = await currentResponse.json();
+                var response = await fetch('/api/settings/email', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         smtp_server: currentSettings.smtp_server || '',
                         smtp_port: currentSettings.smtp_port || '587',
                         smtp_username: currentSettings.smtp_username || '',
                         alert_email: currentSettings.alert_email || '',
                         low_stock_threshold: threshold
-                        // Don't include password - it won't be returned by GET
                     })
                 });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showMessage('success', 'Low stock threshold updated successfully!');
-                    document.getElementById('alerts-status').textContent = `Threshold: ${threshold}`;
-                } else {
-                    showMessage('error', result.error || 'Error saving threshold');
-                }
-            } catch (error) {
-                console.error('Error saving threshold:', error);
-                showMessage('error', 'Error saving threshold');
-            }
+                var result = await response.json();
+                if (response.ok) { showMessage('success', 'Low stock threshold updated!'); }
+                else { showMessage('error', result.error || 'Error saving threshold'); }
+            } catch (error) { showMessage('error', 'Error saving threshold'); }
         });
 
-        // Send test email
-        async function sendTestEmail() {
-            if (!confirm('Send a test email to verify your configuration?')) {
-                return;
-            }
-
-            try {
-                showMessage('success', 'Sending test email...');
-
-                const response = await fetch('/api/alerts/test-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showMessage('success', 'Test email sent successfully! Check your inbox.');
-                } else {
-                    showMessage('error', result.error || 'Failed to send test email');
-                }
-            } catch (error) {
-                console.error('Error sending test email:', error);
-                showMessage('error', 'Error sending test email');
-            }
-        }
-
-        // Check low stock and send alert
         async function checkLowStock() {
-            if (!confirm('Check for low stock items and send alert email if any found?')) {
-                return;
-            }
-
+            if (!confirm('Check for low stock items and send alert email?')) return;
             try {
                 showMessage('success', 'Checking low stock items...');
-
-                const response = await fetch('/api/alerts/check-low-stock', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                const result = await response.json();
-
+                var response = await fetch('/api/alerts/check-low-stock', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                var result = await response.json();
                 if (response.ok) {
-                    if (result.count === 0) {
-                        showMessage('success', 'No low stock items found. All good!');
-                    } else {
-                        showMessage('success', `Alert sent for ${result.count} low stock item(s)!`);
-                    }
-                } else {
-                    showMessage('error', result.error || 'Failed to check low stock');
-                }
-            } catch (error) {
-                console.error('Error checking low stock:', error);
-                showMessage('error', 'Error checking low stock');
-            }
+                    if (result.count === 0) showMessage('success', 'No low stock items found. All good!');
+                    else showMessage('success', 'Alert sent for ' + result.count + ' low stock item(s)!');
+                } else { showMessage('error', result.error || 'Failed to check low stock'); }
+            } catch (error) { showMessage('error', 'Error checking low stock'); }
         }
 
-        // Load scheduler times
-        let schedulerTimes = [];
+        // ── INVENTORY: Scheduler ─────────────────────────────────────────
+        var schedulerTimes = [];
 
         async function loadSchedulerTimes() {
             try {
-                const response = await fetch('/api/settings/scheduler');
-                const data = await response.json();
-
+                var response = await fetch('/api/settings/scheduler');
+                var data = await response.json();
                 schedulerTimes = data.times || ['09:00', '12:00', '18:00'];
                 renderSchedulerTimes();
-            } catch (error) {
-                console.error('Error loading scheduler times:', error);
-                schedulerTimes = ['09:00', '12:00', '18:00'];
-                renderSchedulerTimes();
-            }
+            } catch (error) { schedulerTimes = ['09:00', '12:00', '18:00']; renderSchedulerTimes(); }
         }
-
         function renderSchedulerTimes() {
-            const container = document.getElementById('scheduler-times-list');
+            var container = document.getElementById('scheduler-times-list');
             container.innerHTML = '';
-
-            schedulerTimes.forEach((time, index) => {
-                const timeDiv = document.createElement('div');
-                timeDiv.style.display = 'flex';
-                timeDiv.style.gap = '0.5rem';
-                timeDiv.style.alignItems = 'center';
-                timeDiv.style.marginBottom = '0.75rem';
-                timeDiv.innerHTML = `
-                    <input type="time" value="${time}"
-                           onchange="updateSchedulerTime(${index}, this.value)"
-                           style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
-                    <button type="button" class="btn btn-danger" onclick="removeSchedulerTime(${index})"
-                            style="padding: 0.5rem 1rem;">Remove</button>
-                `;
-                container.appendChild(timeDiv);
+            schedulerTimes.forEach(function(time, index) {
+                var row = document.createElement('div');
+                row.className = 'scheduler-row';
+                row.innerHTML = '<input type="time" value="' + time + '" onchange="updateSchedulerTime(' + index + ', this.value)">' +
+                    '<button type="button" class="s-btn s-btn-danger" onclick="removeSchedulerTime(' + index + ')" style="padding:0.35rem 0.6rem;font-size:0.78rem;">Remove</button>';
+                container.appendChild(row);
             });
         }
-
-        function addSchedulerTime() {
-            schedulerTimes.push('12:00');
-            renderSchedulerTimes();
-        }
-
+        function addSchedulerTime() { schedulerTimes.push('12:00'); renderSchedulerTimes(); }
         function removeSchedulerTime(index) {
-            if (schedulerTimes.length <= 1) {
-                showToast('You must have at least one scheduled check time.', 'warning');
-                return;
-            }
-            schedulerTimes.splice(index, 1);
-            renderSchedulerTimes();
+            if (schedulerTimes.length <= 1) { showToast('You must have at least one scheduled check time.', 'warning'); return; }
+            schedulerTimes.splice(index, 1); renderSchedulerTimes();
         }
-
-        function updateSchedulerTime(index, value) {
-            schedulerTimes[index] = value;
-        }
+        function updateSchedulerTime(index, value) { schedulerTimes[index] = value; }
 
         async function saveSchedulerTimes() {
-            // Convert times to HH:MM format
-            const formattedTimes = schedulerTimes.map(time => {
-                // If time is already in HH:MM format, keep it
-                if (time.match(/^\d{2}:\d{2}$/)) {
-                    return time;
-                }
-                // Otherwise, format it
-                const parts = time.split(':');
-                if (parts.length === 2) {
-                    const hour = parts[0].padStart(2, '0');
-                    const minute = parts[1].padStart(2, '0');
-                    return `${hour}:${minute}`;
-                }
+            var formattedTimes = schedulerTimes.map(function(time) {
+                if (time.match(/^\d{2}:\d{2}$/)) return time;
+                var parts = time.split(':');
+                if (parts.length === 2) return parts[0].padStart(2, '0') + ':' + parts[1].padStart(2, '0');
                 return time;
             });
-
             try {
-                const response = await fetch('/api/settings/scheduler', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                var response = await fetch('/api/settings/scheduler', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ times: formattedTimes })
                 });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showMessage('success', 'Scheduler times updated successfully!');
-                    schedulerTimes = result.times;
-                    renderSchedulerTimes();
-                    loadSchedulerStatus();
-                } else {
-                    showMessage('error', result.error || 'Error saving scheduler times');
-                }
-            } catch (error) {
-                console.error('Error saving scheduler times:', error);
-                showMessage('error', 'Error saving scheduler times');
-            }
+                var result = await response.json();
+                if (response.ok) { showMessage('success', 'Schedule updated!'); schedulerTimes = result.times; renderSchedulerTimes(); loadSchedulerStatus(); }
+                else { showMessage('error', result.error || 'Error saving schedule'); }
+            } catch (error) { showMessage('error', 'Error saving schedule'); }
         }
 
-        // Load scheduler status
         async function loadSchedulerStatus() {
             try {
-                const response = await fetch('/api/scheduler/status');
-                const data = await response.json();
-
-                const statusDiv = document.getElementById('scheduler-status');
-
+                var response = await fetch('/api/scheduler/status');
+                var data = await response.json();
+                var statusDiv = document.getElementById('scheduler-status');
                 if (data.scheduler_running && data.jobs.length > 0) {
-                    const times = data.jobs.map(job => job.name.split(' - ')[1]).join(', ');
-                    const nextRuns = data.jobs.map(job => {
-                        const time = new Date(job.next_run).toLocaleString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        return time;
+                    var times = data.jobs.map(function(job) { return job.name.split(' - ')[1]; }).join(', ');
+                    var nextRuns = data.jobs.map(function(job) {
+                        return new Date(job.next_run).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                     }).join(', ');
-
-                    statusDiv.className = 'settings-info-banner';
-                    statusDiv.innerHTML = `
-                        <span>✅</span>
-                        <span><strong>Automatic Email Alerts Enabled</strong><br>
-                        Scheduled checks: <strong>${times}</strong> daily<br>
-                        Next checks: ${nextRuns}</span>
-                    `;
+                    statusDiv.className = 's-banner s-banner-info';
+                    statusDiv.innerHTML = '<span>✅</span><span><strong>Alerts Enabled</strong> — Checks at: <strong>' + times + '</strong> daily<br>Next: ' + nextRuns + '</span>';
                 } else {
-                    statusDiv.className = 'settings-warn-banner';
-                    statusDiv.innerHTML = `
-                        <span>⚠️</span>
-                        <span><strong>Scheduler Not Running</strong><br>Automatic alerts are disabled</span>
-                    `;
+                    statusDiv.className = 's-banner s-banner-warn';
+                    statusDiv.innerHTML = '<span>⚠️</span><span><strong>Scheduler Not Running</strong> — Automatic alerts are disabled</span>';
                 }
             } catch (error) {
-                console.error('Error loading scheduler status:', error);
-                document.getElementById('scheduler-status').innerHTML = `
-                    <strong style="color: #721c24;">❌ Error Loading Status</strong>
-                `;
+                document.getElementById('scheduler-status').innerHTML = '<span>❌</span><span><strong>Error loading status</strong></span>';
             }
         }
 
-        // Toggle collapsible settings card
-        function toggleSettingsCard(cardId) {
-            const card = document.getElementById(cardId);
-            card.classList.toggle('collapsed');
-        }
-
-        // Initialize
-        loadUserInfo();
-        loadBrandName();
-        loadShopName();
-        loadCurrency();
-        loadSessionTimeout();
-        loadEmailSettings();
-        loadSchedulerTimes();
-        loadSchedulerStatus();
-
-        // ── Backup & Restore ──────────────────────────────────────────────
-
+        // ── BACKUP & RESTORE ─────────────────────────────────────────────
         async function downloadBackup() {
-            const btn = document.getElementById('backup-btn');
-            btn.disabled = true;
-            btn.textContent = '⏳ Generating...';
+            var btn = document.getElementById('backup-btn');
+            btn.disabled = true; btn.textContent = '⏳ Generating...';
             try {
-                const res = await fetch('/api/admin/backup');
-                if (!res.ok) {
-                    const err = await res.json();
-                    showToast(err.error || 'Backup failed', 'error');
-                    return;
-                }
-                const disposition = res.headers.get('Content-Disposition') || '';
-                const match = disposition.match(/filename="?([^"]+)"?/);
-                const filename = match ? match[1] : 'backup.sql';
-                const blob = await res.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = filename; a.click();
+                var res = await fetch('/api/admin/backup');
+                if (!res.ok) { var err = await res.json(); showToast(err.error || 'Backup failed', 'error'); return; }
+                var disposition = res.headers.get('Content-Disposition') || '';
+                var match = disposition.match(/filename="?([^"]+)"?/);
+                var filename = match ? match[1] : 'backup.sql';
+                var blob = await res.blob();
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a'); a.href = url; a.download = filename; a.click();
                 URL.revokeObjectURL(url);
                 showToast('Backup downloaded: ' + filename, 'success');
-            } catch (e) {
-                showToast('Backup failed: ' + e.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '⬇ Download Backup';
-            }
+            } catch (e) { showToast('Backup failed: ' + e.message, 'error'); }
+            finally { btn.disabled = false; btn.textContent = '⬇ Download Backup'; }
         }
 
         function confirmRestore() {
-            const fileInput = document.getElementById('restore-file');
-            if (!fileInput.files.length) {
-                showToast('Please select a .sql backup file first', 'warning');
-                return;
-            }
+            var fileInput = document.getElementById('restore-file');
+            if (!fileInput.files.length) { showToast('Please select a .sql backup file first', 'warning'); return; }
             document.getElementById('restore-confirm-input').value = '';
             document.getElementById('restore-modal').classList.add('active');
         }
-
-        function closeRestoreModal() {
-            document.getElementById('restore-modal').classList.remove('active');
-        }
+        function closeRestoreModal() { document.getElementById('restore-modal').classList.remove('active'); }
 
         async function executeRestore() {
-            const confirmVal = document.getElementById('restore-confirm-input').value.trim();
-            if (confirmVal !== 'CONFIRM') {
-                showToast('Type CONFIRM exactly to proceed', 'warning');
-                return;
-            }
-            const fileInput = document.getElementById('restore-file');
-            const formData = new FormData();
+            var confirmVal = document.getElementById('restore-confirm-input').value.trim();
+            if (confirmVal !== 'CONFIRM') { showToast('Type CONFIRM exactly to proceed', 'warning'); return; }
+            var fileInput = document.getElementById('restore-file');
+            var formData = new FormData();
             formData.append('file', fileInput.files[0]);
-
             closeRestoreModal();
             showToast('Restoring database… please wait', 'info');
-
             try {
-                const res = await fetch('/api/admin/restore', { method: 'POST', body: formData });
-                const data = await res.json();
-                if (res.ok) {
-                    showToast(data.message, 'success');
-                    setTimeout(() => { window.location.href = '/login'; }, 2500);
-                } else {
-                    showToast(data.error || 'Restore failed', 'error');
-                }
-            } catch (e) {
-                showToast('Restore failed: ' + e.message, 'error');
-            }
+                var res = await fetch('/api/admin/restore', { method: 'POST', body: formData });
+                var data = await res.json();
+                if (res.ok) { showToast(data.message, 'success'); setTimeout(function() { window.location.href = '/login'; }, 2500); }
+                else { showToast(data.error || 'Restore failed', 'error'); }
+            } catch (e) { showToast('Restore failed: ' + e.message, 'error'); }
         }
-    </script>
-    <script src="/static/js/session.js"></script>
-    <script>
+
+        // ── Shop Switcher ────────────────────────────────────────────────
         async function loadShopSwitcher(activeShopId) {
             try {
-                const resp = await fetch('/api/shops');
-                const shops = await resp.json();
-                const switcher = document.getElementById('shop-switcher');
-                const sel = document.getElementById('shop-select');
+                var resp = await fetch('/api/shops');
+                var shops = await resp.json();
+                var switcher = document.getElementById('shop-switcher');
+                var sel = document.getElementById('shop-select');
                 sel.innerHTML = '<option value="">All Shops</option>';
-                shops.forEach(s => {
-                    const opt = document.createElement('option');
+                shops.forEach(function(s) {
+                    var opt = document.createElement('option');
                     opt.value = s.id;
                     opt.textContent = (s.icon || '🛒') + ' ' + s.name;
                     if (activeShopId && String(s.id) === String(activeShopId)) opt.selected = true;
@@ -1332,18 +943,24 @@
                 switcher.style.display = '';
             } catch (e) { console.error('Failed to load shops', e); }
         }
-
         async function switchShop(shopId) {
             try {
-                await fetch('/api/shops/switch', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({shop_id: shopId || null})
-                });
+                await fetch('/api/shops/switch', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({shop_id: shopId || null}) });
                 window.location.reload();
             } catch (e) { console.error('Failed to switch shop', e); }
         }
+
+        // ── Initialize ───────────────────────────────────────────────────
+        loadUserInfo();
+        loadBrandName();
+        loadShopName();
+        loadCurrency();
+        loadSessionTimeout();
+        loadEmailSettings();
+        loadSchedulerTimes();
+        loadSchedulerStatus();
     </script>
+    <script src="/static/js/session.js"></script>
     </div><!-- /main-wrapper -->
 </body>
 </html>
