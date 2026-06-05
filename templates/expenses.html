@@ -4,86 +4,108 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expenses - POS System</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=3">
-    <script src="/static/js/ui.js?v=3"></script>
+    <link rel="stylesheet" href="/static/css/style.css?v=4">
+    <script src="/static/js/ui.js?v=4"></script>
     <style>
-        /* ===== Table styling ===== */
-        .report-table-scroll { max-height: 65vh; overflow-y: auto; border-radius: 6px; border: 1px solid #e9ecef; }
-        .report-table-scroll table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-        .report-table-scroll thead th {
-            position: sticky; top: 0; z-index: 2;
-            background: #2c3e50; color: white;
-            padding: 0.65rem 1rem; text-align: left;
-            font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;
-            border-bottom: 2px solid #1a252f;
-        }
-        .report-table-scroll tbody tr:nth-child(even) { background: #f8f9fa; }
-        .report-table-scroll tbody tr:hover { background: #e8f4fd; transition: background 0.1s; }
-        .report-table-scroll tbody td { padding: 0.6rem 1rem; border-bottom: 1px solid #edf0f2; vertical-align: middle; }
-        .report-table-scroll tbody tr:last-child td { border-bottom: none; }
-
-        /* ===== Card header accent ===== */
-        .card h2 {
-            display: flex; align-items: center; gap: 0.5rem;
-            padding-left: 0.75rem;
-            border-left: 4px solid #3498db;
-            font-size: 1.05rem; color: #2c3e50; margin: 0;
-        }
-
-        /* ===== Summary stat cards ===== */
-        .exp-stat-card {
-            padding: 1rem 1.25rem; text-align: center; margin-bottom: 0;
-            border-radius: 8px; border: 1px solid #e9ecef;
-            background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-            transition: transform 0.15s, box-shadow 0.15s;
-        }
-        .exp-stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .exp-stat-card .stat-label { font-size: 0.8rem; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
-        .exp-stat-card .stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1.2; }
-
-        /* ===== Filter pills ===== */
-        .exp-pill {
-            padding: 0.25rem 0.75rem; font-size: 0.8rem; border-radius: 20px;
-            border: 1px solid #ced4da; background: white; color: #495057;
-            cursor: pointer; white-space: nowrap;
-            transition: background 0.12s, color 0.12s, border-color 0.12s;
-        }
-        .exp-pill:hover { border-color: #3498db; color: #3498db; }
-        .exp-pill.active { background: #2c3e50; color: white; border-color: #2c3e50; }
-
-        /* ===== Empty state ===== */
-        .exp-empty-state { text-align: center; padding: 3.5rem 2rem; }
-        .exp-empty-state .empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.6rem; }
-        .exp-empty-state p { font-size: 0.95rem; color: #868e96; margin: 0 0 0.25rem; }
-        .exp-empty-state small { font-size: 0.82rem; color: #adb5bd; }
+        /* ===== KPI Cards ===== */
+        .exp-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .exp-kpi { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem 1.25rem; }
+        .exp-kpi .kpi-value { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
+        .exp-kpi .kpi-label { font-size: 0.78rem; color: #64748b; margin-top: 0.2rem; }
+        .exp-kpi .kpi-sub { font-size: 0.72rem; color: #94a3b8; margin-top: 0.15rem; }
 
         /* ===== Tabs ===== */
-        .exp-tabs { display: flex; gap: 0; border-bottom: 2px solid #e9ecef; margin-bottom: 1.5rem; }
-        .exp-tab {
-            padding: 0.6rem 1.5rem; cursor: pointer; font-size: 0.9rem; font-weight: 500;
-            color: #6c757d; border-bottom: 2px solid transparent; margin-bottom: -2px;
-            transition: color 0.15s, border-color 0.15s;
-        }
-        .exp-tab:hover { color: #2c3e50; }
-        .exp-tab.active { color: #3498db; border-bottom-color: #3498db; }
+        .exp-tabs { display: flex; gap: 0; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem; }
+        .exp-tab { padding: 0.6rem 1.5rem; cursor: pointer; font-size: 0.88rem; font-weight: 500; color: #64748b; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.15s, border-color 0.15s; }
+        .exp-tab:hover { color: #1e293b; }
+        .exp-tab.active { color: #3b82f6; border-bottom-color: #3b82f6; }
 
-        /* Payment method badges */
-        .method-badge {
-            display: inline-block; padding: 0.15rem 0.5rem; border-radius: 12px;
-            font-size: 0.75rem; font-weight: 600; text-transform: capitalize;
-        }
-        .method-badge.cash { background: #d4edda; color: #155724; }
-        .method-badge.card { background: #cce5ff; color: #004085; }
-        .method-badge.transfer { background: #fff3cd; color: #856404; }
+        /* ===== Expense List ===== */
+        .exp-list { background: white; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+        .exp-list-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap; gap: 0.75rem; }
+        .exp-list-header h3 { margin: 0; font-size: 0.95rem; color: #1e293b; font-weight: 600; }
+        .exp-list-filters { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .exp-list-filters input, .exp-list-filters select { padding: 0.4rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.82rem; background: #f8fafc; height: 32px; box-sizing: border-box; }
+        .exp-list-filters input:focus, .exp-list-filters select:focus { outline: none; border-color: #3b82f6; background: white; }
 
-        /* Frequency badges */
-        .freq-badge {
-            display: inline-block; padding: 0.15rem 0.5rem; border-radius: 12px;
-            font-size: 0.75rem; font-weight: 600; background: #e2e3f1; color: #3b3d7b;
-        }
+        .exp-row { display: grid; grid-template-columns: 80px 1fr 2fr auto; align-items: center; padding: 0.7rem 1.25rem; border-bottom: 1px solid #f8fafc; cursor: pointer; transition: background 0.1s; }
+        .exp-row:last-child { border-bottom: none; }
+        .exp-row:hover { background: #f8fafc; }
+        .exp-row-date { font-size: 0.82rem; color: #64748b; }
+        .exp-row-cat { font-size: 0.88rem; color: #1e293b; font-weight: 500; }
+        .exp-row-cat .cat-icon { margin-right: 0.3rem; }
+        .exp-row-desc { font-size: 0.82rem; color: #94a3b8; margin-top: 0.1rem; }
+        .exp-row-amount { font-size: 0.95rem; font-weight: 600; color: #1e293b; text-align: right; white-space: nowrap; }
+        .exp-row-method { font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 0.1rem; text-transform: capitalize; }
 
-        /* Status toggle */
-        .status-toggle { cursor: pointer; font-size: 1.1rem; }
+        .exp-empty { text-align: center; padding: 3rem 2rem; }
+        .exp-empty .empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.5rem; }
+        .exp-empty p { color: #94a3b8; margin: 0; font-size: 0.9rem; }
+
+        /* ===== Category Breakdown ===== */
+        .cat-breakdown { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; }
+        .cat-breakdown-title { font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; margin-bottom: 0.8rem; }
+        .cat-breakdown-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid #f8fafc; }
+        .cat-breakdown-item:last-child { border-bottom: none; }
+        .cat-breakdown-icon { font-size: 1.1rem; width: 28px; text-align: center; }
+        .cat-breakdown-name { flex: 1; font-size: 0.88rem; color: #1e293b; font-weight: 500; }
+        .cat-breakdown-amount { font-size: 0.88rem; font-weight: 600; color: #1e293b; }
+        .cat-breakdown-bar { height: 4px; background: #f1f5f9; border-radius: 2px; margin-top: 0.3rem; overflow: hidden; }
+        .cat-breakdown-bar-fill { height: 100%; background: #3b82f6; border-radius: 2px; transition: width 0.3s; }
+
+        /* ===== Recurring Cards ===== */
+        .recurring-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+        .recurring-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; position: relative; transition: box-shadow 0.15s, border-color 0.15s; }
+        .recurring-card:hover { border-color: #93c5fd; box-shadow: 0 4px 12px rgba(59,130,246,0.08); }
+        .recurring-card.paused { opacity: 0.55; }
+        .recurring-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem; }
+        .recurring-card-title { font-weight: 600; font-size: 1rem; color: #1e293b; }
+        .recurring-card-amount { font-size: 1.2rem; font-weight: 700; color: #1e293b; }
+        .recurring-card-meta { display: flex; gap: 1.5rem; margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid #f1f5f9; }
+        .recurring-card-meta-item { font-size: 0.78rem; color: #64748b; }
+        .recurring-card-meta-item strong { display: block; font-size: 0.85rem; color: #1e293b; font-weight: 600; }
+        .recurring-card-badge { position: absolute; top: 0.8rem; right: 0.8rem; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 10px; font-weight: 600; text-transform: capitalize; }
+        .recurring-card-badge.overdue { background: #fef2f2; color: #991b1b; }
+        .recurring-card-badge.due-today { background: #fef3c7; color: #92400e; }
+        .recurring-card-badge.active { background: #dcfce7; color: #166534; }
+        .recurring-card-badge.paused { background: #f1f5f9; color: #64748b; }
+        .recurring-card-actions { display: flex; gap: 0.4rem; margin-top: 0.8rem; }
+        .recurring-card-actions button { font-size: 0.75rem; padding: 0.3rem 0.6rem; border-radius: 5px; border: 1px solid #e2e8f0; background: white; color: #475569; cursor: pointer; transition: background 0.1s; }
+        .recurring-card-actions button:hover { background: #f1f5f9; }
+
+        /* ===== Categories tab ===== */
+        .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+        .cat-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem 1.25rem; transition: box-shadow 0.15s; }
+        .cat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .cat-card-icon { font-size: 1.5rem; margin-bottom: 0.4rem; }
+        .cat-card-name { font-size: 0.95rem; font-weight: 600; color: #1e293b; }
+        .cat-card-desc { font-size: 0.78rem; color: #94a3b8; margin-top: 0.15rem; }
+        .cat-card-stats { font-size: 0.82rem; color: #64748b; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #f1f5f9; }
+        .cat-card-actions { display: flex; gap: 0.4rem; margin-top: 0.6rem; }
+        .cat-card-actions button { font-size: 0.72rem; padding: 0.25rem 0.5rem; border-radius: 5px; border: 1px solid #e2e8f0; background: white; color: #475569; cursor: pointer; }
+        .cat-card-actions button:hover { background: #f1f5f9; }
+        .cat-card-actions button.danger { color: #ef4444; border-color: #fecaca; }
+
+        /* ===== Detail Panel ===== */
+        .exp-detail-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 1000; }
+        .exp-detail-overlay.active { display: block; }
+        .exp-detail-panel { position: fixed; top: 0; right: 0; width: 400px; max-width: 90vw; height: 100vh; background: white; box-shadow: -4px 0 20px rgba(0,0,0,0.1); z-index: 1001; overflow-y: auto; padding: 1.5rem; transform: translateX(100%); transition: transform 0.2s ease; }
+        .exp-detail-panel.active { transform: translateX(0); }
+        .exp-detail-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
+        .exp-detail-amount { font-size: 2rem; font-weight: 700; color: #1e293b; margin: 0.5rem 0; }
+        .exp-detail-cat { font-size: 1rem; color: #64748b; margin-bottom: 1.5rem; }
+        .exp-detail-fields { display: grid; gap: 0.8rem; }
+        .exp-detail-field .label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.04em; }
+        .exp-detail-field .value { font-size: 0.9rem; color: #1e293b; margin-top: 0.1rem; }
+        .exp-detail-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; }
+
+        /* ===== Layout helpers ===== */
+        .exp-content-grid { display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; }
+        @media (max-width: 900px) { .exp-content-grid { grid-template-columns: 1fr; } }
+
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        .page-header h1 { font-size: 1.4rem; color: #1e293b; margin: 0; font-weight: 700; }
+        .page-header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
     </style>
 </head>
 <body class="has-sidebar">
@@ -153,129 +175,96 @@
         </header>
 
     <div class="container">
-        <!-- Summary Cards -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-            <div class="exp-stat-card" style="border-left: 4px solid #3498db;">
-                <div class="stat-label">Today's Expenses</div>
-                <div class="stat-value" id="stat-today">0</div>
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>💰 Expenses</h1>
+            <div class="page-header-actions">
+                <button class="btn btn-primary" onclick="openAddExpenseModal()">+ Add Expense</button>
             </div>
-            <div class="exp-stat-card" style="border-left: 4px solid #27ae60;">
-                <div class="stat-label">This Month</div>
-                <div class="stat-value" style="color:#27ae60;" id="stat-month">0</div>
-            </div>
-            <div class="exp-stat-card" style="border-left: 4px solid #e67e22;">
-                <div class="stat-label">Recurring / Mo</div>
-                <div class="stat-value" style="color:#e67e22;" id="stat-recurring">0</div>
-            </div>
-            <div class="exp-stat-card" style="border-left: 4px solid #8e44ad;">
-                <div class="stat-label">Top Category</div>
-                <div class="stat-value" style="color:#8e44ad; font-size:1.1rem;" id="stat-top-cat">-</div>
-            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="exp-kpis">
+            <div class="exp-kpi"><div class="kpi-value" id="kpi-today">$0</div><div class="kpi-label">Today</div></div>
+            <div class="exp-kpi"><div class="kpi-value" id="kpi-month">$0</div><div class="kpi-label">This Month</div></div>
+            <div class="exp-kpi"><div class="kpi-value" id="kpi-recurring">$0</div><div class="kpi-label">Recurring / mo</div></div>
+            <div class="exp-kpi"><div class="kpi-value" id="kpi-top-cat" style="font-size:1rem;">—</div><div class="kpi-label">Top Category</div><div class="kpi-sub" id="kpi-top-cat-pct"></div></div>
         </div>
 
         <!-- Tabs -->
         <div class="exp-tabs">
-            <div class="exp-tab active" data-tab="expenses" onclick="switchTab('expenses')">💰 Expenses</div>
-            <div class="exp-tab" data-tab="recurring" onclick="switchTab('recurring')">🔄 Recurring</div>
-            <div class="exp-tab" data-tab="categories" onclick="switchTab('categories')">📂 Categories</div>
+            <div class="exp-tab active" data-tab="expenses" onclick="switchTab('expenses')">Expenses</div>
+            <div class="exp-tab" data-tab="recurring" onclick="switchTab('recurring')">Recurring</div>
+            <div class="exp-tab" data-tab="categories" onclick="switchTab('categories')">Categories</div>
         </div>
 
         <!-- Expenses Tab -->
         <div id="tab-expenses" class="tab-content">
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 1rem;">
-                    <h2 style="margin: 0;">💰 Expenses</h2>
-                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                        <span id="exp-results-count" style="font-size:0.82rem;color:#6c757d;background:#f1f3f5;border-radius:20px;padding:0.2rem 0.7rem;"></span>
-                        <input type="text" id="expense-search" placeholder="Search expenses..." oninput="loadExpenses()" style="padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.9rem;">
-                        <input type="date" id="exp-date-from" onchange="loadExpenses()" title="From date" style="padding: 0.45rem; border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.85rem;">
-                        <input type="date" id="exp-date-to" onchange="loadExpenses()" title="To date" style="padding: 0.45rem; border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.85rem;">
-                        <button class="btn btn-primary" onclick="openAddExpenseModal()">+ Add Expense</button>
+            <div class="exp-content-grid">
+                <!-- Expense List -->
+                <div class="exp-list">
+                    <div class="exp-list-header">
+                        <h3 id="exp-results-count">Expenses</h3>
+                        <div class="exp-list-filters">
+                            <input type="text" id="expense-search" placeholder="Search..." oninput="renderExpenses()">
+                            <input type="date" id="exp-date-from" onchange="loadExpenses()" title="From date">
+                            <input type="date" id="exp-date-to" onchange="loadExpenses()" title="To date">
+                            <select id="exp-cat-filter" onchange="loadExpenses()">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="expense-list-body">
+                        <div class="exp-empty"><div class="empty-icon">💰</div><p>Loading...</p></div>
                     </div>
                 </div>
-                <div class="report-table-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Category</th>
-                                <th>Description</th>
-                                <th>Amount</th>
-                                <th>Method</th>
-                                <th>Ref #</th>
-                                <th>By</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="expenses-table">
-                            <tr><td colspan="8" style="text-align:center;">Loading...</td></tr>
-                        </tbody>
-                    </table>
+
+                <!-- Category Breakdown -->
+                <div class="cat-breakdown">
+                    <div class="cat-breakdown-title">This Month by Category</div>
+                    <div id="cat-breakdown-list">
+                        <p style="color:#94a3b8;font-size:0.85rem;text-align:center;">Loading...</p>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Recurring Tab -->
         <div id="tab-recurring" class="tab-content" style="display:none;">
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 1rem;">
-                    <h2 style="margin: 0;">🔄 Recurring Expenses</h2>
-                    <div style="display:flex;gap:0.5rem;">
-                        <button class="btn btn-secondary" onclick="processRecurringNow()" title="Process all due recurring expenses now">⚡ Process Now</button>
-                        <button class="btn btn-primary" onclick="openAddRecurringModal()">+ Add Recurring</button>
-                    </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+                <p style="margin:0;font-size:0.88rem;color:#64748b;">Automated expenses that run on schedule</p>
+                <div style="display:flex;gap:0.5rem;">
+                    <button class="btn btn-secondary" onclick="processRecurringNow()" title="Process all due recurring expenses now">⚡ Process Now</button>
+                    <button class="btn btn-primary" onclick="openAddRecurringModal()">+ Add Recurring</button>
                 </div>
-                <div class="report-table-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th>Description</th>
-                                <th>Amount</th>
-                                <th>Frequency</th>
-                                <th>Next Due</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recurring-table">
-                            <tr><td colspan="7" style="text-align:center;">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+            </div>
+            <div class="recurring-grid" id="recurring-grid">
+                <div class="exp-empty"><div class="empty-icon">🔄</div><p>Loading...</p></div>
             </div>
         </div>
 
         <!-- Categories Tab -->
         <div id="tab-categories" class="tab-content" style="display:none;">
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 1rem;">
-                    <h2 style="margin: 0;">📂 Expense Categories</h2>
-                    <button class="btn btn-primary" onclick="openAddCategoryModal()">+ Add Category</button>
-                </div>
-                <div class="report-table-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Icon</th>
-                                <th>Name</th>
-                                <th>Description</th>
-                                <th>Expenses</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="categories-table">
-                            <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+                <p style="margin:0;font-size:0.88rem;color:#64748b;">Organize your expenses into categories</p>
+                <button class="btn btn-primary" onclick="openAddCategoryModal()">+ Add Category</button>
+            </div>
+            <div class="cat-grid" id="categories-grid">
+                <div class="exp-empty"><div class="empty-icon">📂</div><p>Loading...</p></div>
             </div>
         </div>
     </div>
 
+    <!-- Expense Detail Slide Panel -->
+    <div class="exp-detail-overlay" id="detail-overlay" onclick="closeDetail()"></div>
+    <div class="exp-detail-panel" id="detail-panel">
+        <button class="exp-detail-close" onclick="closeDetail()">&times;</button>
+        <div id="detail-content"></div>
+    </div>
+
     <!-- Add/Edit Expense Modal -->
     <div id="expense-modal" class="modal">
-        <div class="modal-content" style="max-width: 520px;">
+        <div class="modal-content" style="max-width: 480px;">
             <div class="modal-header">
                 <h2 id="expense-modal-title">Add Expense</h2>
                 <button class="close-btn" onclick="closeExpenseModal()">&times;</button>
@@ -284,17 +273,19 @@
                 <input type="hidden" id="expense-id">
                 <div class="form-group">
                     <label>Category *</label>
-                    <select id="exp-category" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius);">
+                    <select id="exp-category" required style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);height:36px;box-sizing:border-box;appearance:none;background:white url('data:image/svg+xml;utf8,<svg fill=&quot;%2364748b&quot; viewBox=&quot;0 0 20 20&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><path d=&quot;M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z&quot;/></svg>') no-repeat right 0.5rem center/1rem;">
                         <option value="">Select category...</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Amount *</label>
-                    <input type="number" id="exp-amount" required min="0.01" step="0.01" placeholder="0.00">
-                </div>
-                <div class="form-group">
-                    <label>Date *</label>
-                    <input type="date" id="exp-date" required>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                    <div class="form-group">
+                        <label>Amount *</label>
+                        <input type="number" id="exp-amount" required min="0.01" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Date *</label>
+                        <input type="date" id="exp-date" required>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Description</label>
@@ -303,20 +294,20 @@
                 <div class="form-group">
                     <label>Payment Method</label>
                     <div style="display:flex; gap:1rem; margin-top:0.3rem;">
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.9rem;">
+                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.88rem;">
                             <input type="radio" name="exp-method" value="cash" checked> Cash
                         </label>
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.9rem;">
+                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.88rem;">
                             <input type="radio" name="exp-method" value="card"> Card
                         </label>
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.9rem;">
+                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.88rem;">
                             <input type="radio" name="exp-method" value="transfer"> Transfer
                         </label>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Receipt / Reference #</label>
-                    <input type="text" id="exp-receipt-ref" placeholder="Optional receipt number" maxlength="255">
+                    <input type="text" id="exp-receipt-ref" placeholder="Optional" maxlength="255">
                 </div>
                 <div style="display: flex; gap: 1rem;">
                     <button type="submit" class="btn btn-primary">Save Expense</button>
@@ -326,9 +317,9 @@
         </div>
     </div>
 
-    <!-- Add/Edit Recurring Expense Modal -->
+    <!-- Add/Edit Recurring Modal -->
     <div id="recurring-modal" class="modal">
-        <div class="modal-content" style="max-width: 520px;">
+        <div class="modal-content" style="max-width: 480px;">
             <div class="modal-header">
                 <h2 id="recurring-modal-title">Add Recurring Expense</h2>
                 <button class="close-btn" onclick="closeRecurringModal()">&times;</button>
@@ -337,23 +328,25 @@
                 <input type="hidden" id="recurring-id">
                 <div class="form-group">
                     <label>Category *</label>
-                    <select id="rec-category" required style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius);">
+                    <select id="rec-category" required style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);height:36px;box-sizing:border-box;appearance:none;background:white url('data:image/svg+xml;utf8,<svg fill=&quot;%2364748b&quot; viewBox=&quot;0 0 20 20&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><path d=&quot;M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z&quot;/></svg>') no-repeat right 0.5rem center/1rem;">
                         <option value="">Select category...</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Amount *</label>
-                    <input type="number" id="rec-amount" required min="0.01" step="0.01" placeholder="0.00">
-                </div>
-                <div class="form-group">
-                    <label>Frequency</label>
-                    <select id="rec-frequency" style="width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius);">
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly" selected>Monthly</option>
-                        <option value="quarterly">Quarterly</option>
-                        <option value="yearly">Yearly</option>
-                    </select>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                    <div class="form-group">
+                        <label>Amount *</label>
+                        <input type="number" id="rec-amount" required min="0.01" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Frequency</label>
+                        <select id="rec-frequency" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);height:36px;box-sizing:border-box;appearance:none;background:white url('data:image/svg+xml;utf8,<svg fill=&quot;%2364748b&quot; viewBox=&quot;0 0 20 20&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;><path d=&quot;M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z&quot;/></svg>') no-repeat right 0.5rem center/1rem;">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly" selected>Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Next Due Date *</label>
@@ -384,13 +377,15 @@
                     <label>Category Name *</label>
                     <input type="text" id="cat-name" required placeholder="e.g., Employee Salary" maxlength="255">
                 </div>
-                <div class="form-group">
-                    <label>Icon (emoji)</label>
-                    <input type="text" id="cat-icon" placeholder="📝" maxlength="50" style="width:60px;">
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <input type="text" id="cat-description" placeholder="Optional description" maxlength="500">
+                <div style="display:grid;grid-template-columns:60px 1fr;gap:0.75rem;">
+                    <div class="form-group">
+                        <label>Icon</label>
+                        <input type="text" id="cat-icon" placeholder="📝" maxlength="10" style="text-align:center;">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" id="cat-description" placeholder="Optional description" maxlength="500">
+                    </div>
                 </div>
                 <div style="display: flex; gap: 1rem;">
                     <button type="submit" class="btn btn-primary">Save Category</button>
@@ -400,7 +395,7 @@
         </div>
     </div>
 
-    <!-- Change Password Modal (shared) -->
+    <!-- Change Password Modal -->
     <div id="change-password-modal" class="modal">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header"><h2>Change Password</h2><button class="close-btn" onclick="closeChangePasswordModal()">&times;</button></div>
@@ -415,291 +410,312 @@
 
     </div><!-- end main-wrapper -->
 
-    <script src="/static/js/currency.js?v=3"></script>
-    <script src="/static/js/session.js?v=3"></script>
+    <script src="/static/js/currency.js?v=4"></script>
+    <script src="/static/js/session.js?v=4"></script>
     <script>
-        let allExpenses = [];
-        let allCategories = [];
-        let allRecurring = [];
-        let activeCategoryFilter = 'all';
+        var allExpenses = [];
+        var allCategories = [];
+        var allRecurring = [];
 
-        // ── User info & sidebar setup ──
+        // ── User info ──
         async function loadUserInfo() {
             try {
-                const response = await fetch('/api/current-user');
-                const user = await response.json();
+                var response = await fetch('/api/current-user');
+                var user = await response.json();
                 if (user.currency) currencySymbol = user.currency;
                 if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
-                if (user.shop_icon) { const bi = document.querySelector('.navbar-brand-icon'); if (bi) bi.textContent = user.shop_icon; }
-                const initial = (user.full_name || user.username).charAt(0).toUpperCase();
+                if (user.shop_icon) { var bi = document.querySelector('.navbar-brand-icon'); if (bi) bi.textContent = user.shop_icon; }
+                var initial = (user.full_name || user.username).charAt(0).toUpperCase();
                 document.getElementById('user-icon').textContent = initial;
                 document.getElementById('user-name').textContent = user.full_name || user.username;
-                const roleBadge = document.getElementById('role-badge');
+                var roleBadge = document.getElementById('role-badge');
                 roleBadge.textContent = getRoleLabel(user.role); roleBadge.className = getRoleBadgeClass(user.role);
-                const adminEls = document.querySelectorAll('.admin-only');
-                adminEls.forEach(el => el.style.display = isAdminRole(user.role) ? '' : 'none');
+                document.querySelectorAll('.admin-only').forEach(function(el){ el.style.display = isAdminRole(user.role) ? '' : 'none'; });
                 if (user.role === 'super_admin') {
-                    document.querySelectorAll('.super-admin-only').forEach(el => el.style.display = '');
+                    document.querySelectorAll('.super-admin-only').forEach(function(el){ el.style.display = ''; });
                     loadShopSwitcher(user.active_shop_id);
                 } else if (user.role === 'shop_owner') {
                     loadShopSwitcher(user.active_shop_id);
                 }
-            } catch (e) { console.error('Error loading user info:', e); }
+            } catch (e) { console.error(e); }
         }
 
-        // User profile dropdown
         document.getElementById('user-profile-toggle').addEventListener('click', function(e) {
-            e.stopPropagation();
-            this.classList.toggle('active');
-            document.getElementById('user-dropdown').classList.toggle('active');
+            e.stopPropagation(); this.classList.toggle('active'); document.getElementById('user-dropdown').classList.toggle('active');
         });
         document.addEventListener('click', function(e) {
-            const d = document.getElementById('user-dropdown'), t = document.getElementById('user-profile-toggle');
+            var d = document.getElementById('user-dropdown'), t = document.getElementById('user-profile-toggle');
             if (!t.contains(e.target) && !d.contains(e.target)) { t.classList.remove('active'); d.classList.remove('active'); }
         });
-
         function openChangePasswordModal() {
             document.getElementById('change-password-modal').classList.add('active');
             document.getElementById('user-dropdown').classList.remove('active');
             document.getElementById('user-profile-toggle').classList.remove('active');
         }
-        function closeChangePasswordModal() {
-            document.getElementById('change-password-modal').classList.remove('active');
-            document.getElementById('change-password-form').reset();
-        }
-        document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+        function closeChangePasswordModal() { document.getElementById('change-password-modal').classList.remove('active'); document.getElementById('change-password-form').reset(); }
+        document.getElementById('change-password-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const curr = document.getElementById('cp-current').value;
-            const newP = document.getElementById('cp-new').value;
-            const conf = document.getElementById('cp-confirm').value;
+            var curr = document.getElementById('cp-current').value, newP = document.getElementById('cp-new').value, conf = document.getElementById('cp-confirm').value;
             if (newP !== conf) { showToast('Passwords do not match!', 'warning'); return; }
-            if (newP.length < 6) { showToast('Minimum 6 characters!', 'warning'); return; }
+            if (newP.length < 6) { showToast('Min 6 characters!', 'warning'); return; }
             try {
-                const r = await fetch('/api/change-password', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({current_password: curr, new_password: newP}) });
-                const res = await r.json();
-                if (r.ok) { showToast('Password changed!', 'success'); closeChangePasswordModal(); }
-                else showToast(res.error || 'Error', 'error');
-            } catch(e) { showToast('Error changing password', 'error'); }
+                var r = await fetch('/api/change-password', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({current_password:curr, new_password:newP}) });
+                var res = await r.json();
+                if (r.ok) { showToast('Password changed!', 'success'); closeChangePasswordModal(); } else showToast(res.error||'Error','error');
+            } catch(e) { showToast('Error','error'); }
         });
 
-        // Shop switcher
         async function loadShopSwitcher(activeShopId) {
             try {
-                const resp = await fetch('/api/shops');
-                const shops = await resp.json();
-                const switcher = document.getElementById('shop-switcher');
-                const sel = document.getElementById('shop-select');
+                var resp = await fetch('/api/shops');
+                var shops = await resp.json();
+                var switcher = document.getElementById('shop-switcher');
+                var sel = document.getElementById('shop-select');
                 sel.innerHTML = '<option value="">All Shops</option>';
-                shops.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s.id;
-                    opt.textContent = (s.icon || '🛒') + ' ' + s.name;
+                shops.forEach(function(s) {
+                    var opt = document.createElement('option');
+                    opt.value = s.id; opt.textContent = (s.icon || '🛒') + ' ' + s.name;
                     if (activeShopId && String(s.id) === String(activeShopId)) opt.selected = true;
                     sel.appendChild(opt);
                 });
                 if (!activeShopId) sel.value = '';
                 switcher.style.display = '';
-            } catch (e) { console.error('Failed to load shops', e); }
+            } catch(e) {}
         }
-
         async function switchShop(shopId) {
-            try {
-                await fetch('/api/shops/switch', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({shop_id: shopId || null})
-                });
-                window.location.reload();
-            } catch (e) { console.error('Failed to switch shop', e); }
+            try { await fetch('/api/shops/switch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({shop_id: shopId || null}) }); window.location.reload(); } catch(e) {}
         }
 
-        function fmt(amount) {
-            return currencySymbol + ' ' + Number(amount).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
+        function fmt(amount) { return currencySymbol + ' ' + Number(amount).toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0}); }
+        function escHtml(str) { var d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            var d = new Date(dateStr + 'T00:00:00');
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
 
-        // ── Initialize ──
+        // ── Init ──
         loadUserInfo();
-        loadCategories().then(() => {
+        loadCategories().then(function() {
             loadExpenses();
             loadRecurring();
             loadSummary();
-        }).catch(e => {
-            console.error('Init failed:', e);
-            document.getElementById('expenses-table').innerHTML = '<tr><td colspan="8" style="text-align:center;color:#e74c3c;">Failed to load. Check console.</td></tr>';
+            loadCategoryBreakdown();
         });
 
         // ── Tabs ──
         function switchTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.exp-tab').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(function(el){ el.style.display = 'none'; });
+            document.querySelectorAll('.exp-tab').forEach(function(el){ el.classList.remove('active'); });
             document.getElementById('tab-' + tab).style.display = 'block';
-            document.querySelector(`.exp-tab[data-tab="${tab}"]`).classList.add('active');
+            document.querySelector('.exp-tab[data-tab="' + tab + '"]').classList.add('active');
         }
 
-        // ── Summary ──
+        // ── Summary KPIs ──
         async function loadSummary() {
             try {
-                const res = await fetch('/api/expenses/summary');
-                const data = await res.json();
-                document.getElementById('stat-today').textContent = fmt(data.today_total);
-                document.getElementById('stat-month').textContent = fmt(data.month_total);
-                document.getElementById('stat-recurring').textContent = fmt(data.recurring_monthly);
-                document.getElementById('stat-top-cat').textContent = data.top_category.name || '-';
+                var res = await fetch('/api/expenses/summary');
+                var data = await res.json();
+                document.getElementById('kpi-today').textContent = fmt(data.today_total);
+                document.getElementById('kpi-month').textContent = fmt(data.month_total);
+                document.getElementById('kpi-recurring').textContent = fmt(data.recurring_monthly);
+                var topName = data.top_category ? data.top_category.name : '—';
+                document.getElementById('kpi-top-cat').textContent = topName;
+                if (data.top_category && data.month_total > 0) {
+                    var pct = Math.round((data.top_category.total / data.month_total) * 100);
+                    document.getElementById('kpi-top-cat-pct').textContent = fmt(data.top_category.total) + ' (' + pct + '%)';
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        // ── Category Breakdown ──
+        async function loadCategoryBreakdown() {
+            try {
+                var res = await fetch('/api/expenses/category-breakdown');
+                var data = await res.json();
+                var container = document.getElementById('cat-breakdown-list');
+                if (!data.length) {
+                    container.innerHTML = '<p style="color:#94a3b8;font-size:0.85rem;text-align:center;padding:1rem 0;">No expenses this month</p>';
+                    return;
+                }
+                var maxAmount = data[0].total;
+                container.innerHTML = data.map(function(c) {
+                    var pct = maxAmount > 0 ? Math.round((c.total / maxAmount) * 100) : 0;
+                    return '<div class="cat-breakdown-item">' +
+                        '<div class="cat-breakdown-icon">' + (c.icon || '📝') + '</div>' +
+                        '<div style="flex:1;">' +
+                            '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                                '<span class="cat-breakdown-name">' + escHtml(c.name) + '</span>' +
+                                '<span class="cat-breakdown-amount">' + fmt(c.total) + '</span>' +
+                            '</div>' +
+                            '<div class="cat-breakdown-bar"><div class="cat-breakdown-bar-fill" style="width:' + pct + '%"></div></div>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
             } catch(e) {
-                console.error('Failed to load summary', e);
+                document.getElementById('cat-breakdown-list').innerHTML = '<p style="color:#94a3b8;font-size:0.85rem;text-align:center;">No data</p>';
             }
         }
 
         // ── Categories ──
         async function loadCategories() {
             try {
-                const res = await fetch('/api/expense-categories');
-                if (!res.ok) {
-                    console.error('Categories API error:', res.status, res.statusText);
-                    const text = await res.text();
-                    console.error('Response body:', text);
-                    throw new Error('API returned ' + res.status);
-                }
+                var res = await fetch('/api/expense-categories');
                 allCategories = await res.json();
-                console.log('Categories loaded:', allCategories.length);
                 renderCategories();
-                renderCategoryPills();
                 populateCategorySelects();
-            } catch(e) {
-                console.error('Failed to load categories', e);
-                throw e;
-            }
+            } catch(e) { console.error(e); throw e; }
         }
 
         function renderCategories() {
-            const tbody = document.getElementById('categories-table');
+            var grid = document.getElementById('categories-grid');
             if (!allCategories.length) {
-                tbody.innerHTML = '<tr><td colspan="5"><div class="exp-empty-state"><div class="empty-icon">📂</div><p>No categories yet</p><small>Add a category to start tracking expenses</small></div></td></tr>';
+                grid.innerHTML = '<div class="exp-empty"><div class="empty-icon">📂</div><p>No categories yet</p></div>';
                 return;
             }
-            tbody.innerHTML = allCategories.map(c => `
-                <tr>
-                    <td style="font-size:1.3rem;">${c.icon || '📝'}</td>
-                    <td><strong>${escHtml(c.name)}</strong></td>
-                    <td style="color:#6c757d;">${escHtml(c.description || '-')}</td>
-                    <td>${c.expense_count || 0}</td>
-                    <td>
-                        <button class="btn btn-secondary" style="padding:0.25rem 0.5rem;font-size:0.8rem;" onclick="editCategory(${c.id})">✏️</button>
-                        <button class="btn btn-secondary" style="padding:0.25rem 0.5rem;font-size:0.8rem;color:#e74c3c;" onclick="deleteCategory(${c.id})">🗑️</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function renderCategoryPills() {
-            // Category pills removed
+            grid.innerHTML = allCategories.map(function(c) {
+                return '<div class="cat-card">' +
+                    '<div class="cat-card-icon">' + (c.icon || '📝') + '</div>' +
+                    '<div class="cat-card-name">' + escHtml(c.name) + '</div>' +
+                    (c.description ? '<div class="cat-card-desc">' + escHtml(c.description) + '</div>' : '') +
+                    '<div class="cat-card-stats">' + (c.expense_count || 0) + ' expenses</div>' +
+                    '<div class="cat-card-actions">' +
+                        '<button onclick="editCategory(' + c.id + ')">Edit</button>' +
+                        '<button class="danger" onclick="deleteCategory(' + c.id + ')">Delete</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
         }
 
         function populateCategorySelects() {
-            const options = '<option value="">Select category...</option>' + allCategories.map(c => `<option value="${c.id}">${c.icon} ${escHtml(c.name)}</option>`).join('');
+            var options = '<option value="">Select category...</option>' + allCategories.map(function(c){ return '<option value="' + c.id + '">' + (c.icon||'📝') + ' ' + escHtml(c.name) + '</option>'; }).join('');
             document.getElementById('exp-category').innerHTML = options;
             document.getElementById('rec-category').innerHTML = options;
-        }
-
-        function setCategoryFilter(catId) {
-            activeCategoryFilter = catId;
-            loadExpenses();
+            var filterOpts = '<option value="">All Categories</option>' + allCategories.map(function(c){ return '<option value="' + c.id + '">' + (c.icon||'📝') + ' ' + escHtml(c.name) + '</option>'; }).join('');
+            document.getElementById('exp-cat-filter').innerHTML = filterOpts;
         }
 
         // ── Expenses ──
         async function loadExpenses() {
             try {
-                const params = new URLSearchParams();
-                if (activeCategoryFilter !== 'all') params.set('category_id', activeCategoryFilter);
-                const search = document.getElementById('expense-search').value.trim();
-                if (search) params.set('search', search);
-                const dateFrom = document.getElementById('exp-date-from').value;
-                const dateTo = document.getElementById('exp-date-to').value;
+                var params = new URLSearchParams();
+                var catFilter = document.getElementById('exp-cat-filter').value;
+                if (catFilter) params.set('category_id', catFilter);
+                var dateFrom = document.getElementById('exp-date-from').value;
+                var dateTo = document.getElementById('exp-date-to').value;
                 if (dateFrom) params.set('date_from', dateFrom);
                 if (dateTo) params.set('date_to', dateTo);
 
-                const res = await fetch('/api/expenses?' + params.toString());
+                var res = await fetch('/api/expenses?' + params.toString());
                 allExpenses = await res.json();
                 renderExpenses();
-            } catch(e) {
-                console.error('Failed to load expenses', e);
-            }
+            } catch(e) { console.error(e); }
         }
 
         function renderExpenses() {
-            const tbody = document.getElementById('expenses-table');
-            const countEl = document.getElementById('exp-results-count');
-            countEl.textContent = `${allExpenses.length} expense(s)`;
+            var search = (document.getElementById('expense-search').value || '').toLowerCase();
+            var filtered = allExpenses;
+            if (search) {
+                filtered = allExpenses.filter(function(e) {
+                    return (e.description || '').toLowerCase().includes(search) ||
+                        (e.category_name || '').toLowerCase().includes(search) ||
+                        (e.receipt_ref || '').toLowerCase().includes(search);
+                });
+            }
 
-            if (!allExpenses.length) {
-                tbody.innerHTML = '<tr><td colspan="8"><div class="exp-empty-state"><div class="empty-icon">💰</div><p>No expenses found</p><small>Click "+ Add Expense" to record one</small></div></td></tr>';
+            document.getElementById('exp-results-count').textContent = filtered.length + ' expense' + (filtered.length !== 1 ? 's' : '');
+            var body = document.getElementById('expense-list-body');
+
+            if (!filtered.length) {
+                body.innerHTML = '<div class="exp-empty"><div class="empty-icon">💰</div><p>No expenses found</p></div>';
                 return;
             }
-            tbody.innerHTML = allExpenses.map(e => `
-                <tr>
-                    <td style="white-space:nowrap;">${e.expense_date}</td>
-                    <td>${e.category_icon || '📝'} ${escHtml(e.category_name || 'Unknown')}</td>
-                    <td>${escHtml(e.description || '-')}</td>
-                    <td style="font-weight:600;">${fmt(e.amount)}</td>
-                    <td><span class="method-badge ${e.payment_method}">${e.payment_method}</span></td>
-                    <td style="color:#6c757d;font-size:0.85rem;">${escHtml(e.receipt_ref || '-')}</td>
-                    <td style="font-size:0.85rem;">${escHtml(e.created_by_name || '-')}</td>
-                    <td style="white-space:nowrap;">
-                        <button class="btn btn-secondary" style="padding:0.25rem 0.5rem;font-size:0.8rem;" onclick="editExpense(${e.id})">✏️</button>
-                        <button class="btn btn-secondary" style="padding:0.25rem 0.5rem;font-size:0.8rem;color:#e74c3c;" onclick="deleteExpense(${e.id})">🗑️</button>
-                    </td>
-                </tr>
-            `).join('');
+
+            body.innerHTML = filtered.map(function(e) {
+                return '<div class="exp-row" onclick="openDetail(' + e.id + ')">' +
+                    '<div class="exp-row-date">' + formatDate(e.expense_date) + '</div>' +
+                    '<div><div class="exp-row-cat"><span class="cat-icon">' + (e.category_icon || '📝') + '</span>' + escHtml(e.category_name || 'Unknown') + '</div>' +
+                        (e.description ? '<div class="exp-row-desc">' + escHtml(e.description) + '</div>' : '') +
+                    '</div>' +
+                    '<div></div>' +
+                    '<div><div class="exp-row-amount">' + fmt(e.amount) + '</div><div class="exp-row-method">' + (e.payment_method || '') + '</div></div>' +
+                '</div>';
+            }).join('');
+        }
+
+        // ── Expense Detail ──
+        function openDetail(id) {
+            var e = allExpenses.find(function(x){ return x.id === id; });
+            if (!e) return;
+
+            var html = '<div class="exp-detail-amount">' + fmt(e.amount) + '</div>';
+            html += '<div class="exp-detail-cat">' + (e.category_icon || '📝') + ' ' + escHtml(e.category_name || 'Unknown') + '</div>';
+            html += '<div class="exp-detail-fields">';
+            html += '<div class="exp-detail-field"><div class="label">Date</div><div class="value">' + e.expense_date + '</div></div>';
+            if (e.description) html += '<div class="exp-detail-field"><div class="label">Description</div><div class="value">' + escHtml(e.description) + '</div></div>';
+            html += '<div class="exp-detail-field"><div class="label">Payment Method</div><div class="value" style="text-transform:capitalize;">' + (e.payment_method || 'cash') + '</div></div>';
+            if (e.receipt_ref) html += '<div class="exp-detail-field"><div class="label">Reference #</div><div class="value">' + escHtml(e.receipt_ref) + '</div></div>';
+            if (e.created_by_name) html += '<div class="exp-detail-field"><div class="label">Created By</div><div class="value">' + escHtml(e.created_by_name) + '</div></div>';
+            html += '</div>';
+            html += '<div class="exp-detail-actions">';
+            html += '<button class="btn btn-secondary" onclick="closeDetail();editExpense(' + e.id + ')">Edit</button>';
+            html += '<button class="btn btn-secondary" style="color:#ef4444;border-color:#fecaca;" onclick="deleteExpense(' + e.id + ')">Delete</button>';
+            html += '</div>';
+
+            document.getElementById('detail-content').innerHTML = html;
+            document.getElementById('detail-overlay').classList.add('active');
+            document.getElementById('detail-panel').classList.add('active');
+        }
+
+        function closeDetail() {
+            document.getElementById('detail-overlay').classList.remove('active');
+            document.getElementById('detail-panel').classList.remove('active');
         }
 
         // ── Recurring ──
         async function loadRecurring() {
             try {
-                const res = await fetch('/api/recurring-expenses');
+                var res = await fetch('/api/recurring-expenses');
                 allRecurring = await res.json();
                 renderRecurring();
-            } catch(e) {
-                console.error('Failed to load recurring', e);
-            }
+            } catch(e) { console.error(e); }
         }
 
         function renderRecurring() {
-            const tbody = document.getElementById('recurring-table');
+            var grid = document.getElementById('recurring-grid');
             if (!allRecurring.length) {
-                tbody.innerHTML = '<tr><td colspan="7"><div class="exp-empty-state"><div class="empty-icon">🔄</div><p>No recurring expenses</p><small>Add recurring expenses for rent, salaries, etc.</small></div></td></tr>';
+                grid.innerHTML = '<div class="exp-empty" style="grid-column:1/-1;"><div class="empty-icon">🔄</div><p>No recurring expenses</p></div>';
                 return;
             }
-            const today = new Date().toISOString().split('T')[0];
-            tbody.innerHTML = allRecurring.map(r => {
-                let dueBadge = '';
-                if (r.is_active && r.next_due_date) {
-                    if (r.next_due_date < today) {
-                        dueBadge = '<span style="background:#e74c3c;color:#fff;padding:2px 6px;border-radius:4px;font-size:0.7rem;margin-left:4px;">OVERDUE</span>';
-                    } else if (r.next_due_date === today) {
-                        dueBadge = '<span style="background:#f39c12;color:#fff;padding:2px 6px;border-radius:4px;font-size:0.7rem;margin-left:4px;">DUE TODAY</span>';
-                    }
-                }
-                return `
-                <tr style="${r.is_active ? '' : 'opacity:0.5;'}">
-                    <td>${r.category_icon || '📝'} ${escHtml(r.category_name || 'Unknown')}</td>
-                    <td>${escHtml(r.description || '-')}</td>
-                    <td style="font-weight:600;">${fmt(r.amount)}</td>
-                    <td><span class="freq-badge">${r.frequency}</span></td>
-                    <td style="white-space:nowrap;">${r.next_due_date}${dueBadge}</td>
-                    <td>
-                        <span class="status-toggle" onclick="toggleRecurring(${r.id})" title="${r.is_active ? 'Active - click to pause' : 'Paused - click to activate'}">${r.is_active ? '✅' : '⏸️'}</span>
-                    </td>
-                    <td style="white-space:nowrap;">
-                        <button class="btn btn-secondary" style="padding:0.25rem 0.5rem;font-size:0.8rem;" onclick="editRecurring(${r.id})">✏️</button>
-                        <button class="btn btn-secondary" style="padding:0.25rem 0.5rem;font-size:0.8rem;color:#e74c3c;" onclick="deleteRecurring(${r.id})">🗑️</button>
-                    </td>
-                </tr>
-            `}).join('');
+            var today = new Date().toISOString().split('T')[0];
+            grid.innerHTML = allRecurring.map(function(r) {
+                var badgeCls = 'active';
+                var badgeText = r.frequency;
+                if (!r.is_active) { badgeCls = 'paused'; badgeText = 'Paused'; }
+                else if (r.next_due_date < today) { badgeCls = 'overdue'; badgeText = 'Overdue'; }
+                else if (r.next_due_date === today) { badgeCls = 'due-today'; badgeText = 'Due Today'; }
+
+                return '<div class="recurring-card ' + (r.is_active ? '' : 'paused') + '">' +
+                    '<span class="recurring-card-badge ' + badgeCls + '">' + badgeText + '</span>' +
+                    '<div class="recurring-card-header">' +
+                        '<div class="recurring-card-title">' + (r.category_icon || '📝') + ' ' + escHtml(r.category_name || r.description || 'Expense') + '</div>' +
+                    '</div>' +
+                    '<div class="recurring-card-amount">' + fmt(r.amount) + '</div>' +
+                    (r.description ? '<div style="font-size:0.82rem;color:#64748b;margin-top:0.3rem;">' + escHtml(r.description) + '</div>' : '') +
+                    '<div class="recurring-card-meta">' +
+                        '<div class="recurring-card-meta-item"><strong>' + r.frequency + '</strong>Frequency</div>' +
+                        '<div class="recurring-card-meta-item"><strong>' + formatDate(r.next_due_date) + '</strong>Next Run</div>' +
+                    '</div>' +
+                    '<div class="recurring-card-actions">' +
+                        '<button onclick="toggleRecurring(' + r.id + ')">' + (r.is_active ? '⏸ Pause' : '▶ Activate') + '</button>' +
+                        '<button onclick="editRecurring(' + r.id + ')">Edit</button>' +
+                        '<button style="color:#ef4444;" onclick="deleteRecurring(' + r.id + ')">Delete</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
         }
 
-        // ── CRUD Operations ──
-
-        // Expense
+        // ── CRUD: Expense ──
         function openAddExpenseModal() {
             document.getElementById('expense-modal-title').textContent = 'Add Expense';
             document.getElementById('expense-form').reset();
@@ -709,7 +725,7 @@
         }
 
         function editExpense(id) {
-            const e = allExpenses.find(x => x.id === id);
+            var e = allExpenses.find(function(x){ return x.id === id; });
             if (!e) return;
             document.getElementById('expense-modal-title').textContent = 'Edit Expense';
             document.getElementById('expense-id').value = e.id;
@@ -718,7 +734,7 @@
             document.getElementById('exp-date').value = e.expense_date;
             document.getElementById('exp-description').value = e.description || '';
             document.getElementById('exp-receipt-ref').value = e.receipt_ref || '';
-            const radio = document.querySelector(`input[name="exp-method"][value="${e.payment_method}"]`);
+            var radio = document.querySelector('input[name="exp-method"][value="' + e.payment_method + '"]');
             if (radio) radio.checked = true;
             document.getElementById('expense-modal').classList.add('active');
         }
@@ -727,8 +743,8 @@
 
         async function saveExpense(event) {
             event.preventDefault();
-            const id = document.getElementById('expense-id').value;
-            const payload = {
+            var id = document.getElementById('expense-id').value;
+            var payload = {
                 category_id: document.getElementById('exp-category').value,
                 amount: document.getElementById('exp-amount').value,
                 expense_date: document.getElementById('exp-date').value,
@@ -736,35 +752,27 @@
                 payment_method: document.querySelector('input[name="exp-method"]:checked').value,
                 receipt_ref: document.getElementById('exp-receipt-ref').value,
             };
-
-            const url = id ? `/api/expenses/${id}` : '/api/expenses';
-            const method = id ? 'PUT' : 'POST';
-
+            var url = id ? '/api/expenses/' + id : '/api/expenses';
+            var method = id ? 'PUT' : 'POST';
             try {
-                const res = await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-                const data = await res.json();
-                if (data.success) {
-                    closeExpenseModal();
-                    showToast(id ? 'Expense updated' : 'Expense added', 'success');
-                    loadExpenses();
-                    loadSummary();
-                } else {
-                    showToast(data.error || 'Failed to save', 'error');
-                }
+                var res = await fetch(url, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                var data = await res.json();
+                if (data.success) { closeExpenseModal(); showToast(id ? 'Expense updated' : 'Expense added', 'success'); loadExpenses(); loadSummary(); loadCategoryBreakdown(); }
+                else showToast(data.error || 'Failed to save', 'error');
             } catch(e) { showToast('Network error', 'error'); }
         }
 
         async function deleteExpense(id) {
             if (!confirm('Delete this expense?')) return;
             try {
-                const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
-                const data = await res.json();
-                if (data.success) { showToast('Expense deleted', 'success'); loadExpenses(); loadSummary(); }
+                var res = await fetch('/api/expenses/' + id, { method: 'DELETE' });
+                var data = await res.json();
+                if (data.success) { closeDetail(); showToast('Expense deleted', 'success'); loadExpenses(); loadSummary(); loadCategoryBreakdown(); }
                 else showToast(data.error || 'Failed', 'error');
             } catch(e) { showToast('Network error', 'error'); }
         }
 
-        // Recurring
+        // ── CRUD: Recurring ──
         function openAddRecurringModal() {
             document.getElementById('recurring-modal-title').textContent = 'Add Recurring Expense';
             document.getElementById('recurring-form').reset();
@@ -774,7 +782,7 @@
         }
 
         function editRecurring(id) {
-            const r = allRecurring.find(x => x.id === id);
+            var r = allRecurring.find(function(x){ return x.id === id; });
             if (!r) return;
             document.getElementById('recurring-modal-title').textContent = 'Edit Recurring Expense';
             document.getElementById('recurring-id').value = r.id;
@@ -790,37 +798,29 @@
 
         async function saveRecurring(event) {
             event.preventDefault();
-            const id = document.getElementById('recurring-id').value;
-            const payload = {
+            var id = document.getElementById('recurring-id').value;
+            var payload = {
                 category_id: document.getElementById('rec-category').value,
                 amount: document.getElementById('rec-amount').value,
                 frequency: document.getElementById('rec-frequency').value,
                 next_due_date: document.getElementById('rec-next-due').value,
                 description: document.getElementById('rec-description').value,
             };
-
-            const url = id ? `/api/recurring-expenses/${id}` : '/api/recurring-expenses';
-            const method = id ? 'PUT' : 'POST';
-
+            var url = id ? '/api/recurring-expenses/' + id : '/api/recurring-expenses';
+            var method = id ? 'PUT' : 'POST';
             try {
-                const res = await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-                const data = await res.json();
-                if (data.success) {
-                    closeRecurringModal();
-                    showToast(id ? 'Recurring expense updated' : 'Recurring expense added', 'success');
-                    loadRecurring();
-                    loadSummary();
-                } else {
-                    showToast(data.error || 'Failed to save', 'error');
-                }
+                var res = await fetch(url, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                var data = await res.json();
+                if (data.success) { closeRecurringModal(); showToast(id ? 'Updated' : 'Added', 'success'); loadRecurring(); loadSummary(); }
+                else showToast(data.error || 'Failed to save', 'error');
             } catch(e) { showToast('Network error', 'error'); }
         }
 
         async function deleteRecurring(id) {
             if (!confirm('Delete this recurring expense?')) return;
             try {
-                const res = await fetch(`/api/recurring-expenses/${id}`, { method: 'DELETE' });
-                const data = await res.json();
+                var res = await fetch('/api/recurring-expenses/' + id, { method: 'DELETE' });
+                var data = await res.json();
                 if (data.success) { showToast('Deleted', 'success'); loadRecurring(); loadSummary(); }
                 else showToast(data.error || 'Failed', 'error');
             } catch(e) { showToast('Network error', 'error'); }
@@ -828,8 +828,8 @@
 
         async function toggleRecurring(id) {
             try {
-                const res = await fetch(`/api/recurring-expenses/${id}/toggle`, { method: 'POST' });
-                const data = await res.json();
+                var res = await fetch('/api/recurring-expenses/' + id + '/toggle', { method: 'POST' });
+                var data = await res.json();
                 if (data.success) { loadRecurring(); loadSummary(); }
                 else showToast(data.error || 'Failed', 'error');
             } catch(e) { showToast('Network error', 'error'); }
@@ -838,20 +838,14 @@
         async function processRecurringNow() {
             if (!confirm('Process all due recurring expenses now?')) return;
             try {
-                const res = await fetch('/api/scheduler/process-recurring', { method: 'POST' });
-                const data = await res.json();
-                if (data.success) {
-                    showToast('Recurring expenses processed!', 'success');
-                    loadRecurring();
-                    loadExpenses();
-                    loadSummary();
-                } else {
-                    showToast(data.error || 'Failed to process', 'error');
-                }
+                var res = await fetch('/api/scheduler/process-recurring', { method: 'POST' });
+                var data = await res.json();
+                if (data.success) { showToast('Processed!', 'success'); loadRecurring(); loadExpenses(); loadSummary(); loadCategoryBreakdown(); }
+                else showToast(data.error || 'Failed', 'error');
             } catch(e) { showToast('Network error', 'error'); }
         }
 
-        // Category
+        // ── CRUD: Category ──
         function openAddCategoryModal() {
             document.getElementById('category-modal-title').textContent = 'Add Category';
             document.getElementById('category-form').reset();
@@ -861,7 +855,7 @@
         }
 
         function editCategory(id) {
-            const c = allCategories.find(x => x.id === id);
+            var c = allCategories.find(function(x){ return x.id === id; });
             if (!c) return;
             document.getElementById('category-modal-title').textContent = 'Edit Category';
             document.getElementById('cat-id').value = c.id;
@@ -875,44 +869,26 @@
 
         async function saveCategory(event) {
             event.preventDefault();
-            const id = document.getElementById('cat-id').value;
-            const payload = {
-                name: document.getElementById('cat-name').value,
-                icon: document.getElementById('cat-icon').value,
-                description: document.getElementById('cat-description').value,
-            };
-
-            const url = id ? `/api/expense-categories/${id}` : '/api/expense-categories';
-            const method = id ? 'PUT' : 'POST';
-
+            var id = document.getElementById('cat-id').value;
+            var payload = { name: document.getElementById('cat-name').value, icon: document.getElementById('cat-icon').value, description: document.getElementById('cat-description').value };
+            var url = id ? '/api/expense-categories/' + id : '/api/expense-categories';
+            var method = id ? 'PUT' : 'POST';
             try {
-                const res = await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-                const data = await res.json();
-                if (data.success) {
-                    closeCategoryModal();
-                    showToast(id ? 'Category updated' : 'Category added', 'success');
-                    loadCategories();
-                } else {
-                    showToast(data.error || 'Failed to save', 'error');
-                }
+                var res = await fetch(url, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                var data = await res.json();
+                if (data.success) { closeCategoryModal(); showToast(id ? 'Updated' : 'Added', 'success'); loadCategories(); loadCategoryBreakdown(); }
+                else showToast(data.error || 'Failed to save', 'error');
             } catch(e) { showToast('Network error', 'error'); }
         }
 
         async function deleteCategory(id) {
-            if (!confirm('Delete this category? This will fail if expenses use it.')) return;
+            if (!confirm('Delete this category? Fails if expenses use it.')) return;
             try {
-                const res = await fetch(`/api/expense-categories/${id}`, { method: 'DELETE' });
-                const data = await res.json();
-                if (data.success) { showToast('Category deleted', 'success'); loadCategories(); }
+                var res = await fetch('/api/expense-categories/' + id, { method: 'DELETE' });
+                var data = await res.json();
+                if (data.success) { showToast('Deleted', 'success'); loadCategories(); }
                 else showToast(data.error || 'Failed', 'error');
             } catch(e) { showToast('Network error', 'error'); }
-        }
-
-        // ── Utility ──
-        function escHtml(str) {
-            const d = document.createElement('div');
-            d.textContent = str;
-            return d.innerHTML;
         }
     </script>
 </body>
