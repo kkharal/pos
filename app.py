@@ -589,8 +589,28 @@ def get_shops():
             WHERE s.id = ?
             GROUP BY s.id
         ''', (shop_id,)).fetchall()
+
+    result = [dict(s) for s in shops]
+
+    # If stats requested, enrich with product_count, customer_count, month_sales
+    if request.args.get('stats') == '1':
+        first_of_month = datetime.now().strftime('%Y-%m-01')
+        for shop in result:
+            sid = shop['id']
+            shop['product_count'] = conn.execute(
+                'SELECT COUNT(*) FROM products WHERE shop_id = ?', (sid,)
+            ).fetchone()[0]
+            shop['customer_count'] = conn.execute(
+                'SELECT COUNT(*) FROM customers WHERE shop_id = ?', (sid,)
+            ).fetchone()[0]
+            month_sales_row = conn.execute(
+                'SELECT COALESCE(SUM(total_amount), 0) FROM sales WHERE shop_id = ? AND sale_date >= ?',
+                (sid, first_of_month)
+            ).fetchone()
+            shop['month_sales'] = month_sales_row[0] if month_sales_row else 0
+
     conn.close()
-    return jsonify([dict(s) for s in shops])
+    return jsonify(result)
 
 @app.route('/api/shops', methods=['POST'])
 @login_required
