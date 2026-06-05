@@ -114,6 +114,9 @@
             <div class="sidebar-section-title admin-only">Customers</div>
             <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">&#128101;</span><span class="sidebar-label">Customers</span></a>
             <div class="sidebar-divider admin-only"></div>
+            <div class="sidebar-section-title admin-only">Finance</div>
+            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">&#128176;</span><span class="sidebar-label">Expenses</span></a>
+            <div class="sidebar-divider admin-only"></div>
             <div class="sidebar-section-title admin-only">Administration</div>
             <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">&#128100;</span><span class="sidebar-label">Users</span></a>
             <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">&#9881;&#65039;</span><span class="sidebar-label">Settings</span></a>
@@ -161,6 +164,7 @@
             <button id="sales-tab" class="report-tab-btn active" onclick="switchTab('sales')">📊 Sales</button>
             <button id="inventory-tab" class="report-tab-btn" onclick="switchTab('inventory')">📦 Inventory</button>
             <button id="cashflow-tab" class="report-tab-btn admin-only" onclick="switchTab('cashflow')">💰 Cash Flow</button>
+            <button id="pnl-tab" class="report-tab-btn admin-only" onclick="switchTab('pnl')">📋 Profit &amp; Loss</button>
         </div>
 
         <!-- ========== SALES REPORTS SECTION ========== -->
@@ -677,6 +681,179 @@
                 <small>Select a date range above and click <strong>Generate Report</strong></small>
             </div>
         </div>
+
+        <!-- ========== PROFIT & LOSS REPORTS SECTION (Admin Only) ========== -->
+        <div id="pnl-reports-section" class="admin-only" style="display: none;">
+            <div class="date-filter-card">
+                <form id="pnl-date-range-form">
+                    <div class="date-filter-row">
+                        <input type="date" id="pnl-start-date" required style="padding:0.4rem 0.6rem; border:1px solid #ddd; border-radius:6px; font-size:0.85rem;">
+                        <span style="color:#9ca3af; font-size:0.8rem;">→</span>
+                        <input type="date" id="pnl-end-date" required style="padding:0.4rem 0.6rem; border:1px solid #ddd; border-radius:6px; font-size:0.85rem;">
+                        <button type="submit" class="btn btn-primary" style="padding:0.42rem 1rem; font-size:0.88rem;">Generate Report</button>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:0.1rem; align-items:center;">
+                        <span style="font-size:0.7rem; color:#d1d5db; margin-right:0.25rem;">Quick:</span>
+                        <button type="button" class="quick-chip" onclick="setPnlQuickRange('month')">This Month</button>
+                        <button type="button" class="quick-chip" onclick="setPnlQuickRange('quarter')">This Quarter</button>
+                        <button type="button" class="quick-chip" onclick="setPnlQuickRange('year')">This Year</button>
+                        <button type="button" class="quick-chip" onclick="setPnlQuickRange('last-month')">Last Month</button>
+                        <button type="button" class="quick-chip" onclick="setPnlQuickRange('last-quarter')">Last Quarter</button>
+                    </div>
+                </form>
+                <div id="export-buttons-pnl" class="export-row">
+                    <span style="font-size:0.8rem; color:#9ca3af; font-weight:600; letter-spacing:0.04em;">EXPORT</span>
+                    <button type="button" class="btn" style="background:#e74c3c; color:white; padding:0.35rem 0.9rem; font-size:0.82rem;" onclick="exportPnlReport('pdf')">📄 PDF</button>
+                    <button type="button" class="btn" style="background:#27ae60; color:white; padding:0.35rem 0.9rem; font-size:0.82rem;" onclick="exportPnlReport('excel')">📊 Excel</button>
+                </div>
+            </div>
+
+            <div id="pnl-report-content" style="display: none;">
+
+            <!-- P&L Period Comparison -->
+            <div id="pnl-comparison-bar" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:0.75rem; margin-bottom:1.5rem;"></div>
+
+            <!-- P&L Summary Cards -->
+            <h2>Profit &amp; Loss Statement (<span id="pnl-report-period"></span>)</h2>
+
+            <!-- Income Section -->
+            <div class="card" style="margin-bottom: 1rem; border-left: 4px solid #3498db;">
+                <h2 style="border-left:none; padding-left:0;">💵 Revenue</h2>
+                <div class="stats-grid" style="margin-bottom: 0;">
+                    <div class="stat-card" style="border-left: 4px solid #3498db;">
+                        <h3>Total Revenue</h3>
+                        <div class="value" style="color: #3498db;" id="pnl-total-revenue">$0.00</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #e74c3c;">
+                        <h3>Refunds</h3>
+                        <div class="value" style="color: #e74c3c;" id="pnl-refunds">$0.00</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #2980b9;">
+                        <h3>Net Revenue</h3>
+                        <div class="value" style="color: #2980b9;" id="pnl-net-revenue">$0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Transactions</h3>
+                        <div class="value" id="pnl-transactions">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gross Profit Section -->
+            <div class="card" style="margin-bottom: 1rem; border-left: 4px solid #27ae60;">
+                <h2 style="border-left:none; padding-left:0;">📈 Gross Profit</h2>
+                <div class="stats-grid" style="margin-bottom: 0;">
+                    <div class="stat-card" style="border-left: 4px solid #e67e22;">
+                        <h3>Cost of Goods Sold</h3>
+                        <div class="value" style="color: #e67e22;" id="pnl-cogs">$0.00</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #27ae60;">
+                        <h3>Gross Profit</h3>
+                        <div class="value" style="color: #27ae60;" id="pnl-gross-profit">$0.00</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #27ae60;">
+                        <h3>Gross Margin</h3>
+                        <div class="value" style="color: #27ae60;" id="pnl-gross-margin">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expenses Section -->
+            <div class="card" style="margin-bottom: 1rem; border-left: 4px solid #e74c3c;">
+                <h2 style="border-left:none; padding-left:0;">💸 Operating Expenses</h2>
+                <div class="stats-grid" style="margin-bottom: 1rem;">
+                    <div class="stat-card" style="border-left: 4px solid #e74c3c;">
+                        <h3>Total Expenses</h3>
+                        <div class="value" style="color: #e74c3c;" id="pnl-total-expenses">$0.00</div>
+                    </div>
+                </div>
+                <div class="report-table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>% of Expenses</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pnl-expense-categories-body">
+                            <tr><td colspan="3" style="text-align:center;">No expenses</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Net Profit Section -->
+            <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid #8e44ad;">
+                <h2 style="border-left:none; padding-left:0;">🏆 Net Profit</h2>
+                <div class="stats-grid" style="margin-bottom: 0;">
+                    <div class="stat-card" style="border-left: 4px solid #27ae60;">
+                        <h3>Gross Profit</h3>
+                        <div class="value" style="color: #27ae60;" id="pnl-net-gross">$0.00</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #e74c3c;">
+                        <h3>Less: Expenses</h3>
+                        <div class="value" style="color: #e74c3c;" id="pnl-net-expenses">$0.00</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #8e44ad;">
+                        <h3>Net Profit</h3>
+                        <div class="value" id="pnl-net-profit" style="font-size: 1.6rem;">$0.00</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid #8e44ad;">
+                        <h3>Net Margin</h3>
+                        <div class="value" id="pnl-net-margin">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- P&L Charts -->
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="card">
+                    <h2>Profit Trend</h2>
+                    <canvas id="pnl-trend-chart" height="250"></canvas>
+                </div>
+                <div class="card">
+                    <h2>Expense Breakdown</h2>
+                    <canvas id="pnl-expense-pie-chart" height="250"></canvas>
+                </div>
+            </div>
+
+            <!-- P&L Waterfall Visual -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <h2>P&amp;L Waterfall</h2>
+                <canvas id="pnl-waterfall-chart" height="200"></canvas>
+            </div>
+
+            <!-- Daily/Monthly P&L Table -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <h2 id="pnl-breakdown-title">Daily P&amp;L Breakdown</h2>
+                <div class="report-table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Period</th>
+                                <th>Revenue</th>
+                                <th>COGS</th>
+                                <th>Gross Profit</th>
+                                <th>Expenses</th>
+                                <th>Net Profit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pnl-breakdown-body">
+                            <tr><td colspan="6" style="text-align:center;">No data</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            </div><!-- end pnl-report-content -->
+
+            <div id="pnl-no-data-message" class="report-empty-state">
+                <div class="empty-icon">📋</div>
+                <p>No report generated yet</p>
+                <small>Select a date range above and click <strong>Generate Report</strong></small>
+            </div>
+        </div>
     </div>
 
     <!-- Change Password Modal -->
@@ -769,8 +946,10 @@
         function syncReportsUrlState() {
             const p = new URLSearchParams();
             const cs = document.getElementById('cashflow-reports-section');
+            const ps = document.getElementById('pnl-reports-section');
             const tab = document.getElementById('inventory-reports-section').style.display === 'block' ? 'inventory'
-                      : (cs && cs.style.display === 'block' ? 'cashflow' : 'sales');
+                      : (cs && cs.style.display === 'block' ? 'cashflow'
+                      : (ps && ps.style.display === 'block' ? 'pnl' : 'sales'));
             if (tab !== 'sales') p.set('tab', tab);
             const sd = document.getElementById('start-date').value;
             const ed = document.getElementById('end-date').value;
@@ -784,14 +963,18 @@
             const ced = document.getElementById('cashflow-end-date');
             if (csd && csd.value) p.set('cfstart', csd.value);
             if (ced && ced.value) p.set('cfend', ced.value);
+            const psd = document.getElementById('pnl-start-date');
+            const ped = document.getElementById('pnl-end-date');
+            if (psd && psd.value) p.set('pnlstart', psd.value);
+            if (ped && ped.value) p.set('pnlend', ped.value);
             const qs = p.toString();
             history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
         }
 
         // ===== TAB SWITCHING =====
         function switchTab(tab) {
-            const tabs = ['sales-tab','inventory-tab','cashflow-tab'];
-            const sections = ['sales-reports-section','inventory-reports-section','cashflow-reports-section'];
+            const tabs = ['sales-tab','inventory-tab','cashflow-tab','pnl-tab'];
+            const sections = ['sales-reports-section','inventory-reports-section','cashflow-reports-section','pnl-reports-section'];
             tabs.forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
             sections.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
             const activeBtn = document.getElementById(tab + '-tab');
@@ -1446,6 +1629,297 @@
             }).join('');
         }
 
+        // ===== PROFIT & LOSS REPORT =====
+        function setPnlQuickRange(range) {
+            const today = new Date();
+            let startDate, endDate;
+            switch(range) {
+                case 'month':
+                    startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+                    endDate = today.toISOString().split('T')[0];
+                    break;
+                case 'quarter':
+                    const qm = Math.floor(today.getMonth() / 3) * 3;
+                    startDate = new Date(today.getFullYear(), qm, 1).toISOString().split('T')[0];
+                    endDate = today.toISOString().split('T')[0];
+                    break;
+                case 'year':
+                    startDate = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];
+                    endDate = today.toISOString().split('T')[0];
+                    break;
+                case 'last-month':
+                    startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
+                    endDate = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0];
+                    break;
+                case 'last-quarter':
+                    const lqm = Math.floor(today.getMonth() / 3) * 3 - 3;
+                    startDate = new Date(today.getFullYear(), lqm, 1).toISOString().split('T')[0];
+                    endDate = new Date(today.getFullYear(), lqm + 3, 0).toISOString().split('T')[0];
+                    break;
+            }
+            document.getElementById('pnl-start-date').value = startDate;
+            document.getElementById('pnl-end-date').value = endDate;
+            document.getElementById('pnl-date-range-form').dispatchEvent(new Event('submit'));
+        }
+
+        document.getElementById('pnl-date-range-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const startDate = document.getElementById('pnl-start-date').value;
+            const endDate = document.getElementById('pnl-end-date').value;
+            if (!startDate || !endDate) { showToast('Please select both start and end dates', 'warning'); return; }
+            if (startDate > endDate) { showToast('Start date cannot be after end date', 'warning'); return; }
+            showLoading();
+            try {
+                const response = await fetch(`/api/reports/pnl?start_date=${startDate}&end_date=${endDate}`);
+                const data = await response.json();
+                if (!response.ok) { showToast(data.error || 'Error generating P&L report', 'error'); return; }
+                displayPnlReport(data, startDate, endDate);
+            } catch (error) { console.error('Error:', error); showToast('Error generating P&L report', 'error'); } finally { hideLoading(); }
+            syncReportsUrlState();
+        });
+
+        function displayPnlReport(data, startDate, endDate) {
+            document.getElementById('pnl-report-content').style.display = 'block';
+            document.getElementById('pnl-no-data-message').style.display = 'none';
+            document.getElementById('export-buttons-pnl').classList.add('visible');
+
+            const fmtDate = d => new Date(d).toLocaleDateString();
+            document.getElementById('pnl-report-period').textContent = `${fmtDate(startDate)} - ${fmtDate(endDate)}`;
+
+            const s = data.summary;
+
+            // Revenue section
+            document.getElementById('pnl-total-revenue').textContent = `${currencySymbol}${s.total_revenue.toFixed(2)}`;
+            document.getElementById('pnl-refunds').textContent = `-${currencySymbol}${s.total_refunds.toFixed(2)}`;
+            document.getElementById('pnl-net-revenue').textContent = `${currencySymbol}${s.net_revenue.toFixed(2)}`;
+            document.getElementById('pnl-transactions').textContent = s.transaction_count;
+
+            // Gross profit section
+            document.getElementById('pnl-cogs').textContent = `${currencySymbol}${s.total_cogs.toFixed(2)}`;
+            document.getElementById('pnl-gross-profit').textContent = `${currencySymbol}${s.gross_profit.toFixed(2)}`;
+            document.getElementById('pnl-gross-margin').textContent = `${s.gross_margin.toFixed(1)}%`;
+
+            // Expenses section
+            document.getElementById('pnl-total-expenses').textContent = `${currencySymbol}${s.total_expenses.toFixed(2)}`;
+
+            // Expense categories table
+            const expBody = document.getElementById('pnl-expense-categories-body');
+            if (data.expenses_by_category.length === 0) {
+                expBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#27ae60;">No expenses in this period</td></tr>';
+            } else {
+                expBody.innerHTML = data.expenses_by_category.map(cat => {
+                    const pct = s.total_expenses > 0 ? ((cat.total_amount / s.total_expenses) * 100).toFixed(1) : '0.0';
+                    return `<tr>
+                        <td>${cat.category_icon || '📝'} ${cat.category_name || 'Uncategorized'}</td>
+                        <td style="font-weight:600;">${currencySymbol}${parseFloat(cat.total_amount).toFixed(2)}</td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <div style="flex:1; background:#ecf0f1; border-radius:4px; height:8px; max-width:100px;">
+                                    <div style="width:${pct}%; background:#e74c3c; height:100%; border-radius:4px;"></div>
+                                </div>
+                                <span style="font-size:0.85rem; color:#666;">${pct}%</span>
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
+
+            // Net profit section
+            document.getElementById('pnl-net-gross').textContent = `${currencySymbol}${s.gross_profit.toFixed(2)}`;
+            document.getElementById('pnl-net-expenses').textContent = `-${currencySymbol}${s.total_expenses.toFixed(2)}`;
+            const netProfitEl = document.getElementById('pnl-net-profit');
+            netProfitEl.textContent = `${currencySymbol}${s.net_profit.toFixed(2)}`;
+            netProfitEl.style.color = s.net_profit >= 0 ? '#27ae60' : '#e74c3c';
+            const netMarginEl = document.getElementById('pnl-net-margin');
+            netMarginEl.textContent = `${s.net_margin.toFixed(1)}%`;
+            netMarginEl.style.color = s.net_margin >= 0 ? '#27ae60' : '#e74c3c';
+
+            // Period comparison
+            renderPnlComparison(data);
+
+            // Charts
+            renderPnlTrendChart(data);
+            renderPnlExpensePieChart(data.expenses_by_category, s.total_expenses);
+            renderPnlWaterfallChart(s);
+
+            // Daily/Monthly breakdown table
+            renderPnlBreakdown(data);
+        }
+
+        function renderPnlComparison(data) {
+            const pc = data.period_comparison;
+            const s = data.summary;
+            const bar = document.getElementById('pnl-comparison-bar');
+
+            function pctChange(cur, prev) {
+                if (prev === 0) return cur > 0 ? '+100%' : (cur < 0 ? '-100%' : '0%');
+                const pct = ((cur - prev) / Math.abs(prev) * 100).toFixed(1);
+                return (pct >= 0 ? '+' : '') + pct + '%';
+            }
+            function changeColor(cur, prev) { return cur >= prev ? '#27ae60' : '#e74c3c'; }
+
+            const prevLabel = `${new Date(pc.prev_start).toLocaleDateString()} - ${new Date(pc.prev_end).toLocaleDateString()}`;
+            const cards = [
+                { label: 'Revenue', cur: `${currencySymbol}${s.total_revenue.toFixed(0)}`, prev: `${currencySymbol}${pc.prev_revenue.toFixed(0)}`, change: pctChange(s.total_revenue, pc.prev_revenue), color: changeColor(s.total_revenue, pc.prev_revenue) },
+                { label: 'Gross Profit', cur: `${currencySymbol}${s.gross_profit.toFixed(0)}`, prev: `${currencySymbol}${pc.prev_gross_profit.toFixed(0)}`, change: pctChange(s.gross_profit, pc.prev_gross_profit), color: changeColor(s.gross_profit, pc.prev_gross_profit) },
+                { label: 'Expenses', cur: `${currencySymbol}${s.total_expenses.toFixed(0)}`, prev: `${currencySymbol}${pc.prev_expenses.toFixed(0)}`, change: pctChange(s.total_expenses, pc.prev_expenses), color: s.total_expenses <= pc.prev_expenses ? '#27ae60' : '#e74c3c' },
+                { label: 'Net Profit', cur: `${currencySymbol}${s.net_profit.toFixed(0)}`, prev: `${currencySymbol}${pc.prev_net_profit.toFixed(0)}`, change: pctChange(s.net_profit, pc.prev_net_profit), color: changeColor(s.net_profit, pc.prev_net_profit) },
+            ];
+
+            bar.innerHTML = `<div style="grid-column:1/-1; font-size:0.8rem; color:#888; margin-bottom:-0.5rem;">Compared to previous period (${prevLabel})</div>` +
+                cards.map(c => `
+                <div style="background:white; border:1px solid #e9ecef; border-radius:8px; padding:0.75rem 1rem;">
+                    <div style="font-size:0.75rem; color:#888; text-transform:uppercase;">${c.label}</div>
+                    <div style="display:flex; align-items:baseline; gap:0.5rem;">
+                        <span style="font-size:1.2rem; font-weight:bold;">${c.cur}</span>
+                        <span style="font-size:0.8rem; color:${c.color}; font-weight:600;">${c.change}</span>
+                    </div>
+                    <div style="font-size:0.75rem; color:#aaa;">was ${c.prev}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderPnlTrendChart(data) {
+            destroyChart('pnlTrend');
+            const ctx = document.getElementById('pnl-trend-chart').getContext('2d');
+
+            // Use monthly if available, otherwise daily
+            const series = data.monthly_pnl.length > 0 ? data.monthly_pnl : data.daily_pnl;
+            const labelKey = data.monthly_pnl.length > 0 ? 'month' : 'date';
+            const labels = series.map(d => {
+                if (labelKey === 'month') return d.month;
+                return new Date(d.date).toLocaleDateString(undefined, {month:'short', day:'numeric'});
+            });
+
+            salesCharts.pnlTrend = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Revenue', data: series.map(d => d.revenue), borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.1)', fill: false, tension: 0.3 },
+                        { label: 'Gross Profit', data: series.map(d => d.gross_profit), borderColor: '#27ae60', backgroundColor: 'rgba(39,174,96,0.1)', fill: false, tension: 0.3 },
+                        { label: 'Expenses', data: series.map(d => d.expenses), borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)', fill: false, tension: 0.3, borderDash: [5, 5] },
+                        { label: 'Net Profit', data: series.map(d => d.net_profit), borderColor: '#8e44ad', backgroundColor: 'rgba(142,68,173,0.15)', fill: true, tension: 0.3, borderWidth: 2 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'top' } },
+                    scales: { y: { beginAtZero: true, ticks: { callback: v => currencySymbol + v } } }
+                }
+            });
+        }
+
+        function renderPnlExpensePieChart(categories, total) {
+            destroyChart('pnlExpPie');
+            const ctx = document.getElementById('pnl-expense-pie-chart').getContext('2d');
+
+            if (!categories || categories.length === 0) {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                return;
+            }
+
+            salesCharts.pnlExpPie = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories.map(c => c.category_name || 'Uncategorized'),
+                    datasets: [{
+                        data: categories.map(c => parseFloat(c.total_amount)),
+                        backgroundColor: chartColors.slice(0, categories.length),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${currencySymbol}${ctx.raw.toFixed(2)} (${(ctx.raw/total*100).toFixed(1)}%)` } }
+                    }
+                }
+            });
+        }
+
+        function renderPnlWaterfallChart(s) {
+            destroyChart('pnlWaterfall');
+            const ctx = document.getElementById('pnl-waterfall-chart').getContext('2d');
+
+            const labels = ['Revenue', 'COGS', 'Gross Profit', 'Expenses', 'Net Profit'];
+            const values = [s.net_revenue, -s.total_cogs, s.gross_profit, -s.total_expenses, s.net_profit];
+            const bgColors = ['#3498db', '#e67e22', '#27ae60', '#e74c3c', s.net_profit >= 0 ? '#8e44ad' : '#c0392b'];
+
+            salesCharts.pnlWaterfall = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values.map(v => Math.abs(v)),
+                        backgroundColor: bgColors.map(c => c + 'CC'),
+                        borderColor: bgColors,
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => `${currencySymbol}${values[ctx.dataIndex].toFixed(2)}` } }
+                    },
+                    scales: { y: { beginAtZero: true, ticks: { callback: v => currencySymbol + v } } }
+                }
+            });
+        }
+
+        function renderPnlBreakdown(data) {
+            const tbody = document.getElementById('pnl-breakdown-body');
+            const titleEl = document.getElementById('pnl-breakdown-title');
+
+            const series = data.monthly_pnl.length > 0 ? data.monthly_pnl : data.daily_pnl;
+            titleEl.textContent = data.monthly_pnl.length > 0 ? 'Monthly P&L Breakdown' : 'Daily P&L Breakdown';
+
+            if (series.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No data for this period</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = series.map(row => {
+                const period = row.month || new Date(row.date).toLocaleDateString();
+                const netColor = row.net_profit >= 0 ? '#27ae60' : '#e74c3c';
+                return `<tr>
+                    <td><strong>${period}</strong></td>
+                    <td>${currencySymbol}${row.revenue.toFixed(2)}</td>
+                    <td style="color:#e67e22;">${currencySymbol}${row.cogs.toFixed(2)}</td>
+                    <td style="color:#27ae60;">${currencySymbol}${row.gross_profit.toFixed(2)}</td>
+                    <td style="color:#e74c3c;">${currencySymbol}${row.expenses.toFixed(2)}</td>
+                    <td style="color:${netColor}; font-weight:bold;">${currencySymbol}${row.net_profit.toFixed(2)}</td>
+                </tr>`;
+            }).join('');
+
+            // Add totals row
+            const totals = series.reduce((acc, row) => {
+                acc.revenue += row.revenue; acc.cogs += row.cogs;
+                acc.gross_profit += row.gross_profit; acc.expenses += row.expenses;
+                acc.net_profit += row.net_profit; return acc;
+            }, { revenue: 0, cogs: 0, gross_profit: 0, expenses: 0, net_profit: 0 });
+
+            const netColor = totals.net_profit >= 0 ? '#27ae60' : '#e74c3c';
+            tbody.innerHTML += `<tr style="background:#f1f5f9; font-weight:bold; border-top:2px solid #dee2e6;">
+                <td>TOTAL</td>
+                <td>${currencySymbol}${totals.revenue.toFixed(2)}</td>
+                <td style="color:#e67e22;">${currencySymbol}${totals.cogs.toFixed(2)}</td>
+                <td style="color:#27ae60;">${currencySymbol}${totals.gross_profit.toFixed(2)}</td>
+                <td style="color:#e74c3c;">${currencySymbol}${totals.expenses.toFixed(2)}</td>
+                <td style="color:${netColor};">${currencySymbol}${totals.net_profit.toFixed(2)}</td>
+            </tr>`;
+        }
+
+        function exportPnlReport(format) {
+            const startDate = document.getElementById('pnl-start-date').value;
+            const endDate = document.getElementById('pnl-end-date').value;
+            if (!startDate || !endDate) { showToast('Generate a P&L report first', 'warning'); return; }
+            window.open(`/api/reports/pnl/export/${format}?start_date=${startDate}&end_date=${endDate}`, '_blank');
+        }
+
         // ===== INITIALIZATION =====
         // Restore from URL or default to last 7 days
         const _urlP = new URLSearchParams(window.location.search);
@@ -1458,12 +1932,18 @@
         document.getElementById('cashflow-end-date').value = _urlP.get('cfend') || today.toISOString().split('T')[0];
         document.getElementById('cashflow-start-date').value = _urlP.get('cfstart') || lastWeek.toISOString().split('T')[0];
 
+        // P&L defaults to this month
+        const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        document.getElementById('pnl-end-date').value = _urlP.get('pnlend') || today.toISOString().split('T')[0];
+        document.getElementById('pnl-start-date').value = _urlP.get('pnlstart') || firstOfMonth;
+
         // Load user info then auto-load report (Feature 13)
         loadUserInfo().then(() => {
             // Switch to saved tab
             const savedTab = _urlP.get('tab');
             if (savedTab === 'inventory') switchTab('inventory');
             else if (savedTab === 'cashflow') switchTab('cashflow');
+            else if (savedTab === 'pnl') switchTab('pnl');
             // Auto-generate sales report on page load
             setTimeout(() => {
                 document.getElementById('date-range-form').dispatchEvent(new Event('submit'));

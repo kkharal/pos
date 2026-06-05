@@ -442,6 +442,58 @@ def init_db():
         """
     )
 
+    # ── 16. Expense categories ────────────────────────────────────────────────
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS expense_categories (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            icon VARCHAR(50) DEFAULT '📝',
+            description TEXT,
+            shop_id INT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """
+    )
+
+    # ── 17. Expenses ──────────────────────────────────────────────────────────
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS expenses (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            category_id INT NOT NULL,
+            amount DECIMAL(12,2) NOT NULL,
+            description TEXT,
+            expense_date DATE NOT NULL,
+            payment_method VARCHAR(50) NOT NULL DEFAULT 'cash',
+            receipt_ref VARCHAR(255),
+            created_by INT,
+            shop_id INT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (category_id) REFERENCES expense_categories (id),
+            FOREIGN KEY (created_by) REFERENCES users (id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """
+    )
+
+    # ── 18. Recurring expenses ────────────────────────────────────────────────
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS recurring_expenses (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            category_id INT NOT NULL,
+            amount DECIMAL(12,2) NOT NULL,
+            description TEXT,
+            frequency VARCHAR(50) NOT NULL DEFAULT 'monthly',
+            next_due_date DATE NOT NULL,
+            is_active TINYINT(1) NOT NULL DEFAULT 1,
+            shop_id INT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (category_id) REFERENCES expense_categories (id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """
+    )
+
     # ── Migration: add columns to existing tables ────────────────────────────
 
     # Sales: total_cost column (profit tracking)
@@ -644,6 +696,29 @@ def init_db():
         print("Default users created:")
         print("  Super Admin  – Username: superadmin, Password: superadmin123")
         print("  Shop Admin   – Username: admin,      Password: admin123")
+
+    # ── Seed default expense categories (per shop, only if none exist) ───────
+    for sid in all_shop_ids:
+        cat_count = cursor.execute(
+            "SELECT COUNT(*) as cnt FROM expense_categories WHERE shop_id = ?", (sid,)
+        ).fetchone()[0]
+        if cat_count == 0:
+            default_categories = [
+                ('Employee Salary', '👤', 'Staff wages and salaries'),
+                ('Shop Rent', '🏠', 'Monthly shop rental'),
+                ('Electricity / Utilities', '⚡', 'Electric, water, gas bills'),
+                ('Transportation', '🚗', 'Delivery and travel costs'),
+                ('Maintenance & Repairs', '🔧', 'Shop repairs and maintenance'),
+                ('Packaging & Supplies', '📦', 'Bags, boxes, wrapping'),
+                ('Marketing', '📣', 'Advertising and promotions'),
+                ('Miscellaneous', '📝', 'Other expenses'),
+            ]
+            for cat_name, cat_icon, cat_desc in default_categories:
+                cursor.execute(
+                    "INSERT INTO expense_categories (name, icon, description, shop_id) VALUES (?, ?, ?, ?)",
+                    (cat_name, cat_icon, cat_desc, sid),
+                )
+            print(f"  Default expense categories seeded for shop id={sid}")
 
     conn.commit()
     conn.close()

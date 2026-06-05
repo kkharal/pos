@@ -149,6 +149,91 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
     except Exception as e:
         print(f"[SCHEDULER] ✗ Error for shop '{shop_name}' (id={shop_id}): {str(e)}")
 
+
+# ── Recurring Expense Auto-Creation ──────────────────────────────────────────
+
+def scheduled_recurring_expenses():
+    """
+    Scheduled job that processes recurring expenses.
+    Checks all active recurring expenses across all shops.
+    If next_due_date <= today, creates an expense record and advances the due date.
+    Runs once daily at 00:05.
+    """
+    try:
+        print(f"[SCHEDULER {datetime.now()}] Processing recurring expenses...")
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        today = datetime.now().strftime('%Y-%m-%d')
+
+        # Find all active recurring expenses that are due
+        due_items = cursor.execute('''
+            SELECT re.*, ec.name as category_name
+            FROM recurring_expenses re
+            LEFT JOIN expense_categories ec ON re.category_id = ec.id
+            WHERE re.is_active = 1 AND re.next_due_date <= ?
+        ''', (today,)).fetchall()
+
+        created_count = 0
+        for item in due_items:
+            try:
+                # Create the expense record
+                cursor.execute('''
+                    INSERT INTO expenses (category_id, amount, description, expense_date, payment_method, receipt_ref, created_by, shop_id)
+                    VALUES (?, ?, ?, ?, 'cash', ?, NULL, ?)
+                ''', (
+                    item['category_id'],
+                    item['amount'],
+                    f"[Auto] {item['description'] or item['category_name'] or 'Recurring expense'}",
+                    item['next_due_date'],
+                    f"REC-{item['id']}",
+                    item['shop_id']
+                ))
+
+                # Advance next_due_date based on frequency
+                next_date = _advance_date(item['next_due_date'], item['frequency'])
+                cursor.execute(
+                    'UPDATE recurring_expenses SET next_due_date = ? WHERE id = ?',
+                    (next_date, item['id'])
+                )
+                created_count += 1
+
+            except Exception as e:
+                print(f"[SCHEDULER] ✗ Error processing recurring expense id={item['id']}: {str(e)}")
+
+        conn.commit()
+        conn.close()
+        print(f"[SCHEDULER] ✓ Created {created_count} expense(s) from {len(due_items)} due recurring item(s)")
+
+    except Exception as e:
+        print(f"[SCHEDULER] ✗ Error during recurring expense processing: {str(e)}")
+
+
+def _advance_date(date_str, frequency):
+    """Advance a date string by the given frequency. Returns new date string."""
+    from dateutil.relativedelta import relativedelta
+
+    if isinstance(date_str, str):
+        current = datetime.strptime(date_str, '%Y-%m-%d')
+    else:
+        current = datetime.combine(date_str, datetime.min.time())
+
+    if frequency == 'daily':
+        next_dt = current + relativedelta(days=1)
+    elif frequency == 'weekly':
+        next_dt = current + relativedelta(weeks=1)
+    elif frequency == 'monthly':
+        next_dt = current + relativedelta(months=1)
+    elif frequency == 'quarterly':
+        next_dt = current + relativedelta(months=3)
+    elif frequency == 'yearly':
+        next_dt = current + relativedelta(years=1)
+    else:
+        next_dt = current + relativedelta(months=1)
+
+    return next_dt.strftime('%Y-%m-%d')
+
+
 # Initialize the background scheduler
 scheduler = BackgroundScheduler()
 
@@ -220,6 +305,17 @@ def load_scheduler_jobs():
 
 # Load scheduler jobs and start the scheduler
 load_scheduler_jobs()
+
+# Add recurring expense processor - runs daily at 00:05
+scheduler.add_job(
+    func=scheduled_recurring_expenses,
+    trigger=CronTrigger(hour=0, minute=5),
+    id='recurring_expenses_daily',
+    name='Recurring Expenses - Daily 00:05',
+    replace_existing=True
+)
+print("[SCHEDULER] Added recurring expense job: daily at 00:05")
+
 scheduler.start()
 print("[SCHEDULER] Background scheduler started")
 
@@ -513,8 +609,27 @@ def create_shop():
              data.get('icon', '🛒'), data.get('currency_symbol', '$'),
              int(data.get('low_stock_threshold', 5)))
         )
+        new_shop_id = cursor.lastrowid
+
+        # Seed default expense categories for the new shop
+        default_categories = [
+            ('Employee Salary', '👤', 'Staff wages and salaries'),
+            ('Shop Rent', '🏠', 'Monthly shop rental'),
+            ('Electricity / Utilities', '⚡', 'Electric, water, gas bills'),
+            ('Transportation', '🚗', 'Delivery and travel costs'),
+            ('Maintenance & Repairs', '🔧', 'Shop repairs and maintenance'),
+            ('Packaging & Supplies', '📦', 'Bags, boxes, wrapping'),
+            ('Marketing', '📣', 'Advertising and promotions'),
+            ('Miscellaneous', '📝', 'Other expenses'),
+        ]
+        for cat_name, cat_icon, cat_desc in default_categories:
+            cursor.execute(
+                'INSERT INTO expense_categories (name, icon, description, shop_id) VALUES (?, ?, ?, ?)',
+                (cat_name, cat_icon, cat_desc, new_shop_id)
+            )
+
         conn.commit()
-        return jsonify({'success': True, 'id': cursor.lastrowid}), 201
+        return jsonify({'success': True, 'id': new_shop_id}), 201
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'error': str(e)}), 400
@@ -5088,6 +5203,948 @@ def restore_database():
         return jsonify({'error': 'mysql client not found. Make sure MySQL client tools are installed.'}), 500
     except subprocess.TimeoutExpired:
         return jsonify({'error': 'Restore timed out.'}), 500
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPENSE MANAGEMENT MODULE
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/expenses')
+@login_required
+@admin_required
+def expenses_page():
+    return render_template('expenses.html')
+
+# --- Expense Categories API ---
+
+@app.route('/api/expense-categories', methods=['GET'])
+@login_required
+@admin_required
+def get_expense_categories():
+    conn = get_db_connection()
+    flt_sql, flt_params = shop_filter('ec')
+
+    # When in all-shops mode (super_admin), deduplicate by name to avoid showing
+    # the same category name from multiple shops
+    if not flt_sql:
+        categories = conn.execute('''
+            SELECT MIN(ec.id) as id, ec.name, ec.icon, ec.description, MIN(ec.shop_id) as shop_id,
+                   MIN(ec.created_at) as created_at,
+                   (SELECT COUNT(*) FROM expenses ex WHERE ex.category_id IN
+                       (SELECT id FROM expense_categories WHERE name = ec.name)) as expense_count
+            FROM expense_categories ec
+            GROUP BY ec.name, ec.icon, ec.description
+            ORDER BY ec.name
+        ''').fetchall()
+    else:
+        categories = conn.execute(f'''
+            SELECT ec.id, ec.name, ec.icon, ec.description, ec.shop_id, ec.created_at,
+                   (SELECT COUNT(*) FROM expenses ex WHERE ex.category_id = ec.id) as expense_count
+            FROM expense_categories ec
+            WHERE 1=1 {flt_sql}
+            ORDER BY ec.name
+        ''', flt_params).fetchall()
+    conn.close()
+    return jsonify([dict(c) for c in categories])
+
+@app.route('/api/expense-categories', methods=['POST'])
+@login_required
+@admin_required
+def add_expense_category():
+    data = request.json
+    if not data.get('name', '').strip():
+        return jsonify({'success': False, 'error': 'Category name is required'}), 400
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        shop_id = get_current_shop_id()
+        cursor.execute('''
+            INSERT INTO expense_categories (name, icon, description, shop_id)
+            VALUES (?, ?, ?, ?)
+        ''', (data['name'].strip(), data.get('icon', '📝').strip(),
+              data.get('description', '').strip(), shop_id))
+        conn.commit()
+        return jsonify({'success': True, 'id': cursor.lastrowid}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+@app.route('/api/expense-categories/<int:cat_id>', methods=['PUT'])
+@login_required
+@admin_required
+def update_expense_category(cat_id):
+    data = request.json
+    if not data.get('name', '').strip():
+        return jsonify({'success': False, 'error': 'Category name is required'}), 400
+
+    conn = get_db_connection()
+    try:
+        flt_sql, flt_params = shop_filter()
+        conn.execute(f'''
+            UPDATE expense_categories SET name=?, icon=?, description=?
+            WHERE id=? {flt_sql}
+        ''', [data['name'].strip(), data.get('icon', '📝').strip(),
+              data.get('description', '').strip(), cat_id] + flt_params)
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+@app.route('/api/expense-categories/<int:cat_id>', methods=['DELETE'])
+@login_required
+@admin_required
+def delete_expense_category(cat_id):
+    conn = get_db_connection()
+    flt_sql, flt_params = shop_filter()
+    # Check if category has expenses
+    exp_count = conn.execute(
+        f'SELECT COUNT(*) as c FROM expenses WHERE category_id=? {flt_sql}',
+        [cat_id] + flt_params
+    ).fetchone()['c']
+    if exp_count > 0:
+        conn.close()
+        return jsonify({'success': False, 'error': f'Cannot delete category with {exp_count} expense(s). Delete or reassign expenses first.'}), 400
+    try:
+        conn.execute(f'DELETE FROM expense_categories WHERE id=? {flt_sql}', [cat_id] + flt_params)
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+# --- Expenses API ---
+
+@app.route('/api/expenses', methods=['GET'])
+@login_required
+@admin_required
+def get_expenses():
+    conn = get_db_connection()
+    flt_sql, flt_params = shop_filter('e')
+
+    # Optional filters
+    category_id = request.args.get('category_id')
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    search = request.args.get('search', '').strip()
+
+    extra_sql = ''
+    extra_params = []
+
+    if category_id:
+        extra_sql += ' AND e.category_id = ?'
+        extra_params.append(int(category_id))
+    if date_from:
+        extra_sql += ' AND e.expense_date >= ?'
+        extra_params.append(date_from)
+    if date_to:
+        extra_sql += ' AND e.expense_date <= ?'
+        extra_params.append(date_to)
+    if search:
+        extra_sql += ' AND (e.description LIKE ? OR ec.name LIKE ? OR e.receipt_ref LIKE ?)'
+        like_term = f'%{search}%'
+        extra_params.extend([like_term, like_term, like_term])
+
+    expenses = conn.execute(f'''
+        SELECT e.*, ec.name as category_name, ec.icon as category_icon,
+               u.username as created_by_name
+        FROM expenses e
+        LEFT JOIN expense_categories ec ON e.category_id = ec.id
+        LEFT JOIN users u ON e.created_by = u.id
+        WHERE 1=1 {flt_sql} {extra_sql}
+        ORDER BY e.expense_date DESC, e.created_at DESC
+    ''', flt_params + extra_params).fetchall()
+    conn.close()
+    return jsonify([dict(e) for e in expenses])
+
+@app.route('/api/expenses/summary', methods=['GET'])
+@login_required
+@admin_required
+def get_expenses_summary():
+    conn = get_db_connection()
+    flt_sql, flt_params = shop_filter('e')
+
+    today = datetime.now().strftime('%Y-%m-%d')
+    first_of_month = datetime.now().strftime('%Y-%m-01')
+
+    # Today's total
+    today_total = conn.execute(f'''
+        SELECT COALESCE(SUM(e.amount), 0) as total
+        FROM expenses e WHERE e.expense_date = ? {flt_sql}
+    ''', [today] + flt_params).fetchone()['total']
+
+    # This month's total
+    month_total = conn.execute(f'''
+        SELECT COALESCE(SUM(e.amount), 0) as total
+        FROM expenses e WHERE e.expense_date >= ? {flt_sql}
+    ''', [first_of_month] + flt_params).fetchone()['total']
+
+    # Recurring monthly total
+    recurring_total = conn.execute(f'''
+        SELECT COALESCE(SUM(re.amount), 0) as total
+        FROM recurring_expenses re WHERE re.is_active = 1 AND re.frequency = 'monthly' {flt_sql.replace('e.shop_id', 're.shop_id')}
+    ''', flt_params).fetchone()['total']
+
+    # Top category this month
+    top_category = conn.execute(f'''
+        SELECT ec.name, COALESCE(SUM(e.amount), 0) as total
+        FROM expenses e
+        LEFT JOIN expense_categories ec ON e.category_id = ec.id
+        WHERE e.expense_date >= ? {flt_sql}
+        GROUP BY ec.id, ec.name
+        ORDER BY total DESC LIMIT 1
+    ''', [first_of_month] + flt_params).fetchone()
+
+    conn.close()
+    return jsonify({
+        'today_total': today_total,
+        'month_total': month_total,
+        'recurring_monthly': recurring_total,
+        'top_category': dict(top_category) if top_category else {'name': '-', 'total': 0}
+    })
+
+@app.route('/api/expenses', methods=['POST'])
+@login_required
+@admin_required
+def add_expense():
+    data = request.json
+    if not data.get('category_id'):
+        return jsonify({'success': False, 'error': 'Category is required'}), 400
+    if not data.get('amount') or float(data['amount']) <= 0:
+        return jsonify({'success': False, 'error': 'Valid amount is required'}), 400
+    if not data.get('expense_date'):
+        return jsonify({'success': False, 'error': 'Date is required'}), 400
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        shop_id = get_current_shop_id()
+        cursor.execute('''
+            INSERT INTO expenses (category_id, amount, description, expense_date, payment_method, receipt_ref, created_by, shop_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (int(data['category_id']), float(data['amount']),
+              data.get('description', '').strip(),
+              data['expense_date'],
+              data.get('payment_method', 'cash'),
+              data.get('receipt_ref', '').strip(),
+              session.get('user_id'),
+              shop_id))
+        conn.commit()
+        return jsonify({'success': True, 'id': cursor.lastrowid}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+@app.route('/api/expenses/<int:expense_id>', methods=['PUT'])
+@login_required
+@admin_required
+def update_expense(expense_id):
+    data = request.json
+    if not data.get('category_id'):
+        return jsonify({'success': False, 'error': 'Category is required'}), 400
+    if not data.get('amount') or float(data['amount']) <= 0:
+        return jsonify({'success': False, 'error': 'Valid amount is required'}), 400
+    if not data.get('expense_date'):
+        return jsonify({'success': False, 'error': 'Date is required'}), 400
+
+    conn = get_db_connection()
+    try:
+        flt_sql, flt_params = shop_filter()
+        conn.execute(f'''
+            UPDATE expenses SET category_id=?, amount=?, description=?, expense_date=?, payment_method=?, receipt_ref=?
+            WHERE id=? {flt_sql}
+        ''', [int(data['category_id']), float(data['amount']),
+              data.get('description', '').strip(),
+              data['expense_date'],
+              data.get('payment_method', 'cash'),
+              data.get('receipt_ref', '').strip(),
+              expense_id] + flt_params)
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+@app.route('/api/expenses/<int:expense_id>', methods=['DELETE'])
+@login_required
+@admin_required
+def delete_expense(expense_id):
+    conn = get_db_connection()
+    try:
+        flt_sql, flt_params = shop_filter()
+        conn.execute(f'DELETE FROM expenses WHERE id=? {flt_sql}', [expense_id] + flt_params)
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+# --- Recurring Expenses API ---
+
+@app.route('/api/recurring-expenses', methods=['GET'])
+@login_required
+@admin_required
+def get_recurring_expenses():
+    conn = get_db_connection()
+    flt_sql, flt_params = shop_filter('re')
+    recurring = conn.execute(f'''
+        SELECT re.*, ec.name as category_name, ec.icon as category_icon
+        FROM recurring_expenses re
+        LEFT JOIN expense_categories ec ON re.category_id = ec.id
+        WHERE 1=1 {flt_sql}
+        ORDER BY re.next_due_date ASC
+    ''', flt_params).fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in recurring])
+
+@app.route('/api/recurring-expenses', methods=['POST'])
+@login_required
+@admin_required
+def add_recurring_expense():
+    data = request.json
+    if not data.get('category_id'):
+        return jsonify({'success': False, 'error': 'Category is required'}), 400
+    if not data.get('amount') or float(data['amount']) <= 0:
+        return jsonify({'success': False, 'error': 'Valid amount is required'}), 400
+    if not data.get('next_due_date'):
+        return jsonify({'success': False, 'error': 'Next due date is required'}), 400
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        shop_id = get_current_shop_id()
+        cursor.execute('''
+            INSERT INTO recurring_expenses (category_id, amount, description, frequency, next_due_date, is_active, shop_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (int(data['category_id']), float(data['amount']),
+              data.get('description', '').strip(),
+              data.get('frequency', 'monthly'),
+              data['next_due_date'],
+              1, shop_id))
+        conn.commit()
+        return jsonify({'success': True, 'id': cursor.lastrowid}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+@app.route('/api/recurring-expenses/<int:rec_id>', methods=['PUT'])
+@login_required
+@admin_required
+def update_recurring_expense(rec_id):
+    data = request.json
+    if not data.get('category_id'):
+        return jsonify({'success': False, 'error': 'Category is required'}), 400
+    if not data.get('amount') or float(data['amount']) <= 0:
+        return jsonify({'success': False, 'error': 'Valid amount is required'}), 400
+    if not data.get('next_due_date'):
+        return jsonify({'success': False, 'error': 'Next due date is required'}), 400
+
+    conn = get_db_connection()
+    try:
+        flt_sql, flt_params = shop_filter()
+        conn.execute(f'''
+            UPDATE recurring_expenses SET category_id=?, amount=?, description=?, frequency=?, next_due_date=?, is_active=?
+            WHERE id=? {flt_sql}
+        ''', [int(data['category_id']), float(data['amount']),
+              data.get('description', '').strip(),
+              data.get('frequency', 'monthly'),
+              data['next_due_date'],
+              1 if data.get('is_active', True) else 0,
+              rec_id] + flt_params)
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+@app.route('/api/recurring-expenses/<int:rec_id>', methods=['DELETE'])
+@login_required
+@admin_required
+def delete_recurring_expense(rec_id):
+    conn = get_db_connection()
+    try:
+        flt_sql, flt_params = shop_filter()
+        conn.execute(f'DELETE FROM recurring_expenses WHERE id=? {flt_sql}', [rec_id] + flt_params)
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+@app.route('/api/recurring-expenses/<int:rec_id>/toggle', methods=['POST'])
+@login_required
+@admin_required
+def toggle_recurring_expense(rec_id):
+    conn = get_db_connection()
+    try:
+        flt_sql, flt_params = shop_filter()
+        current = conn.execute(
+            f'SELECT is_active FROM recurring_expenses WHERE id=? {flt_sql}', [rec_id] + flt_params
+        ).fetchone()
+        if not current:
+            conn.close()
+            return jsonify({'success': False, 'error': 'Not found'}), 404
+        new_state = 0 if current['is_active'] else 1
+        conn.execute(f'UPDATE recurring_expenses SET is_active=? WHERE id=? {flt_sql}', [new_state, rec_id] + flt_params)
+        conn.commit()
+        return jsonify({'success': True, 'is_active': bool(new_state)})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+
+# ── Manual Recurring Expense Trigger ─────────────────────────────────────────
+
+@app.route('/api/scheduler/process-recurring', methods=['POST'])
+@admin_required
+def process_recurring_now():
+    """Manually trigger recurring expense processing for testing/immediate use."""
+    try:
+        scheduled_recurring_expenses()
+        return jsonify({'success': True, 'message': 'Recurring expenses processed successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ── Profit & Loss Report ─────────────────────────────────────────────────────
+
+@app.route('/api/reports/pnl', methods=['GET'])
+@login_required
+@admin_required
+def get_pnl_report():
+    """Generate Profit & Loss report showing gross profit, expenses, and net profit."""
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    if not start_date or not end_date:
+        return jsonify({'success': False, 'error': 'Start and end dates are required'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    flt_sql_s, flt_params_s = shop_filter('s')
+    flt_sql_e, flt_params_e = shop_filter('e')
+
+    try:
+        end_date_time = end_date + ' 23:59:59'
+        start_date_time = start_date + ' 00:00:00'
+
+        # ─── Revenue ───
+        revenue_data = cursor.execute(f'''
+            SELECT COALESCE(SUM(total_amount), 0) as total_revenue,
+                   COALESCE(SUM(total_cost), 0) as total_cogs,
+                   COUNT(*) as transaction_count
+            FROM sales s
+            WHERE sale_date BETWEEN ? AND ? {flt_sql_s}
+        ''', [start_date_time, end_date_time] + flt_params_s).fetchone()
+
+        total_revenue = float(revenue_data['total_revenue'] or 0)
+        total_cogs = float(revenue_data['total_cogs'] or 0)
+        transaction_count = revenue_data['transaction_count']
+        gross_profit = total_revenue - total_cogs
+
+        # ─── Refunds (reduce revenue) ───
+        flt_sql_plain, flt_params_plain = shop_filter()
+        refund_data = cursor.execute(f'''
+            SELECT COALESCE(SUM(refund_amount), 0) as total_refunds
+            FROM sale_returns WHERE return_date BETWEEN ? AND ? {flt_sql_plain}
+        ''', [start_date_time, end_date_time] + flt_params_plain).fetchone()
+        total_refunds = float(refund_data['total_refunds'] or 0)
+
+        # ─── Discounts ───
+        discount_data = cursor.execute(f'''
+            SELECT COALESCE(SUM(discount_amount), 0) as total_discounts
+            FROM sales s WHERE sale_date BETWEEN ? AND ? {flt_sql_s}
+            AND discount_amount > 0
+        ''', [start_date_time, end_date_time] + flt_params_s).fetchone()
+        total_discounts = float(discount_data['total_discounts'] or 0)
+
+        # Net revenue = revenue - refunds (discounts already factored in total_amount)
+        net_revenue = total_revenue - total_refunds
+
+        # ─── Expenses by Category ───
+        expenses_by_category = cursor.execute(f'''
+            SELECT ec.name as category_name, ec.icon as category_icon,
+                   COALESCE(SUM(e.amount), 0) as total_amount,
+                   COUNT(e.id) as expense_count
+            FROM expenses e
+            LEFT JOIN expense_categories ec ON e.category_id = ec.id
+            WHERE e.expense_date BETWEEN ? AND ? {flt_sql_e}
+            GROUP BY ec.id, ec.name, ec.icon
+            ORDER BY total_amount DESC
+        ''', [start_date, end_date] + flt_params_e).fetchall()
+
+        total_expenses = sum(float(row['total_amount']) for row in expenses_by_category)
+
+        # ─── Net Profit ───
+        net_profit = gross_profit - total_expenses
+
+        # ─── Daily P&L Breakdown ───
+        daily_revenue = cursor.execute(f'''
+            SELECT DATE(sale_date) as the_date,
+                   COALESCE(SUM(total_amount), 0) as revenue,
+                   COALESCE(SUM(total_cost), 0) as cogs
+            FROM sales s
+            WHERE sale_date BETWEEN ? AND ? {flt_sql_s}
+            GROUP BY DATE(sale_date)
+            ORDER BY the_date ASC
+        ''', [start_date_time, end_date_time] + flt_params_s).fetchall()
+
+        daily_expenses = cursor.execute(f'''
+            SELECT expense_date as the_date,
+                   COALESCE(SUM(amount), 0) as expenses
+            FROM expenses e
+            WHERE expense_date BETWEEN ? AND ? {flt_sql_e}
+            GROUP BY expense_date
+            ORDER BY the_date ASC
+        ''', [start_date, end_date] + flt_params_e).fetchall()
+
+        # Merge daily data
+        daily_map = {}
+        for row in daily_revenue:
+            d = str(row['the_date'])
+            daily_map[d] = {
+                'date': d,
+                'revenue': float(row['revenue']),
+                'cogs': float(row['cogs']),
+                'gross_profit': float(row['revenue']) - float(row['cogs']),
+                'expenses': 0,
+                'net_profit': 0
+            }
+        for row in daily_expenses:
+            d = str(row['the_date'])
+            if d not in daily_map:
+                daily_map[d] = {'date': d, 'revenue': 0, 'cogs': 0, 'gross_profit': 0, 'expenses': 0, 'net_profit': 0}
+            daily_map[d]['expenses'] = float(row['expenses'])
+
+        for d in daily_map:
+            daily_map[d]['net_profit'] = daily_map[d]['gross_profit'] - daily_map[d]['expenses']
+
+        daily_pnl = sorted(daily_map.values(), key=lambda x: x['date'])
+
+        # ─── Monthly P&L (if period > 31 days) ───
+        from datetime import datetime as dt_cls, timedelta
+        sd = dt_cls.strptime(start_date, '%Y-%m-%d')
+        ed = dt_cls.strptime(end_date, '%Y-%m-%d')
+        period_days = (ed - sd).days + 1
+
+        monthly_pnl = []
+        if period_days > 31:
+            monthly_rev = cursor.execute(f'''
+                SELECT DATE_FORMAT(sale_date, '%Y-%m') as month,
+                       COALESCE(SUM(total_amount), 0) as revenue,
+                       COALESCE(SUM(total_cost), 0) as cogs
+                FROM sales s
+                WHERE sale_date BETWEEN ? AND ? {flt_sql_s}
+                GROUP BY DATE_FORMAT(sale_date, '%Y-%m')
+                ORDER BY month ASC
+            ''', [start_date_time, end_date_time] + flt_params_s).fetchall()
+
+            monthly_exp = cursor.execute(f'''
+                SELECT DATE_FORMAT(expense_date, '%Y-%m') as month,
+                       COALESCE(SUM(amount), 0) as expenses
+                FROM expenses e
+                WHERE expense_date BETWEEN ? AND ? {flt_sql_e}
+                GROUP BY DATE_FORMAT(expense_date, '%Y-%m')
+                ORDER BY month ASC
+            ''', [start_date, end_date] + flt_params_e).fetchall()
+
+            monthly_map = {}
+            for row in monthly_rev:
+                m = row['month']
+                monthly_map[m] = {
+                    'month': m,
+                    'revenue': float(row['revenue']),
+                    'cogs': float(row['cogs']),
+                    'gross_profit': float(row['revenue']) - float(row['cogs']),
+                    'expenses': 0, 'net_profit': 0
+                }
+            for row in monthly_exp:
+                m = row['month']
+                if m not in monthly_map:
+                    monthly_map[m] = {'month': m, 'revenue': 0, 'cogs': 0, 'gross_profit': 0, 'expenses': 0, 'net_profit': 0}
+                monthly_map[m]['expenses'] = float(row['expenses'])
+            for m in monthly_map:
+                monthly_map[m]['net_profit'] = monthly_map[m]['gross_profit'] - monthly_map[m]['expenses']
+            monthly_pnl = sorted(monthly_map.values(), key=lambda x: x['month'])
+
+        # ─── Period comparison ───
+        prev_end = sd - timedelta(days=1)
+        prev_start = prev_end - timedelta(days=period_days - 1)
+        prev_start_str = prev_start.strftime('%Y-%m-%d') + ' 00:00:00'
+        prev_end_str = prev_end.strftime('%Y-%m-%d') + ' 23:59:59'
+
+        prev_rev = cursor.execute(f'''
+            SELECT COALESCE(SUM(total_amount), 0) as revenue,
+                   COALESCE(SUM(total_cost), 0) as cogs
+            FROM sales s WHERE sale_date BETWEEN ? AND ? {flt_sql_s}
+        ''', [prev_start_str, prev_end_str] + flt_params_s).fetchone()
+
+        prev_exp = cursor.execute(f'''
+            SELECT COALESCE(SUM(amount), 0) as expenses
+            FROM expenses e WHERE expense_date BETWEEN ? AND ? {flt_sql_e}
+        ''', [prev_start.strftime('%Y-%m-%d'), prev_end.strftime('%Y-%m-%d')] + flt_params_e).fetchone()
+
+        prev_revenue = float(prev_rev['revenue'] or 0)
+        prev_cogs = float(prev_rev['cogs'] or 0)
+        prev_gross = prev_revenue - prev_cogs
+        prev_expenses = float(prev_exp['expenses'] or 0)
+        prev_net = prev_gross - prev_expenses
+
+        conn.close()
+
+        # Margins
+        gross_margin = (gross_profit / net_revenue * 100) if net_revenue > 0 else 0
+        net_margin = (net_profit / net_revenue * 100) if net_revenue > 0 else 0
+
+        return jsonify({
+            'success': True,
+            'summary': {
+                'total_revenue': total_revenue,
+                'total_refunds': total_refunds,
+                'net_revenue': net_revenue,
+                'total_cogs': total_cogs,
+                'gross_profit': gross_profit,
+                'gross_margin': gross_margin,
+                'total_expenses': total_expenses,
+                'net_profit': net_profit,
+                'net_margin': net_margin,
+                'total_discounts': total_discounts,
+                'transaction_count': transaction_count
+            },
+            'expenses_by_category': [dict(row) for row in expenses_by_category],
+            'daily_pnl': daily_pnl,
+            'monthly_pnl': monthly_pnl,
+            'period_comparison': {
+                'prev_start': prev_start.strftime('%Y-%m-%d'),
+                'prev_end': prev_end.strftime('%Y-%m-%d'),
+                'prev_revenue': prev_revenue,
+                'prev_gross_profit': prev_gross,
+                'prev_expenses': prev_expenses,
+                'prev_net_profit': prev_net
+            }
+        })
+
+    except Exception as e:
+        conn.close()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/reports/pnl/export/<format>', methods=['GET'])
+@login_required
+@admin_required
+def export_pnl_report(format):
+    """Export P&L report to PDF or Excel"""
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    if not start_date or not end_date:
+        return jsonify({'success': False, 'error': 'Start and end dates are required'}), 400
+    if format not in ['pdf', 'excel']:
+        return jsonify({'success': False, 'error': 'Invalid format'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    flt_sql_s, flt_params_s = shop_filter('s')
+    flt_sql_e, flt_params_e = shop_filter('e')
+
+    try:
+        shop_id = get_current_shop_id() or session.get('shop_id')
+        shop = cursor.execute('SELECT name, currency_symbol FROM shops WHERE id = ?', (shop_id,)).fetchone()
+        shop_name = shop['name'] if shop else 'POS System'
+        currency = shop['currency_symbol'] if shop else '$'
+
+        end_date_time = end_date + ' 23:59:59'
+        start_date_time = start_date + ' 00:00:00'
+
+        # Revenue
+        rev = cursor.execute(f'''
+            SELECT COALESCE(SUM(total_amount), 0) as revenue, COALESCE(SUM(total_cost), 0) as cogs
+            FROM sales s WHERE sale_date BETWEEN ? AND ? {flt_sql_s}
+        ''', [start_date_time, end_date_time] + flt_params_s).fetchone()
+        total_revenue = float(rev['revenue'] or 0)
+        total_cogs = float(rev['cogs'] or 0)
+        gross_profit = total_revenue - total_cogs
+
+        # Refunds
+        flt_sql_plain, flt_params_plain = shop_filter()
+        refunds = cursor.execute(f'''
+            SELECT COALESCE(SUM(refund_amount), 0) as total
+            FROM sale_returns WHERE return_date BETWEEN ? AND ? {flt_sql_plain}
+        ''', [start_date_time, end_date_time] + flt_params_plain).fetchone()
+        total_refunds = float(refunds['total'] or 0)
+        net_revenue = total_revenue - total_refunds
+
+        # Expenses by category
+        exp_cats = cursor.execute(f'''
+            SELECT ec.name as category_name, COALESCE(SUM(e.amount), 0) as total_amount
+            FROM expenses e
+            LEFT JOIN expense_categories ec ON e.category_id = ec.id
+            WHERE e.expense_date BETWEEN ? AND ? {flt_sql_e}
+            GROUP BY ec.id, ec.name ORDER BY total_amount DESC
+        ''', [start_date, end_date] + flt_params_e).fetchall()
+        total_expenses = sum(float(row['total_amount']) for row in exp_cats)
+        net_profit = gross_profit - total_expenses
+
+        conn.close()
+
+        gross_margin = (gross_profit / net_revenue * 100) if net_revenue > 0 else 0
+        net_margin = (net_profit / net_revenue * 100) if net_revenue > 0 else 0
+
+        pnl_data = {
+            'total_revenue': total_revenue,
+            'total_refunds': total_refunds,
+            'net_revenue': net_revenue,
+            'total_cogs': total_cogs,
+            'gross_profit': gross_profit,
+            'gross_margin': gross_margin,
+            'total_expenses': total_expenses,
+            'net_profit': net_profit,
+            'net_margin': net_margin,
+            'expenses_by_category': [dict(row) for row in exp_cats]
+        }
+
+        if format == 'pdf':
+            return generate_pnl_pdf(shop_name, currency, start_date, end_date, pnl_data)
+        else:
+            return generate_pnl_excel(shop_name, currency, start_date, end_date, pnl_data)
+
+    except Exception as e:
+        conn.close()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+def generate_pnl_pdf(shop_name, currency, start_date, end_date, data):
+    """Generate PDF for Profit & Loss report"""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        'CustomTitle', parent=styles['Heading1'], fontSize=20,
+        textColor=colors.HexColor('#2c3e50'), spaceAfter=30, alignment=1
+    )
+    elements.append(Paragraph(f"{shop_name}", title_style))
+    elements.append(Paragraph("Profit & Loss Statement", styles['Heading2']))
+    elements.append(Paragraph(f"Period: {start_date} to {end_date}", styles['Normal']))
+    elements.append(Spacer(1, 0.3*inch))
+
+    # P&L Statement Table
+    elements.append(Paragraph("Income", styles['Heading3']))
+    pnl_rows = [
+        ['', 'Amount'],
+        ['Total Revenue (Sales)', f"{currency}{data['total_revenue']:,.2f}"],
+        ['Less: Refunds', f"({currency}{data['total_refunds']:,.2f})"],
+        ['Net Revenue', f"{currency}{data['net_revenue']:,.2f}"],
+    ]
+    t = Table(pnl_rows, colWidths=[3.5*inch, 2.5*inch])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#34495e')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(t)
+    elements.append(Spacer(1, 0.2*inch))
+
+    # COGS & Gross Profit
+    elements.append(Paragraph("Cost of Goods Sold", styles['Heading3']))
+    cogs_rows = [
+        ['', 'Amount'],
+        ['Cost of Goods Sold (COGS)', f"({currency}{data['total_cogs']:,.2f})"],
+        ['Gross Profit', f"{currency}{data['gross_profit']:,.2f}"],
+        ['Gross Margin', f"{data['gross_margin']:.1f}%"],
+    ]
+    t2 = Table(cogs_rows, colWidths=[3.5*inch, 2.5*inch])
+    t2.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#34495e')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 2), (-1, 2), 'Helvetica-Bold'),
+        ('TEXTCOLOR', (1, 2), (1, 2), colors.HexColor('#27ae60')),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(t2)
+    elements.append(Spacer(1, 0.2*inch))
+
+    # Operating Expenses
+    elements.append(Paragraph("Operating Expenses", styles['Heading3']))
+    exp_rows = [['Category', 'Amount']]
+    for cat in data['expenses_by_category']:
+        exp_rows.append([cat['category_name'] or 'Uncategorized', f"{currency}{float(cat['total_amount']):,.2f}"])
+    exp_rows.append(['Total Expenses', f"({currency}{data['total_expenses']:,.2f})"])
+
+    t3 = Table(exp_rows, colWidths=[3.5*inch, 2.5*inch])
+    style_cmds = [
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#34495e')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('TEXTCOLOR', (1, -1), (1, -1), colors.HexColor('#e74c3c')),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]
+    t3.setStyle(TableStyle(style_cmds))
+    elements.append(t3)
+    elements.append(Spacer(1, 0.3*inch))
+
+    # Net Profit Summary
+    elements.append(Paragraph("Net Profit", styles['Heading3']))
+    net_color = colors.HexColor('#27ae60') if data['net_profit'] >= 0 else colors.HexColor('#e74c3c')
+    net_rows = [
+        ['', 'Amount'],
+        ['Gross Profit', f"{currency}{data['gross_profit']:,.2f}"],
+        ['Less: Total Expenses', f"({currency}{data['total_expenses']:,.2f})"],
+        ['Net Profit', f"{currency}{data['net_profit']:,.2f}"],
+        ['Net Margin', f"{data['net_margin']:.1f}%"],
+    ]
+    t4 = Table(net_rows, colWidths=[3.5*inch, 2.5*inch])
+    t4.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#34495e')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('FONTNAME', (0, -2), (-1, -1), 'Helvetica-Bold'),
+        ('TEXTCOLOR', (1, -2), (1, -2), net_color),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(t4)
+
+    doc.build(elements)
+    buffer.seek(0)
+    return send_file(buffer, mimetype='application/pdf',
+                     as_attachment=True, download_name=f'pnl_report_{start_date}_to_{end_date}.pdf')
+
+
+def generate_pnl_excel(shop_name, currency, start_date, end_date, data):
+    """Generate Excel for Profit & Loss report"""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Profit & Loss'
+
+    header_font = Font(bold=True, size=12, color='FFFFFF')
+    header_fill = PatternFill(start_color='2C3E50', end_color='2C3E50', fill_type='solid')
+    bold_font = Font(bold=True, size=11)
+    green_font = Font(bold=True, size=11, color='27AE60')
+    red_font = Font(bold=True, size=11, color='E74C3C')
+    border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+
+    # Title
+    ws.merge_cells('A1:B1')
+    ws['A1'] = f'{shop_name} - Profit & Loss Statement'
+    ws['A1'].font = Font(bold=True, size=16)
+    ws['A2'] = f'Period: {start_date} to {end_date}'
+    ws['A2'].font = Font(size=11, italic=True)
+
+    row = 4
+    ws.column_dimensions['A'].width = 35
+    ws.column_dimensions['B'].width = 20
+
+    # Income Section
+    ws.cell(row=row, column=1, value='INCOME').font = bold_font
+    row += 1
+    ws.cell(row=row, column=1, value='Total Revenue (Sales)')
+    ws.cell(row=row, column=2, value=data['total_revenue']).number_format = f'"{currency}"#,##0.00'
+    row += 1
+    ws.cell(row=row, column=1, value='Less: Refunds')
+    ws.cell(row=row, column=2, value=-data['total_refunds']).number_format = f'"{currency}"#,##0.00'
+    row += 1
+    ws.cell(row=row, column=1, value='Net Revenue').font = bold_font
+    ws.cell(row=row, column=2, value=data['net_revenue']).number_format = f'"{currency}"#,##0.00'
+    ws.cell(row=row, column=2).font = bold_font
+    row += 2
+
+    # COGS Section
+    ws.cell(row=row, column=1, value='COST OF GOODS SOLD').font = bold_font
+    row += 1
+    ws.cell(row=row, column=1, value='Cost of Goods Sold (COGS)')
+    ws.cell(row=row, column=2, value=-data['total_cogs']).number_format = f'"{currency}"#,##0.00'
+    row += 1
+    ws.cell(row=row, column=1, value='Gross Profit').font = bold_font
+    ws.cell(row=row, column=2, value=data['gross_profit']).number_format = f'"{currency}"#,##0.00'
+    ws.cell(row=row, column=2).font = green_font
+    row += 1
+    ws.cell(row=row, column=1, value='Gross Margin')
+    ws.cell(row=row, column=2, value=f"{data['gross_margin']:.1f}%")
+    row += 2
+
+    # Expenses Section
+    ws.cell(row=row, column=1, value='OPERATING EXPENSES').font = bold_font
+    row += 1
+    for cat in data['expenses_by_category']:
+        ws.cell(row=row, column=1, value=cat['category_name'] or 'Uncategorized')
+        ws.cell(row=row, column=2, value=float(cat['total_amount'])).number_format = f'"{currency}"#,##0.00'
+        row += 1
+    ws.cell(row=row, column=1, value='Total Expenses').font = bold_font
+    ws.cell(row=row, column=2, value=data['total_expenses']).number_format = f'"{currency}"#,##0.00'
+    ws.cell(row=row, column=2).font = red_font
+    row += 2
+
+    # Net Profit Section
+    ws.cell(row=row, column=1, value='NET PROFIT').font = Font(bold=True, size=13)
+    row += 1
+    ws.cell(row=row, column=1, value='Gross Profit')
+    ws.cell(row=row, column=2, value=data['gross_profit']).number_format = f'"{currency}"#,##0.00'
+    row += 1
+    ws.cell(row=row, column=1, value='Less: Total Expenses')
+    ws.cell(row=row, column=2, value=-data['total_expenses']).number_format = f'"{currency}"#,##0.00'
+    row += 1
+    ws.cell(row=row, column=1, value='Net Profit').font = Font(bold=True, size=12)
+    net_font = green_font if data['net_profit'] >= 0 else red_font
+    ws.cell(row=row, column=2, value=data['net_profit']).number_format = f'"{currency}"#,##0.00'
+    ws.cell(row=row, column=2).font = net_font
+    row += 1
+    ws.cell(row=row, column=1, value='Net Margin')
+    ws.cell(row=row, column=2, value=f"{data['net_margin']:.1f}%")
+
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    return send_file(buffer, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                     as_attachment=True, download_name=f'pnl_report_{start_date}_to_{end_date}.xlsx')
 
 
 if __name__ == '__main__':
