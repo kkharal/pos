@@ -193,11 +193,6 @@
                         <button class="btn btn-primary" onclick="openAddExpenseModal()">+ Add Expense</button>
                     </div>
                 </div>
-                <!-- Category filter pills -->
-                <div id="category-pills" style="display:flex; gap:0.4rem; margin-bottom:1rem; flex-wrap:wrap;">
-                    <button class="exp-pill active" data-cat="all" onclick="setCategoryFilter('all')">All</button>
-                </div>
-
                 <div class="report-table-scroll">
                     <table>
                         <thead>
@@ -597,12 +592,7 @@
         }
 
         function renderCategoryPills() {
-            const container = document.getElementById('category-pills');
-            let html = '<button class="exp-pill ' + (activeCategoryFilter === 'all' ? 'active' : '') + '" data-cat="all" onclick="setCategoryFilter(\'all\')">All</button>';
-            allCategories.forEach(c => {
-                html += `<button class="exp-pill ${activeCategoryFilter == c.id ? 'active' : ''}" data-cat="${c.id}" onclick="setCategoryFilter(${c.id})">${c.icon || ''} ${escHtml(c.name)}</button>`;
-            });
-            container.innerHTML = html;
+            // Category pills removed
         }
 
         function populateCategorySelects() {
@@ -613,7 +603,6 @@
 
         function setCategoryFilter(catId) {
             activeCategoryFilter = catId;
-            renderCategoryPills();
             loadExpenses();
         }
 

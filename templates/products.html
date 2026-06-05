@@ -151,7 +151,6 @@
             <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap;">
                 <input type="text" id="product-search" placeholder="Search by name, SKU or category..."
                     style="flex:1; min-width:200px; padding:0.5rem 0.75rem; border:1px solid #ddd; border-radius:4px;">
-                <div id="product-category-tabs" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
             </div>
 
             <!-- Action Toolbar -->
@@ -666,20 +665,11 @@
         // Search
         document.getElementById('product-search').addEventListener('input', () => { currentPage = 1; renderProducts(); });
 
-        // Category tabs
-        function renderCategoryTabs() {
-            const tabs = document.getElementById('product-category-tabs');
-            if (!tabs) return;
-            const cats = ['All', ...[...new Set(products.map(p => p.category))].sort()];
-            tabs.innerHTML = cats.map(cat => {
-                const isActive = cat === activeCategory;
-                return `<button class="cat-pill${isActive ? ' active' : ''}" onclick="setProductCategory('${cat.replace(/'/g, "\\\\'")}')">${cat}</button>`;
-            }).join('');
-        }
+        // Category tabs (removed)
+        function renderCategoryTabs() {}
         function setProductCategory(cat) {
             activeCategory = cat;
             currentPage = 1;
-            renderCategoryTabs();
             renderProducts();
         }
 
