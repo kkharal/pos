@@ -1,6 +1,6 @@
 # Clothing Shop POS System
 
-A full-featured Point of Sale (POS) web application for managing one or multiple retail and wholesale shops with comprehensive inventory management, sales tracking, profit analysis, wholesale customer credit management, and automated alerts.
+A full-featured Point of Sale (POS) web application for managing one or multiple retail and wholesale shops with comprehensive inventory management, sales tracking, profit analysis, expense management, wholesale customer credit management, and automated alerts.
 
 ## Key Features
 
@@ -29,6 +29,8 @@ A full-featured Point of Sale (POS) web application for managing one or multiple
 - ✅ **Credit & partial payment** support at POS with invoice tracking
 - ✅ **Cash flow tracking** dashboard and reports with aging analysis
 - ✅ **Receivables reporting** with PDF/Excel export
+- ✅ **Expense management** with categories, recurring expenses, and receipt tracking
+- ✅ **Profit & Loss report** with net profit, gross margin, and expense breakdown
 
 ## Tech Stack
 
@@ -127,7 +129,30 @@ The system has **four roles**, each with distinct permissions:
 - **Aging report**: View overdue receivables broken down by 0-30, 31-60, 61-90, 90+ days
 - **Summary cards**: Total customers, total credit given, total outstanding, customers with balance
 
-### 🛒 Point of Sale (All Users)
+### � Expense Management (Admin Only)
+- **Expense CRUD**: Add, edit, delete expenses with amount, date, category, description, payment method, and receipt reference
+- **Expense categories**: Pre-seeded categories (Rent, Utilities, Salaries, Transport, Supplies, Marketing, Maintenance, Miscellaneous) with custom icons
+- **Custom categories**: Create, edit, delete your own expense categories
+- **Recurring expenses**: Set up auto-recurring expenses (daily, weekly, monthly, yearly) with next-due-date tracking
+- **Recurring auto-creation**: Background scheduler automatically creates expense entries when recurring expenses are due
+- **Manual trigger**: Process recurring expenses on-demand from Settings
+- **Expense filters**: Filter by category, date range, or search by description/receipt reference
+- **Summary cards**: Today's total, this month's total, recurring monthly commitment, top category
+- **Multi-shop isolation**: All expenses scoped per shop
+
+### 📋 Profit & Loss Report (Admin Only)
+- **Full P&L statement**: Revenue, refunds, net revenue, COGS, gross profit, operating expenses, net profit
+- **Gross & net margins**: Percentage calculations for both gross and net profit
+- **Expense breakdown**: Per-category expense table with percentage bars
+- **Period comparison**: Current vs previous period with % change indicators
+- **Daily/Monthly breakdown**: Detailed P&L table auto-switching based on date range length
+- **Profit trend chart**: Line chart showing revenue, gross profit, expenses, and net profit over time
+- **Expense pie chart**: Doughnut chart of expense distribution by category
+- **P&L waterfall chart**: Visual bar chart showing the flow from revenue to net profit
+- **Quick date ranges**: This Month, This Quarter, This Year, Last Month, Last Quarter
+- **PDF/Excel export**: Download the full P&L statement in either format
+
+### �🛒 Point of Sale (All Users)
 - **Customer type toggle**: Walk-in (cash only) or Wholesale (credit/partial)
 - **Searchable customer selector**: Autocomplete search for wholesale customers by name, phone, or email
 - **Credit info display**: Shows customer credit limit, current balance, and available credit on selection
