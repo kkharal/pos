@@ -90,29 +90,29 @@
             </div>
         </div>
         <div class="sidebar-nav">
-            <div class="sidebar-section-title">Overview</div>
-            <a href="/" class="sidebar-item"><span class="sidebar-icon">&#128202;</span><span class="sidebar-label">Dashboard</span></a>
-            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">&#128722;</span><span class="sidebar-label">Point of Sale</span></a>
+            <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span><span class="sidebar-label">Home</span></a>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Sales</div>
-            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">&#128203;</span><span class="sidebar-label">Sales History</span></a>
-            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">&#128200;</span><span class="sidebar-label">Reports</span></a>
+            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">🛒</span><span class="sidebar-label">Point of Sale</span></a>
+            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">📋</span><span class="sidebar-label">Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Inventory</div>
-            <a href="/products" class="sidebar-item admin-only active"><span class="sidebar-icon">&#128230;</span><span class="sidebar-label">Products</span></a>
-            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">&#127981;</span><span class="sidebar-label">Suppliers</span></a>
-            <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-icon">&#128204;</span><span class="sidebar-label">Purchase Orders</span></a>
+            <div class="sidebar-section-title admin-only">Products</div>
+            <a href="/products" class="sidebar-item admin-only active"><span class="sidebar-icon">📦</span><span class="sidebar-label">Inventory</span></a>
+            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">🏭</span><span class="sidebar-label">Suppliers</span></a>
+            <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-icon">📌</span><span class="sidebar-label">Purchase Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Customers</div>
-            <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">&#128101;</span><span class="sidebar-label">Customers</span></a>
+            <div class="sidebar-section-title admin-only">People</div>
+            <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">👥</span><span class="sidebar-label">Customers</span></a>
+            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">👤</span><span class="sidebar-label">Users</span></a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Analytics</div>
+            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">📊</span><span class="sidebar-label">Reports</span></a>
             <div class="sidebar-divider admin-only"></div>
             <div class="sidebar-section-title admin-only">Finance</div>
-            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">&#128176;</span><span class="sidebar-label">Expenses</span></a>
+            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">💰</span><span class="sidebar-label">Expenses</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Administration</div>
-            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">&#128100;</span><span class="sidebar-label">Users</span></a>
-            <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">&#9881;&#65039;</span><span class="sidebar-label">Settings</span></a>
-            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">&#127978;</span><span class="sidebar-label">Shops</span></a>
+            <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">Settings</span></a>
+            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">🏪</span><span class="sidebar-label">Shops</span></a>
         </div>
     </aside>
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -521,9 +521,9 @@
             if (isAdmin) {
                 html += '<div style="margin-top:0.6rem;display:flex;gap:0.4rem;flex-wrap:wrap;">';
                 if (isOverridePrice) {
-                    html += '<button onclick="resetPriceOverride()" style="font-size:0.75rem;padding:0.25rem 0.5rem;border:1px solid #e2e8f0;background:white;border-radius:4px;cursor:pointer;color:#64748b;">Reset to Product Price</button>';
+                    html += '<button class="btn btn-secondary btn-sm" onclick="resetPriceOverride()">Reset to Product Price</button>';
                 }
-                html += '<button onclick="setVariantOverride()" style="font-size:0.75rem;padding:0.25rem 0.5rem;border:1px solid #3b82f6;background:#eff6ff;border-radius:4px;cursor:pointer;color:#1d4ed8;">' + (isOverridePrice ? 'Change Override' : 'Override Price') + '</button>';
+                html += '<button class="btn btn-primary btn-sm" onclick="setVariantOverride()">' + (isOverridePrice ? 'Change Override' : 'Override Price') + '</button>';
                 html += '</div>';
             }
             html += '</div>';
@@ -617,7 +617,7 @@
                     container.innerHTML = links.map(function(l) {
                         return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid #f1f5f9;">' +
                             '<span>' + escapeHtml(l.supplier_name) + (l.supplier_cost ? ' <span style=\'color:#94a3b8;font-size:0.78rem;\'>(' + currencySymbol + parseFloat(l.supplier_cost).toFixed(2) + ')</span>' : '') + '</span>' +
-                            '<button onclick="removeProductSupplier(' + l.id + ',' + productId + ')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.8rem;padding:0.2rem 0.4rem;" title="Remove">✕</button>' +
+                            '<button class="btn btn-danger btn-sm" onclick="removeProductSupplier(' + l.id + ',' + productId + ')" title="Remove">✕</button>' +
                             '</div>';
                     }).join('');
                 }
@@ -630,7 +630,7 @@
                         '<option value="">+ Add supplier...</option>' +
                         available.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.name) + '</option>'; }).join('') +
                         '</select>' +
-                        '<button onclick="addProductSupplier(' + productId + ')" style="padding:0.3rem 0.5rem;background:#3b82f6;color:white;border:none;border-radius:4px;font-size:0.78rem;cursor:pointer;">Add</button>' +
+                        '<button class="btn btn-primary btn-sm" onclick="addProductSupplier(' + productId + ')">Add</button>' +
                         '</div>';
                 }
             } catch(e) {

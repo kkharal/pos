@@ -111,29 +111,29 @@
             </div>
         </div>
         <div class="sidebar-nav">
-            <div class="sidebar-section-title">Overview</div>
-            <a href="/" class="sidebar-item"><span class="sidebar-icon">&#128202;</span><span class="sidebar-label">Dashboard</span></a>
-            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">&#128722;</span><span class="sidebar-label">Point of Sale</span></a>
+            <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span><span class="sidebar-label">Home</span></a>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Sales</div>
-            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">&#128203;</span><span class="sidebar-label">Sales History</span></a>
-            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">&#128200;</span><span class="sidebar-label">Reports</span></a>
+            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">🛒</span><span class="sidebar-label">Point of Sale</span></a>
+            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">📋</span><span class="sidebar-label">Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Inventory</div>
-            <a href="/products" class="sidebar-item admin-only"><span class="sidebar-icon">&#128230;</span><span class="sidebar-label">Products</span></a>
-            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">&#127981;</span><span class="sidebar-label">Suppliers</span></a>
-            <a href="/purchase-orders" class="sidebar-item admin-only active"><span class="sidebar-icon">&#128204;</span><span class="sidebar-label">Purchase Orders</span></a>
+            <div class="sidebar-section-title admin-only">Products</div>
+            <a href="/products" class="sidebar-item admin-only"><span class="sidebar-icon">📦</span><span class="sidebar-label">Inventory</span></a>
+            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">🏭</span><span class="sidebar-label">Suppliers</span></a>
+            <a href="/purchase-orders" class="sidebar-item admin-only active"><span class="sidebar-icon">📌</span><span class="sidebar-label">Purchase Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Customers</div>
-            <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">&#128101;</span><span class="sidebar-label">Customers</span></a>
+            <div class="sidebar-section-title admin-only">People</div>
+            <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">👥</span><span class="sidebar-label">Customers</span></a>
+            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">👤</span><span class="sidebar-label">Users</span></a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Analytics</div>
+            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">📊</span><span class="sidebar-label">Reports</span></a>
             <div class="sidebar-divider admin-only"></div>
             <div class="sidebar-section-title admin-only">Finance</div>
-            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">&#128176;</span><span class="sidebar-label">Expenses</span></a>
+            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">💰</span><span class="sidebar-label">Expenses</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Administration</div>
-            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">&#128100;</span><span class="sidebar-label">Users</span></a>
-            <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">&#9881;&#65039;</span><span class="sidebar-label">Settings</span></a>
-            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">&#127978;</span><span class="sidebar-label">Shops</span></a>
+            <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">Settings</span></a>
+            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">🏪</span><span class="sidebar-label">Shops</span></a>
         </div>
     </aside>
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -265,7 +265,7 @@
                         <input type="hidden" id="product-picker-value">
                         <div id="product-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #e2e8f0; border-top:none; border-radius:0 0 8px 8px; max-height:250px; overflow-y:auto; z-index:100; box-shadow:0 4px 16px rgba(0,0,0,0.1);"></div>
                     </div>
-                    <button class="btn" onclick="refreshProducts()" title="Refresh product list" style="padding:0.5rem 0.6rem; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer; font-size:0.9rem;">🔄</button>
+                    <button class="btn btn-secondary" onclick="refreshProducts()" title="Refresh product list">🔄</button>
                 </div>
 
                 <table class="po-items-table">
@@ -669,9 +669,9 @@
                     <td>${date}<br><span style="font-size:0.78rem;color:#94a3b8;">${po.created_by_name || ''}</span></td>
                     <td onclick="event.stopPropagation()">
                         <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
-                            ${po.status !== 'received' && po.status !== 'draft' ? `<button class="btn btn-success" style="font-size:0.73rem;padding:0.2rem 0.5rem;" onclick="openReceiveModal(${po.id})">Receive</button>` : ''}
-                            ${po.status === 'draft' ? `<button class="btn btn-primary" style="font-size:0.73rem;padding:0.2rem 0.5rem;" onclick="submitDraft(${po.id})">Submit</button>` : ''}
-                            ${po.status !== 'received' ? `<button class="btn" style="font-size:0.73rem;padding:0.2rem 0.5rem;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;" onclick="deletePO(${po.id})">Delete</button>` : ''}
+                            ${po.status !== 'received' && po.status !== 'draft' ? `<button class="btn btn-success btn-sm" onclick="openReceiveModal(${po.id})">Receive</button>` : ''}
+                            ${po.status === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="submitDraft(${po.id})">Submit</button>` : ''}
+                            ${po.status !== 'received' ? `<button class="btn btn-danger btn-sm" onclick="deletePO(${po.id})">Delete</button>` : ''}
                         </div>
                     </td>
                 </tr>`;

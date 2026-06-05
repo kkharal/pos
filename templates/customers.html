@@ -89,29 +89,29 @@
             </div>
         </div>
         <div class="sidebar-nav">
-            <div class="sidebar-section-title">Overview</div>
-            <a href="/" class="sidebar-item"><span class="sidebar-icon">&#128202;</span><span class="sidebar-label">Dashboard</span></a>
-            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">&#128722;</span><span class="sidebar-label">Point of Sale</span></a>
+            <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span><span class="sidebar-label">Home</span></a>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Sales</div>
-            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">&#128203;</span><span class="sidebar-label">Sales History</span></a>
-            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">&#128200;</span><span class="sidebar-label">Reports</span></a>
+            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">🛒</span><span class="sidebar-label">Point of Sale</span></a>
+            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">📋</span><span class="sidebar-label">Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Inventory</div>
-            <a href="/products" class="sidebar-item admin-only"><span class="sidebar-icon">&#128230;</span><span class="sidebar-label">Products</span></a>
-            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">&#127981;</span><span class="sidebar-label">Suppliers</span></a>
-            <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-icon">&#128204;</span><span class="sidebar-label">Purchase Orders</span></a>
+            <div class="sidebar-section-title admin-only">Products</div>
+            <a href="/products" class="sidebar-item admin-only"><span class="sidebar-icon">📦</span><span class="sidebar-label">Inventory</span></a>
+            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">🏭</span><span class="sidebar-label">Suppliers</span></a>
+            <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-icon">📌</span><span class="sidebar-label">Purchase Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Customers</div>
-            <a href="/customers" class="sidebar-item admin-only active"><span class="sidebar-icon">&#128101;</span><span class="sidebar-label">Customers</span></a>
+            <div class="sidebar-section-title admin-only">People</div>
+            <a href="/customers" class="sidebar-item admin-only active"><span class="sidebar-icon">👥</span><span class="sidebar-label">Customers</span></a>
+            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">👤</span><span class="sidebar-label">Users</span></a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Analytics</div>
+            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">📊</span><span class="sidebar-label">Reports</span></a>
             <div class="sidebar-divider admin-only"></div>
             <div class="sidebar-section-title admin-only">Finance</div>
-            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">&#128176;</span><span class="sidebar-label">Expenses</span></a>
+            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">💰</span><span class="sidebar-label">Expenses</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Administration</div>
-            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">&#128100;</span><span class="sidebar-label">Users</span></a>
-            <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">&#9881;&#65039;</span><span class="sidebar-label">Settings</span></a>
-            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">&#127978;</span><span class="sidebar-label">Shops</span></a>
+            <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">Settings</span></a>
+            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">🏪</span><span class="sidebar-label">Shops</span></a>
         </div>
     </aside>
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -539,7 +539,7 @@
                 html += '<div style="display:flex;gap:0.75rem;margin-top:1.25rem;padding-top:1rem;border-top:1px solid #e2e8f0;flex-wrap:wrap;">';
                 if (cust.balance > 0) html += '<button class="btn btn-success" onclick="closeDetailModal();openPayModal(' + id + ')">Record Payment</button>';
                 html += '<button class="btn btn-secondary" onclick="closeDetailModal();editCustomer(' + id + ')">Edit</button>';
-                html += '<button class="btn btn-secondary" onclick="deleteCustomer(' + id + ',\'' + escapeHtml(cust.name).replace(/'/g,"\\'") + '\')" style="margin-left:auto;color:#ef4444;border-color:#fecaca;">Delete</button>';
+                html += '<button class="btn btn-danger" style="margin-left:auto;" onclick="deleteCustomer(' + id + ',\'' + escapeHtml(cust.name).replace(/'/g,"\\'") + '\')">Delete</button>';
                 html += '</div>';
 
                 document.getElementById('customer-detail-content').innerHTML = html;
@@ -696,7 +696,7 @@
                     html += '<td style="padding:0.5rem;text-align:right;color:#c2410c;">' + (c.days_60 > 0 ? currencySymbol + c.days_60.toFixed(0) : '-') + '</td>';
                     html += '<td style="padding:0.5rem;text-align:right;color:#ef4444;font-weight:600;">' + (c.days_90_plus > 0 ? currencySymbol + c.days_90_plus.toFixed(0) : '-') + '</td>';
                     html += '<td style="padding:0.5rem;text-align:right;font-weight:700;">' + currencySymbol + c.balance.toFixed(0) + '</td>';
-                    html += '<td style="padding:0.5rem;"><button onclick="document.getElementById(\'aging-modal\').classList.remove(\'active\');openPayModal(' + c.id + ')" style="font-size:0.72rem;padding:0.2rem 0.4rem;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:4px;cursor:pointer;">Pay</button></td>';
+                    html += '<td style="padding:0.5rem;"><button class="btn btn-success btn-sm" onclick="document.getElementById(\'aging-modal\').classList.remove(\'active\');openPayModal(' + c.id + ')">Pay</button></td>';
                     html += '</tr>';
                 });
                 html += '</tbody></table></div>';
