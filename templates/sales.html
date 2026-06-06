@@ -4,119 +4,126 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orders - POS System</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=7">
+    <script src="/static/js/loading.js?v=1" defer></script>
     <script src="/static/js/ui.js"></script>
     <style>
         /* ===== Orders Layout ===== */
-        .orders-layout { background: #f8fafc; min-height: calc(100vh - 80px); padding: 1.75rem 2rem; }
+        .orders-layout { background: #f8fafc; min-height: calc(100vh - 80px); padding: 1.5rem 2rem; }
 
         /* ===== Page Header ===== */
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
         .page-title { font-size: 1.35rem; font-weight: 700; color: #1e293b; }
         .page-subtitle { font-size: 0.82rem; color: #64748b; margin-top: 0.15rem; }
         .page-actions { display: flex; gap: 0.5rem; align-items: center; }
         .page-actions .btn-export { padding: 0.45rem 0.85rem; border-radius: 8px; border: 1px solid #e2e8f0; background: white; color: #475569; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 0.35rem; font-weight: 500; }
         .page-actions .btn-export:hover { border-color: #cbd5e1; background: #f1f5f9; }
 
-        /* ===== Tabs ===== */
-        .orders-tabs { display: flex; gap: 0; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem; }
-        .orders-tab { padding: 0.6rem 1.25rem; font-size: 0.88rem; font-weight: 500; border: none; background: none; cursor: pointer; color: #64748b; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
-        .orders-tab:hover { color: #3b82f6; }
-        .orders-tab.active { color: #3b82f6; border-bottom-color: #3b82f6; font-weight: 600; }
-
         /* ===== Filter Card ===== */
-        .filter-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
-        .filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-        .filter-row + .filter-row { margin-top: 0.6rem; }
+        .filter-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.85rem 1.25rem; margin-bottom: 1rem; }
+        .filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
         .filter-search-wrap { position: relative; flex: 1; min-width: 200px; }
-        .filter-search-wrap .search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.85rem; pointer-events: none; }
-        .filter-search { width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.1rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.85rem; box-sizing: border-box; height: 36px; }
+        .filter-search-wrap .search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.95rem; pointer-events: none; }
+        .filter-search { width: 100%; padding: 0.45rem 0.75rem 0.45rem 2.2rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.85rem; box-sizing: border-box; height: 36px; }
         .filter-search:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.08); }
-        .filter-btn { display: flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; background: white; color: #475569; font-size: 0.82rem; cursor: pointer; white-space: nowrap; height: 36px; box-sizing: border-box; }
-        .filter-btn:hover { border-color: #cbd5e1; background: #f8fafc; }
-        .filter-btn.active-filter { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
-        .filter-clear { display: none; padding: 0.45rem 0.7rem; background: none; border: 1px solid #fca5a5; color: #dc2626; border-radius: 8px; font-size: 0.82rem; cursor: pointer; height: 36px; box-sizing: border-box; }
+        .filter-select { min-width: 130px; max-width: 170px; padding: 0.45rem 0.7rem; border: 1px solid #e2e8f0; border-radius: 8px; background: white; color: #475569; font-size: 0.85rem; height: 36px; box-sizing: border-box; }
+        .filter-select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.08); }
+        .filter-clear { padding: 0.4rem 0.7rem; background: none; border: 1px solid #fca5a5; color: #dc2626; border-radius: 8px; font-size: 0.82rem; cursor: pointer; height: 36px; box-sizing: border-box; white-space: nowrap; }
         .filter-clear:hover { background: #fef2f2; }
 
-        /* Date chips */
-        .date-chips { display: flex; gap: 0.25rem; flex-wrap: wrap; }
-        .date-chip { padding: 0.22rem 0.55rem; border-radius: 99px; border: 1px solid transparent; background: none; color: #64748b; font-size: 0.75rem; cursor: pointer; transition: all 0.15s; }
-        .date-chip:hover { color: #3b82f6; border-color: #bfdbfe; background: #eff6ff; }
-        .date-chip.active { color: #1d4ed8; border-color: #3b82f6; background: #eff6ff; font-weight: 600; }
+        /* ===== Compact Order Row ===== */
+        .date-group { display: flex; flex-direction: column; gap: 0; margin-bottom: 6px; }
+        .date-group-header { padding: 10px 0 6px; }
+        .date-group-label { font-size: 0.8rem; font-weight: 700; color: #374151; }
+        .date-group-summary { font-size: 0.74rem; color: #94a3b8; font-weight: 500; margin-top: 1px; }
 
-        /* Status pills */
-        .status-pills { display: flex; gap: 0.3rem; flex-wrap: wrap; }
-        .status-pill { padding: 0.25rem 0.65rem; border-radius: 99px; border: 1px solid #e2e8f0; background: white; color: #475569; font-size: 0.78rem; cursor: pointer; font-weight: 500; transition: all 0.15s; }
-        .status-pill:hover { border-color: #94a3b8; }
-        .status-pill.active { background: #1e293b; color: white; border-color: #1e293b; }
+        .order-row {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: border-color 0.12s, box-shadow 0.12s;
+        }
+        .order-row:hover { border-color: #cbd5e1; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
+        .order-row.expanded { border-color: #93c5fd; box-shadow: 0 2px 12px rgba(59,130,246,0.08); }
 
-        /* Advanced panel */
-        .advanced-panel { display: none; border-top: 1px solid #f1f5f9; padding-top: 0.75rem; margin-top: 0.6rem; }
-        .advanced-panel.open { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-        .advanced-panel label { font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-        .advanced-panel select, .advanced-panel input[type="date"] { padding: 0.4rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.82rem; height: 34px; box-sizing: border-box; background: white; }
+        .order-row-top { display: flex; justify-content: space-between; align-items: center; }
+        .order-row-invoice { font-size: 0.85rem; font-weight: 700; color: #111827; }
+        .order-row-amount { font-size: 0.92rem; font-weight: 700; color: #111827; }
 
-        /* ===== Results Bar ===== */
-        .results-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
-        .results-count { font-size: 0.82rem; color: #64748b; font-weight: 500; }
-        .results-badge { background: #f1f5f9; border-radius: 99px; padding: 0.2rem 0.6rem; font-size: 0.75rem; color: #475569; font-weight: 600; }
+        .order-row-mid { display: flex; justify-content: space-between; align-items: center; margin-top: 3px; }
+        .order-row-customer { font-size: 0.82rem; color: #374151; font-weight: 500; }
+        .order-row-status { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; color: #64748b; }
+        .order-row-status .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .dot-green { background: #16a34a; }
+        .dot-red { background: #dc2626; }
+        .dot-orange { background: #ea580c; }
+        .dot-blue { background: #2563eb; }
+        .dot-purple { background: #7c3aed; }
 
-        /* ===== Table ===== */
-        .orders-table-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
-        .orders-table-wrap { max-height: 65vh; overflow-y: auto; }
-        .orders-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
-        .orders-table thead th { position: sticky; top: 0; z-index: 2; padding: 0.7rem 0.75rem; text-align: left; font-weight: 600; color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
-        .orders-table thead th[onclick] { cursor: pointer; user-select: none; }
-        .orders-table thead th[onclick]:hover { color: #1e293b; }
-        .orders-table tbody td { padding: 0.65rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #374151; vertical-align: middle; }
-        .orders-table tbody tr:last-child td { border-bottom: none; }
-        .orders-table tbody tr.sale-row { cursor: pointer; transition: background 0.1s; }
-        .orders-table tbody tr.sale-row:hover { background: #f8fafc; }
+        .order-row-bottom { display: flex; align-items: center; margin-top: 4px; }
+        .order-row-meta { font-size: 0.76rem; color: #9ca3af; }
 
-        /* Invoice number */
-        .inv-num { font-weight: 600; color: #3b82f6; font-size: 0.82rem; }
-        .inv-num:hover { text-decoration: underline; }
+        /* Action buttons inside expanded details */
+        .order-details-actions { display: flex; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #f1f5f9; }
+        .order-details-btn { padding: 5px 14px; border-radius: 7px; border: 1px solid #e2e8f0; background: white; color: #475569; font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: background 0.12s; }
+        .order-details-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
+        .order-details-btn.primary { border-color: #93c5fd; color: #1d4ed8; background: #eff6ff; }
+        .order-details-btn.primary:hover { background: #dbeafe; }
+        .order-details-btn.danger { border-color: #fca5a5; color: #dc2626; }
+        .order-details-btn.danger:hover { background: #fef2f2; }
 
-        /* Day group header */
-        .day-header td { background: #f8fafc; font-weight: 600; font-size: 0.78rem; color: #64748b; padding: 0.45rem 0.75rem !important; border-bottom: 1px solid #e2e8f0 !important; }
-        .day-subtotal-row td { background: #f1f5f9 !important; font-size: 0.78rem !important; color: #475569; padding: 0.4rem 0.75rem !important; border-bottom: 1px solid #e2e8f0 !important; font-weight: 500; }
+        /* ===== Expanded Details (receipt style) ===== */
+        .order-details-panel { padding: 12px 0 4px; border-top: 1px solid #f1f5f9; margin-top: 10px; }
+        .order-details-section { margin-bottom: 10px; }
+        .order-details-section-title { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #f1f5f9; }
+        .order-details-items { display: flex; flex-direction: column; gap: 3px; }
+        .order-details-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 0.82rem; }
+        .order-details-item-name { color: #374151; }
+        .order-details-item-price { color: #111827; font-weight: 600; }
+        .order-details-totals { display: flex; flex-direction: column; gap: 3px; padding-top: 6px; border-top: 1px solid #e5e7eb; }
+        .order-details-total-row { display: flex; justify-content: space-between; font-size: 0.82rem; }
+        .order-details-total-row .lbl { color: #64748b; }
+        .order-details-total-row .val { color: #111827; font-weight: 600; }
+        .order-details-total-row.grand { font-size: 0.88rem; font-weight: 700; }
+        .order-details-total-row.grand .val { color: #111827; }
+        .order-details-info { display: flex; flex-direction: column; gap: 3px; }
+        .order-details-info-row { font-size: 0.78rem; color: #64748b; }
+        .order-details-info-row strong { color: #374151; font-weight: 600; }
 
-        /* Status badges */
-        .badge { display: inline-flex; align-items: center; padding: 0.2rem 0.5rem; border-radius: 99px; font-size: 0.7rem; font-weight: 600; }
+        /* Status dot colors defined inline above */
+        /* Legacy badge classes for compatibility */
         .badge-success { background: #dcfce7; color: #166534; }
-        .badge-warning { background: #fef3c7; color: #92400e; }
         .badge-danger { background: #fee2e2; color: #991b1b; }
         .badge-orange { background: #ffedd5; color: #9a3412; }
+        .badge-blue { background: #dbeafe; color: #1d4ed8; }
         .badge-purple { background: #f3e8ff; color: #6b21a8; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
 
-        /* Action icons */
-        .row-actions { display: inline-flex; gap: 0.15rem; align-items: center; margin-left: 0.4rem; }
-        .row-action { background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 0.85rem; padding: 0.15rem; line-height: 1; border-radius: 4px; }
-        .row-action:hover { color: #374151; background: #f1f5f9; }
+        /* ===== Results Bar ===== */
+        .results-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+        .results-count { font-size: 0.8rem; color: #64748b; font-weight: 500; }
+        .results-badge { background: #f1f5f9; border-radius: 99px; padding: 0.15rem 0.5rem; font-size: 0.72rem; color: #475569; font-weight: 600; }
+
+        /* ===== Order list container ===== */
+        .orders-list-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.85rem; }
+        .orders-list { display: flex; flex-direction: column; }
 
         /* ===== Empty State ===== */
-        .empty-state { text-align: center; padding: 3.5rem 2rem; }
-        .empty-state-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.75rem; }
-        .empty-state p { font-size: 0.9rem; color: #64748b; margin: 0; }
-        .empty-state small { font-size: 0.82rem; color: #94a3b8; }
+        .empty-state { text-align: center; padding: 3rem 2rem; }
+        .empty-state-icon { font-size: 2rem; opacity: 0.4; margin-bottom: 0.5rem; }
+        .empty-state p { font-size: 0.88rem; color: #64748b; margin: 0; }
+        .empty-state small { font-size: 0.78rem; color: #94a3b8; }
 
-        /* ===== Summary Cards ===== */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .kpi-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem 1.25rem; cursor: default; transition: box-shadow 0.15s; }
-        .kpi-card.clickable { cursor: pointer; }
-        .kpi-card.clickable:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .kpi-label { font-size: 0.72rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.3rem; }
-        .kpi-value { font-size: 1.35rem; font-weight: 700; color: #1e293b; }
-        .kpi-value.blue { color: #2563eb; }
-        .kpi-value.green { color: #16a34a; }
-        .kpi-value.orange { color: #ea580c; }
-        .kpi-value.red { color: #dc2626; }
-        .kpi-value.purple { color: #7c3aed; }
-
-        .payment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; }
-        .payment-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; }
-        .payment-card .pm-label { font-size: 0.84rem; color: #475569; }
-        .payment-card .pm-value { font-size: 0.9rem; font-weight: 700; }
+        /* ===== Sticky Summary Bar ===== */
+        .summary-bar { position: sticky; top: 56px; z-index: 50; background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.6rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .summary-bar .sb-item { font-size: 0.82rem; color: #475569; font-weight: 500; }
+        .summary-bar .sb-item strong { font-weight: 700; color: #1e293b; }
+        .summary-bar .sb-item.green strong { color: #16a34a; }
+        .summary-bar .sb-item.red strong { color: #dc2626; }
+        .summary-bar .sb-sep { color: #d1d5db; font-size: 0.75rem; }
 
         /* ===== Drawer ===== */
         #sale-drawer { position: fixed; top: 0; right: 0; width: 420px; max-width: 95vw; height: 100vh; background: white; box-shadow: -4px 0 24px rgba(0,0,0,0.12); z-index: 1200; display: flex; flex-direction: column; transform: translateX(105%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); }
@@ -143,9 +150,13 @@
 
         /* ===== Responsive ===== */
         @media (max-width: 768px) {
-            .orders-layout { padding: 1rem; }
-            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-            .payment-grid { grid-template-columns: 1fr; }
+            .orders-layout { padding: 0.75rem; }
+            .kpi-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+            .kpi-card { padding: 0.6rem 0.75rem; }
+            .kpi-value { font-size: 1rem; }
+            .order-row { padding: 8px 10px; }
+            .filter-row { gap: 0.4rem; }
+            .filter-select { min-width: 100px; max-width: 140px; }
         }
     </style>
 </head>
@@ -158,29 +169,29 @@
             </div>
         </div>
         <div class="sidebar-nav">
-            <div class="sidebar-section-title">Overview</div>
-            <a href="/" class="sidebar-item"><span class="sidebar-icon">&#128202;</span><span class="sidebar-label">Dashboard</span></a>
-            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">&#128722;</span><span class="sidebar-label">Point of Sale</span></a>
+            <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span><span class="sidebar-label">Home</span></a>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Sales</div>
-            <a href="/sales" class="sidebar-item active"><span class="sidebar-icon">&#128203;</span><span class="sidebar-label">Orders</span></a>
-            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">&#128200;</span><span class="sidebar-label">Reports</span></a>
+            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">🛒</span><span class="sidebar-label">Point of Sale</span></a>
+            <a href="/sales" class="sidebar-item active"><span class="sidebar-icon">📋</span><span class="sidebar-label">Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Inventory</div>
-            <a href="/products" class="sidebar-item admin-only"><span class="sidebar-icon">&#128230;</span><span class="sidebar-label">Products</span></a>
-            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">&#127981;</span><span class="sidebar-label">Suppliers</span></a>
-            <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-icon">&#128204;</span><span class="sidebar-label">Purchase Orders</span></a>
+            <div class="sidebar-section-title admin-only">Products</div>
+            <a href="/products" class="sidebar-item admin-only"><span class="sidebar-icon">📦</span><span class="sidebar-label">Inventory</span></a>
+            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">🏭</span><span class="sidebar-label">Suppliers</span></a>
+            <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-icon">📌</span><span class="sidebar-label">Purchase Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Customers</div>
-            <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">&#128101;</span><span class="sidebar-label">Customers</span></a>
+            <div class="sidebar-section-title admin-only">People</div>
+            <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">👥</span><span class="sidebar-label">Customers</span></a>
+            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">👤</span><span class="sidebar-label">Users</span></a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Analytics</div>
+            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">📊</span><span class="sidebar-label">Reports</span></a>
             <div class="sidebar-divider admin-only"></div>
             <div class="sidebar-section-title admin-only">Finance</div>
-            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">&#128176;</span><span class="sidebar-label">Expenses</span></a>
+            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">💰</span><span class="sidebar-label">Expenses</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Administration</div>
-            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">&#128100;</span><span class="sidebar-label">Users</span></a>
-            <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">&#9881;&#65039;</span><span class="sidebar-label">Settings</span></a>
-            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">&#127978;</span><span class="sidebar-label">Shops</span></a>
+            <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">Settings</span></a>
+            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">🏪</span><span class="sidebar-label">Shops</span></a>
         </div>
     </aside>
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -195,9 +206,9 @@
             <div class="topbar-spacer"></div>
             <div class="user-profile-container">
                 <div class="user-profile" id="user-profile-toggle">
-                    <div class="user-profile-icon" id="user-icon">A</div>
+                    <div class="user-profile-icon" id="user-icon">{{ session.get('full_name', 'A')[0] | upper }}</div>
                     <div class="user-profile-info">
-                        <span class="user-profile-name" id="user-name">Admin</span>
+                        <span class="user-profile-name" id="user-name">{{ session.get('full_name', '') }}</span>
                     </div>
                     <span class="user-profile-arrow">&#9660;</span>
                 </div>
@@ -223,15 +234,13 @@
                     <div class="page-subtitle">View and manage all transactions</div>
                 </div>
                 <div class="page-actions">
+                    <a href="/pos" class="btn-export">🛒 New Sale</a>
                     <button class="btn-export" onclick="exportSalesCSV()">⬇ Export CSV</button>
                 </div>
             </div>
 
-            <!-- Tabs -->
-            <div class="orders-tabs">
-                <button class="orders-tab active" id="tab-btn-transactions" onclick="switchTab('transactions')">Transactions</button>
-                <button class="orders-tab" id="tab-btn-summary" onclick="switchTab('summary')">Summary</button>
-            </div>
+            <!-- Orders Summary (sticky) -->
+            <div class="summary-bar" id="orders-summary-bar"></div>
 
             <!-- ═══ TRANSACTIONS TAB ═══ -->
             <div id="tab-transactions">
@@ -241,52 +250,54 @@
                     <div class="filter-row">
                         <div class="filter-search-wrap">
                             <span class="search-icon">🔍</span>
-                            <input type="text" id="filter-search" class="filter-search" placeholder="Search invoice #, product, or customer…">
+                            <input type="text" id="filter-search" class="filter-search" placeholder="Search orders, invoice #, product, or customer…">
                         </div>
-                        <button class="filter-btn" id="advanced-toggle-btn" onclick="toggleAdvanced()">
-                            <span>Filters</span>
-                            <span id="advanced-arrow" style="font-size:0.65rem; transition:transform 0.2s;">▼</span>
-                            <span id="advanced-badge" style="display:none; background:#3b82f6; color:white; border-radius:99px; font-size:0.6rem; font-weight:700; padding:0.05rem 0.35rem; line-height:1.3;"></span>
-                        </button>
-                        <button class="filter-clear" id="clear-filters-btn" onclick="clearFilters()">× Clear</button>
-                    </div>
-                    <div class="filter-row">
-                        <div class="date-chips">
-                            <button class="date-chip" id="chip-today" onclick="setDateFilter('today')">Today</button>
-                            <button class="date-chip" id="chip-yesterday" onclick="setDateFilter('yesterday')">Yesterday</button>
-                            <button class="date-chip" id="chip-week" onclick="setDateFilter('week')">This Week</button>
-                            <button class="date-chip" id="chip-month" onclick="setDateFilter('month')">This Month</button>
-                            <button class="date-chip" id="chip-all" onclick="setDateFilter('all')">All time</button>
-                        </div>
-                    </div>
-                    <div class="filter-row">
-                        <div class="status-pills">
-                            <button class="status-pill active" data-status="all" onclick="setStatusFilter('all')">All</button>
-                            <button class="status-pill" data-status="completed" onclick="setStatusFilter('completed')">Completed</button>
-                            <button class="status-pill" data-status="unpaid" onclick="setStatusFilter('unpaid')">Unpaid</button>
-                            <button class="status-pill" data-status="partially_paid" onclick="setStatusFilter('partially_paid')">Partially Paid</button>
-                            <button class="status-pill" data-status="refunded" onclick="setStatusFilter('refunded')">Refunded</button>
-                            <button class="status-pill" data-status="partial_refund" onclick="setStatusFilter('partial_refund')">Partial Refund</button>
-                        </div>
-                    </div>
-                    <!-- Advanced Panel -->
-                    <div class="advanced-panel" id="advanced-panel">
-                        <label>Date Range</label>
-                        <input type="date" id="filter-start-date">
-                        <span style="color:#94a3b8; font-size:0.75rem;">→</span>
-                        <input type="date" id="filter-end-date">
-                        <div style="width:1px; height:24px; background:#e2e8f0; margin:0 0.3rem;"></div>
-                        <select id="filter-user">
-                            <option value="all">All Users</option>
+                        <select id="filter-date-period" class="filter-select" aria-label="Date filter">
+                            <option value="all">All dates</option>
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="week">This week</option>
+                            <option value="month">This month</option>
                         </select>
-                        <select id="filter-payment">
-                            <option value="all">All Methods</option>
+                        <select id="filter-status" class="filter-select" aria-label="Status filter">
+                            <option value="all">All status</option>
+                            <option value="completed">Paid</option>
+                            <option value="unpaid">Unpaid</option>
+                            <option value="partially_paid">Partially Paid</option>
+                            <option value="refunded">Refunded</option>
+                            <option value="partial_refund">Partial Refund</option>
+                        </select>
+                        <select id="filter-payment" class="filter-select" aria-label="Payment method filter">
+                            <option value="all">All payments</option>
                             <option value="cash">Cash</option>
                             <option value="card">Card</option>
                             <option value="transfer">Transfer</option>
                             <option value="credit">On Credit</option>
                             <option value="partial">Partial Payment</option>
                         </select>
+                        <select id="filter-customer" class="filter-select" aria-label="Customer filter">
+                            <option value="all">All customers</option>
+                        </select>
+                        <select id="filter-staff" class="filter-select" aria-label="Staff filter">
+                            <option value="all">All staff</option>
+                        </select>
+                        <button class="filter-clear" id="clear-filters-btn" onclick="clearFilters()">× Clear</button>
+                    </div>
+                    <input type="date" id="filter-start-date" style="display:none;">
+                    <input type="date" id="filter-end-date" style="display:none;">
+                </div>
+
+                <!-- Results -->
+                <div class="results-bar">
+                    <span class="results-count" id="results-count">Loading...</span>
+                </div>
+
+                <!-- Order list -->
+                <div class="orders-list-card">
+                    <div class="orders-list" id="sales-list">
+                        <div class="skeleton skeleton-card-row"></div>
+                        <div class="skeleton skeleton-card-row"></div>
+                        <div class="skeleton skeleton-card-row"></div>
                     </div>
                     <!-- Hidden select for compatibility -->
                     <select id="filter-status" style="display:none;">
@@ -299,40 +310,7 @@
                     </select>
                 </div>
 
-                <!-- Results -->
-                <div class="results-bar">
-                    <span class="results-count" id="results-count">Loading...</span>
-                </div>
-
-                <!-- Table -->
-                <div class="orders-table-card">
-                    <div class="orders-table-wrap">
-                        <table class="orders-table">
-                            <thead>
-                                <tr>
-                                    <th style="width:90px;" onclick="sortSales('id')">Invoice <span id="sort-id"></span></th>
-                                    <th style="width:140px;" onclick="sortSales('date')">Date <span id="sort-date">▼</span></th>
-                                    <th>Customer</th>
-                                    <th style="width:80px; text-align:center;">Items</th>
-                                    <th style="width:100px;" onclick="sortSales('total')">Total <span id="sort-total"></span></th>
-                                    <th style="width:160px;">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sales-table">
-                                <tr><td colspan="6" style="text-align:center; padding:2rem; color:#94a3b8;">Loading...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
             </div><!-- /tab-transactions -->
-
-            <!-- ═══ SUMMARY TAB ═══ -->
-            <div id="tab-summary" style="display:none;">
-                <div class="kpi-grid" id="sales-summary-bar"></div>
-                <div style="margin-bottom:0.75rem; font-size:0.78rem; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.04em;">Payment Methods</div>
-                <div class="payment-grid" id="payment-breakdown"></div>
-            </div><!-- /tab-summary -->
 
         </div><!-- /orders-layout -->
 
@@ -393,27 +371,10 @@
         var currencySymbol = '$';
         var sortField = 'date';
         var sortAsc = false;
-        var activeTab = 'transactions';
+        var expandedOrderId = null;
 
-        // ── Tab switching ─────────────────────────────────────────
-        function switchTab(tab) {
-            activeTab = tab;
-            document.getElementById('tab-transactions').style.display = tab === 'transactions' ? '' : 'none';
-            document.getElementById('tab-summary').style.display = tab === 'summary' ? '' : 'none';
-            document.getElementById('tab-btn-transactions').classList.toggle('active', tab === 'transactions');
-            document.getElementById('tab-btn-summary').classList.toggle('active', tab === 'summary');
-            var p = new URLSearchParams(window.location.search);
-            if (tab === 'summary') p.set('tab', 'summary'); else p.delete('tab');
-            history.replaceState(null, '', window.location.pathname + (p.toString() ? '?' + p.toString() : ''));
-            if (tab === 'summary') renderSummaryTab();
-        }
-
-        // ── Status filter ─────────────────────────────────────────
         function setStatusFilter(value) {
             document.getElementById('filter-status').value = value;
-            document.querySelectorAll('.status-pill').forEach(function(btn) {
-                btn.classList.toggle('active', btn.dataset.status === value);
-            });
             applyClientSideFilters();
         }
 
@@ -429,22 +390,13 @@
         function updateClearBtn() {
             var hasStart   = !!document.getElementById('filter-start-date').value;
             var hasEnd     = !!document.getElementById('filter-end-date').value;
-            var hasUser    = document.getElementById('filter-user').value !== 'all';
+            var hasCustomer = document.getElementById('filter-customer').value !== 'all';
+            var hasStaff   = document.getElementById('filter-staff').value !== 'all';
             var hasPayment = document.getElementById('filter-payment').value !== 'all';
             var hasStatus  = document.getElementById('filter-status').value !== 'all';
             var hasSearch  = !!document.getElementById('filter-search').value.trim();
-            var anyActive = hasStart || hasEnd || hasUser || hasPayment || hasStatus || hasSearch;
+            var anyActive = hasStart || hasEnd || hasCustomer || hasStaff || hasPayment || hasStatus || hasSearch;
             document.getElementById('clear-filters-btn').style.display = anyActive ? 'inline-flex' : 'none';
-
-            var advancedCount = [hasStart || hasEnd, hasUser, hasPayment].filter(Boolean).length;
-            var badge = document.getElementById('advanced-badge');
-            if (advancedCount > 0) {
-                badge.textContent = advancedCount;
-                badge.style.display = 'inline-block';
-                if (!advancedOpen) toggleAdvanced();
-            } else {
-                badge.style.display = 'none';
-            }
         }
 
         // Restore filter state from URL
@@ -454,12 +406,10 @@
             if (p.get('end')) document.getElementById('filter-end-date').value = p.get('end');
             if (p.get('search')) document.getElementById('filter-search').value = p.get('search');
             if (p.get('payment')) document.getElementById('filter-payment').value = p.get('payment');
-            var statusVal = p.get('status') || 'all';
-            document.getElementById('filter-status').value = statusVal;
-            document.querySelectorAll('.status-pill').forEach(function(btn) {
-                btn.classList.toggle('active', btn.dataset.status === statusVal);
-            });
-            if (p.get('tab') === 'summary') activeTab = 'summary';
+            if (p.get('status')) document.getElementById('filter-status').value = p.get('status');
+            if (p.get('customer')) document.getElementById('filter-customer').value = p.get('customer');
+            if (p.get('staff')) document.getElementById('filter-staff').value = p.get('staff');
+            if (p.get('period')) document.getElementById('filter-date-period').value = p.get('period');
             updateClearBtn();
         })();
 
@@ -488,11 +438,12 @@
             var v = function(id) { return (document.getElementById(id) ? document.getElementById(id).value : '').trim(); };
             if (v('filter-start-date')) p.set('start', v('filter-start-date'));
             if (v('filter-end-date')) p.set('end', v('filter-end-date'));
-            if (v('filter-user') && v('filter-user') !== 'all') p.set('user', v('filter-user'));
+            if (v('filter-date-period') && v('filter-date-period') !== 'all') p.set('period', v('filter-date-period'));
+            if (v('filter-staff') && v('filter-staff') !== 'all') p.set('staff', v('filter-staff'));
             if (v('filter-payment') && v('filter-payment') !== 'all') p.set('payment', v('filter-payment'));
             if (v('filter-status') && v('filter-status') !== 'all') p.set('status', v('filter-status'));
+            if (v('filter-customer') && v('filter-customer') !== 'all') p.set('customer', v('filter-customer'));
             if (v('filter-search')) p.set('search', v('filter-search'));
-            if (activeTab === 'summary') p.set('tab', 'summary');
             var qs = p.toString();
             history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
         }
@@ -503,7 +454,7 @@
             try {
                 var startDate = document.getElementById('filter-start-date').value;
                 var endDate = document.getElementById('filter-end-date').value;
-                var userId = document.getElementById('filter-user').value;
+                var userId = document.getElementById('filter-staff').value;
                 var url = '/api/sales?';
                 var params = [];
                 if (startDate) params.push('start_date=' + startDate);
@@ -512,6 +463,7 @@
                 url += params.join('&');
                 var response = await fetch(url);
                 allSales = await response.json();
+                populateCustomerFilter();
                 applyClientSideFilters();
             } catch (error) {
                 console.error('Error loading sales:', error);
@@ -536,14 +488,22 @@
             var searchTerm = document.getElementById('filter-search').value.toLowerCase().trim();
             var paymentFilter = document.getElementById('filter-payment').value;
             var statusFilter = document.getElementById('filter-status').value;
+            var customerFilter = document.getElementById('filter-customer').value;
+            var staffFilter = document.getElementById('filter-staff').value;
 
             sales = allSales.filter(function(sale) {
                 if (paymentFilter !== 'all' && (sale.payment_method || 'cash') !== paymentFilter) return false;
                 if (statusFilter !== 'all' && getSaleStatus(sale) !== statusFilter) return false;
+                if (customerFilter !== 'all' && ((sale.customer_name || 'Walk-in') !== customerFilter)) return false;
+                if (staffFilter !== 'all') {
+                    var saleStaffId = sale.user_id || sale.created_by || sale.staff_id || '';
+                    if (saleStaffId && saleStaffId.toString() !== staffFilter) return false;
+                    if (!saleStaffId && (sale.full_name || sale.username || 'N/A') !== staffFilter) return false;
+                }
                 if (searchTerm) {
                     var matchId = sale.id.toString().includes(searchTerm);
-                    var matchProduct = sale.items.some(function(i) { return i.name.toLowerCase().includes(searchTerm); });
-                    var matchCustomer = (sale.customer_name || '').toLowerCase().includes(searchTerm);
+                    var matchProduct = sale.items.some(function(i) { return (i.name || '').toLowerCase().includes(searchTerm); });
+                    var matchCustomer = (sale.customer_name || 'walk-in').toLowerCase().includes(searchTerm);
                     if (!matchId && !matchProduct && !matchCustomer) return false;
                 }
                 return true;
@@ -562,24 +522,23 @@
             }
 
             renderSales();
-            if (activeTab === 'summary') renderSummaryTab();
+            renderSummaryTab();
             updateClearBtn();
         }
 
-        // ── Summary Tab ───────────────────────────────────────────
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // ── Orders Summary Bar ─────────────────────────────────────
         function renderSummaryTab() {
-            var bar = document.getElementById('sales-summary-bar');
+            var bar = document.getElementById('orders-summary-bar');
             var totalRevenue = sales.reduce(function(s, sale) { return s + sale.total_amount; }, 0);
-            var totalDiscount = sales.reduce(function(s, sale) { return s + (sale.discount_amount || 0); }, 0);
-            var totalRefunded = sales.reduce(function(s, sale) { return s + (sale.refund_total || 0); }, 0);
-            var avgTransaction = sales.length > 0 ? totalRevenue / sales.length : 0;
-
-            var byCash     = sales.filter(function(s) { return (s.payment_method || 'cash') === 'cash'; }).reduce(function(sum, s) { return sum + s.total_amount; }, 0);
-            var byCard     = sales.filter(function(s) { return s.payment_method === 'card'; }).reduce(function(sum, s) { return sum + s.total_amount; }, 0);
-            var byTransfer = sales.filter(function(s) { return s.payment_method === 'transfer'; }).reduce(function(sum, s) { return sum + s.total_amount; }, 0);
-            var byCredit   = sales.filter(function(s) { return s.payment_method === 'credit'; }).reduce(function(sum, s) { return sum + s.total_amount; }, 0);
-            var byPartial  = sales.filter(function(s) { return s.payment_method === 'partial'; }).reduce(function(sum, s) { return sum + s.total_amount; }, 0);
-
             var unpaidTotal = sales
                 .filter(function(s) { return s.payment_method === 'credit' || s.payment_method === 'partial'; })
                 .reduce(function(sum, s) {
@@ -587,39 +546,90 @@
                     return sum + Math.max(0, s.total_amount - paid);
                 }, 0);
 
-            var cards = [
-                { label: 'Transactions', value: sales.length, color: 'blue', filter: null },
-                { label: 'Revenue', value: currencySymbol + totalRevenue.toFixed(2), color: 'green', filter: null },
-                { label: 'Avg Order', value: currencySymbol + avgTransaction.toFixed(2), color: 'purple', filter: null },
-                { label: 'Discounts', value: currencySymbol + totalDiscount.toFixed(2), color: 'orange', filter: null },
-            ];
-            if (totalRefunded > 0) cards.push({ label: 'Refunds', value: currencySymbol + totalRefunded.toFixed(2), color: 'red', filter: 'refunded' });
-            if (unpaidTotal > 0) cards.push({ label: 'Outstanding', value: currencySymbol + unpaidTotal.toFixed(2), color: 'red', filter: 'unpaid' });
+            bar.innerHTML = '<span class="sb-item"><strong>' + sales.length + '</strong> Orders</span>'
+                + '<span class="sb-sep">|</span>'
+                + '<span class="sb-item green"><strong>' + currencySymbol + totalRevenue.toFixed(2) + '</strong> Revenue</span>'
+                + '<span class="sb-sep">|</span>'
+                + '<span class="sb-item red"><strong>' + currencySymbol + unpaidTotal.toFixed(2) + '</strong> Outstanding</span>';
+        }
 
-            bar.innerHTML = cards.map(function(c) {
-                return '<div class="kpi-card' + (c.filter ? ' clickable' : '') + '"' + (c.filter ? ' onclick="switchTab(\'transactions\'); setStatusFilter(\'' + c.filter + '\');"' : '') + '><div class="kpi-label">' + c.label + '</div><div class="kpi-value ' + c.color + '">' + c.value + '</div></div>';
-            }).join('');
+        // ── Order details expansion ──────────────────────────────
+        function toggleOrderDetails(saleId) {
+            expandedOrderId = expandedOrderId === saleId ? null : saleId;
+            renderSales();
+        }
 
-            // Payment breakdown
-            var pbEl = document.getElementById('payment-breakdown');
-            var methods = [
-                { label: '💵 Cash', value: byCash, color: '#16a34a' },
-                { label: '💳 Card', value: byCard, color: '#2563eb' },
-                { label: '🏦 Transfer', value: byTransfer, color: '#7c3aed' },
-                { label: '📋 On Credit', value: byCredit, color: '#dc2626' },
-                { label: '🔀 Partial', value: byPartial, color: '#ea580c' },
-            ].filter(function(m) { return m.value > 0; });
+        function renderOrderDetails(sale) {
+            var saleDateTime = parseUTC(sale.sale_date);
+            var payMethod = (sale.payment_method || 'cash');
+            if (payMethod === 'card') payMethod = 'Card';
+            else if (payMethod === 'bank_transfer' || payMethod === 'transfer') payMethod = 'Transfer';
+            else if (payMethod === 'mobile_payment') payMethod = 'Mobile';
+            else if (payMethod === 'credit') payMethod = 'On Credit';
+            else if (payMethod === 'partial') payMethod = 'Partial Payment';
+            else payMethod = payMethod.charAt(0).toUpperCase() + payMethod.slice(1);
 
-            pbEl.innerHTML = methods.length === 0
-                ? '<p style="color:#94a3b8; font-size:0.85rem;">No payment data for current filter</p>'
-                : methods.map(function(m) {
-                    return '<div class="payment-card"><span class="pm-label">' + m.label + '</span><strong class="pm-value" style="color:' + m.color + ';">' + currencySymbol + m.value.toFixed(2) + '</strong></div>';
-                }).join('');
+            var staffName = sale.full_name || sale.username || 'N/A';
+            var discountAmount = sale.discount_amount || 0;
+            var subtotalAmount = sale.total_amount + discountAmount;
+            var statusLabel = getSaleStatus(sale).replace(/_/g, ' ');
+            statusLabel = statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1);
+
+            var body = '<div class="order-details-panel">';
+
+            // Items section
+            body += '<div class="order-details-section"><div class="order-details-section-title">Items</div><div class="order-details-items">';
+            (sale.items || []).forEach(function(item) {
+                var lineTotal = (item.price || 0) * (item.quantity || 0);
+                body += '<div class="order-details-item"><span class="order-details-item-name">' + escapeHtml(item.name || 'Item') + ' x' + (item.quantity || 0) + '</span><span class="order-details-item-price">' + currencySymbol + lineTotal.toFixed(2) + '</span></div>';
+            });
+            body += '</div></div>';
+
+            // Totals section
+            body += '<div class="order-details-section"><div class="order-details-totals">';
+            if (discountAmount > 0) {
+                body += '<div class="order-details-total-row"><span class="lbl">Subtotal</span><span class="val">' + currencySymbol + subtotalAmount.toFixed(2) + '</span></div>';
+                body += '<div class="order-details-total-row"><span class="lbl">Discount</span><span class="val" style="color:#16a34a;">-' + currencySymbol + discountAmount.toFixed(2) + '</span></div>';
+            }
+            body += '<div class="order-details-total-row grand"><span class="lbl">Total</span><span class="val">' + currencySymbol + sale.total_amount.toFixed(2) + '</span></div>';
+            if (sale.refund_total > 0) {
+                body += '<div class="order-details-total-row"><span class="lbl">Refunded</span><span class="val" style="color:#dc2626;">-' + currencySymbol + sale.refund_total.toFixed(2) + '</span></div>';
+                body += '<div class="order-details-total-row"><span class="lbl">Net</span><span class="val">' + currencySymbol + (sale.total_amount - sale.refund_total).toFixed(2) + '</span></div>';
+            }
+            body += '</div></div>';
+
+            // Payment section
+            body += '<div class="order-details-section"><div class="order-details-section-title">Payment</div><div class="order-details-info">';
+            body += '<div class="order-details-info-row"><strong>' + escapeHtml(payMethod) + '</strong></div>';
+            body += '<div class="order-details-info-row">' + escapeHtml(statusLabel) + '</div>';
+            body += '</div></div>';
+
+            // Staff section
+            body += '<div class="order-details-section"><div class="order-details-section-title">Staff</div><div class="order-details-info">';
+            body += '<div class="order-details-info-row"><strong>' + escapeHtml(staffName) + '</strong></div>';
+            body += '</div></div>';
+
+            // Action buttons
+            var status = getSaleStatus(sale);
+            body += '<div class="order-details-actions">';
+            body += '<button type="button" class="order-details-btn" onclick="event.stopPropagation(); reprintReceipt(' + sale.id + ')">Print</button>';
+            if (status === 'unpaid') {
+                body += '<button type="button" class="order-details-btn primary" onclick="event.stopPropagation(); markSalePaid(' + sale.id + ')">Mark Paid</button>';
+            }
+            if (sale.refund_count > 0) {
+                body += '<button type="button" class="order-details-btn" onclick="event.stopPropagation(); viewRefundDetails(' + sale.id + ')">Refunds</button>';
+            } else if (status === 'completed') {
+                body += '<button type="button" class="order-details-btn danger" onclick="event.stopPropagation(); viewRefundDetails(' + sale.id + ')">Refund</button>';
+            }
+            body += '</div>';
+
+            body += '</div>';
+            return body;
         }
 
         // ── Render Sales Table ────────────────────────────────────
         function renderSales() {
-            var tbody = document.getElementById('sales-table');
+            var list = document.getElementById('sales-list');
             var countEl = document.getElementById('results-count');
             var filteredRevenue = sales.reduce(function(s, sale) { return s + sale.total_amount; }, 0);
             var isFiltered = sales.length !== allSales.length;
@@ -631,7 +641,7 @@
             }
 
             if (sales.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">🧾</div><p>No orders found</p><small>Try adjusting your filters or date range</small></div></td></tr>';
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🧾</div><p>No orders found</p><small>Try adjusting your filters or date range</small></div>';
                 return;
             }
 
@@ -640,59 +650,107 @@
             var dayCount = 0;
             var html = '';
 
+            // Pre-compute daily totals
+            var dayTotals = {};
+            sales.forEach(function(sale) {
+                var dk = parseUTC(sale.sale_date).toISOString().slice(0, 10);
+                if (!dayTotals[dk]) dayTotals[dk] = { count: 0, total: 0 };
+                dayTotals[dk].count++;
+                dayTotals[dk].total += sale.total_amount;
+            });
+
             sales.forEach(function(sale, idx) {
-                var saleDate = parseUTC(sale.sale_date).toLocaleDateString();
-                var isNewDay = saleDate !== lastDate;
+                var saleDateTime = parseUTC(sale.sale_date);
+                var saleDate = saleDateTime.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+                var dateKey = saleDateTime.toISOString().slice(0, 10);
+                var isNewDay = dateKey !== lastDate;
 
                 if (isNewDay && lastDate !== '') {
-                    html += renderDaySubtotal(lastDate, dayCount, daySubtotal);
-                    daySubtotal = 0; dayCount = 0;
+                    html += '</div>'; // close date-group
                 }
                 if (isNewDay) {
-                    html += '<tr class="day-header"><td colspan="6">📅 ' + saleDate + '</td></tr>';
-                    lastDate = saleDate;
+                    var dt = dayTotals[dateKey];
+                    html += '<div class="date-group">';
+                    html += '<div class="date-group-header">';
+                    html += '<div class="date-group-label">' + saleDate + '</div>';
+                    html += '<div class="date-group-summary">' + dt.count + ' order' + (dt.count !== 1 ? 's' : '') + ' · ' + currencySymbol + dt.total.toFixed(2) + '</div>';
+                    html += '</div>';
+                    lastDate = dateKey;
                 }
 
-                daySubtotal += sale.total_amount;
-                dayCount++;
+                var customerName = sale.customer_name || 'Walk-in';
+                var timePart = saleDateTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                var itemCount = (sale.items || []).reduce(function(sum, item) { return sum + item.quantity; }, 0);
+                var status = getSaleStatus(sale);
+                var dotClass = 'dot-green';
+                var badgeText = 'Paid';
+                if (status === 'refunded') { dotClass = 'dot-blue'; badgeText = 'Refunded'; }
+                else if (status === 'partial_refund') { dotClass = 'dot-purple'; badgeText = 'Partial Refund'; }
+                else if (status === 'unpaid') { dotClass = 'dot-red'; badgeText = 'Unpaid'; }
+                else if (status === 'partially_paid') { dotClass = 'dot-orange'; badgeText = 'Partially Paid'; }
 
-                var customerName = sale.customer_name || '';
-                var saleDateTime = parseUTC(sale.sale_date);
-                var datePart = saleDateTime.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
-                var timePart = saleDateTime.toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
-                var itemCount = (sale.items || []).reduce(function(s, i) { return s + i.quantity; }, 0);
+                var paymentLabel = (sale.payment_method || 'cash');
+                if (paymentLabel === 'card') paymentLabel = 'Card';
+                else if (paymentLabel === 'bank_transfer' || paymentLabel === 'transfer') paymentLabel = 'Transfer';
+                else if (paymentLabel === 'mobile_payment') paymentLabel = 'Mobile';
+                else if (paymentLabel === 'credit') paymentLabel = 'On Credit';
+                else if (paymentLabel === 'partial') paymentLabel = 'Partial Payment';
+                else paymentLabel = paymentLabel.charAt(0).toUpperCase() + paymentLabel.slice(1);
 
-                // Status badge
-                var badgeClass = 'badge-success';
-                var badgeText = 'Completed';
-                var saleStatus = getSaleStatus(sale);
-                if (saleStatus === 'refunded') { badgeClass = 'badge-danger'; badgeText = 'Refunded'; }
-                else if (saleStatus === 'partial_refund') { badgeClass = 'badge-orange'; badgeText = 'Partial Refund'; }
-                else if (saleStatus === 'unpaid') { badgeClass = 'badge-danger'; badgeText = 'Unpaid'; }
-                else if (saleStatus === 'partially_paid') { badgeClass = 'badge-warning'; badgeText = 'Partially Paid'; }
+                var isExpanded = expandedOrderId === sale.id;
 
-                var printBtn = '<button class="row-action" title="Print receipt" onclick="event.stopPropagation(); reprintReceipt(' + sale.id + ')">🖨</button>';
-                var refundBtn = sale.refund_count > 0 ? '<button class="row-action" title="View refunds" onclick="event.stopPropagation(); viewRefundDetails(' + sale.id + ')" style="color:#ea580c;">↩</button>' : '';
+                html += '<div class="order-row' + (isExpanded ? ' expanded' : '') + '" onclick="toggleOrderDetails(' + sale.id + ')">';
 
-                html += '<tr class="sale-row" onclick="openDrawer(' + sale.id + ')">';
-                html += '<td><span class="inv-num">INV-' + sale.id + '</span></td>';
-                html += '<td style="white-space:nowrap;"><span style="font-size:0.84rem;">' + datePart + '</span><br><span style="font-size:0.75rem; color:#94a3b8;">' + timePart + '</span></td>';
-                html += '<td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + customerName + '">' + (customerName || '<span style="color:#cbd5e1; font-style:italic;">Walk-in</span>') + '</td>';
-                html += '<td style="text-align:center; color:#64748b;">' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + '</td>';
-                html += '<td style="font-weight:700;">' + currencySymbol + sale.total_amount.toFixed(2) + '</td>';
-                html += '<td><span class="badge ' + badgeClass + '">' + badgeText + '</span><span class="row-actions">' + printBtn + refundBtn + '</span></td>';
-                html += '</tr>';
+                // Row 1: Invoice + Amount
+                html += '<div class="order-row-top">';
+                html += '<span class="order-row-invoice">INV-' + sale.id + '</span>';
+                html += '<span class="order-row-amount">' + currencySymbol + sale.total_amount.toFixed(2) + '</span>';
+                html += '</div>';
+
+                // Row 2: Customer + Status
+                html += '<div class="order-row-mid">';
+                html += '<span class="order-row-customer">' + escapeHtml(customerName) + '</span>';
+                html += '<span class="order-row-status"><span class="dot ' + dotClass + '"></span>' + badgeText + '</span>';
+                html += '</div>';
+
+                // Row 3: Meta
+                html += '<div class="order-row-bottom">';
+                html += '<span class="order-row-meta">' + itemCount + ' item' + (itemCount !== 1 ? 's' : '') + ' · ' + escapeHtml(paymentLabel) + ' · ' + timePart + '</span>';
+                html += '</div>';
+
+                // Expanded details
+                if (isExpanded) {
+                    html += renderOrderDetails(sale);
+                }
+
+                html += '</div>'; // close order-row
 
                 if (idx === sales.length - 1) {
-                    html += renderDaySubtotal(saleDate, dayCount, daySubtotal);
+                    html += '</div>'; // close date-group
                 }
             });
 
-            tbody.innerHTML = html;
+            list.innerHTML = html;
         }
 
-        function renderDaySubtotal(date, count, subtotal) {
-            return '<tr class="day-subtotal-row"><td colspan="6">' + count + ' order' + (count !== 1 ? 's' : '') + ' · Total: <strong>' + currencySymbol + subtotal.toFixed(2) + '</strong></td></tr>';
+        function renderDaySubtotal(count, subtotal) {
+            return '';
+        }
+
+        // ── Mark Sale Paid ─────────────────────────────────────────
+        async function markSalePaid(saleId) {
+            if (!confirm('Mark this order as paid?')) return;
+            try {
+                var sale = allSales.find(function(s) { return s.id === saleId; });
+                if (!sale || !sale.invoice_id) { showToast('No invoice found for this sale', 'error'); return; }
+                var response = await fetch('/api/invoices/' + sale.invoice_id + '/payments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: sale.total_amount, method: 'cash' })
+                });
+                if (response.ok) { showToast('Marked as paid', 'success'); loadSales(); }
+                else { var r = await response.json(); showToast(r.error || 'Error', 'error'); }
+            } catch (e) { showToast('Error marking as paid', 'error'); }
         }
 
         // ── Detail Drawer ─────────────────────────────────────────
@@ -969,16 +1027,32 @@
             try {
                 var response = await fetch('/api/sales/users');
                 var users = await response.json();
-                var userSelect = document.getElementById('filter-user');
+                var userSelect = document.getElementById('filter-staff');
                 users.forEach(function(user) {
                     var option = document.createElement('option');
                     option.value = user.id;
                     option.textContent = user.full_name || user.username;
                     userSelect.appendChild(option);
                 });
-                var urlUser = new URLSearchParams(window.location.search).get('user');
+                var urlUser = new URLSearchParams(window.location.search).get('staff');
                 if (urlUser) userSelect.value = urlUser;
             } catch (error) { console.error('Error loading users:', error); }
+        }
+
+        function populateCustomerFilter() {
+            var customerSelect = document.getElementById('filter-customer');
+            var customers = allSales.reduce(function(set, sale) {
+                var name = sale.customer_name || 'Walk-in';
+                if (name && name !== 'Walk-in') set[name] = true;
+                return set;
+            }, {});
+            Object.keys(customers).sort().forEach(function(name) {
+                if ([...customerSelect.options].some(function(opt) { return opt.value === name; })) return;
+                var option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                customerSelect.appendChild(option);
+            });
         }
 
         // Date filter
@@ -986,9 +1060,7 @@
             var today = new Date();
             var startDateInput = document.getElementById('filter-start-date');
             var endDateInput = document.getElementById('filter-end-date');
-            document.querySelectorAll('.date-chip').forEach(function(c) { c.classList.remove('active'); });
-            var chipEl = document.getElementById('chip-' + period);
-            if (chipEl) chipEl.classList.add('active');
+            document.getElementById('filter-date-period').value = period;
 
             if (period === 'all') {
                 startDateInput.value = '';
@@ -999,17 +1071,24 @@
             endDateInput.value = today.toISOString().split('T')[0];
             switch(period) {
                 case 'today':
-                    startDateInput.value = today.toISOString().split('T')[0]; break;
+                    startDateInput.value = today.toISOString().split('T')[0];
+                    break;
                 case 'yesterday':
-                    var yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+                    var yesterday = new Date(today);
+                    yesterday.setDate(yesterday.getDate() - 1);
                     startDateInput.value = yesterday.toISOString().split('T')[0];
-                    endDateInput.value = yesterday.toISOString().split('T')[0]; break;
+                    endDateInput.value = yesterday.toISOString().split('T')[0];
+                    break;
                 case 'week':
-                    var weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 6);
-                    startDateInput.value = weekAgo.toISOString().split('T')[0]; break;
+                    var weekAgo = new Date(today);
+                    weekAgo.setDate(weekAgo.getDate() - 6);
+                    startDateInput.value = weekAgo.toISOString().split('T')[0];
+                    break;
                 case 'month':
-                    var monthAgo = new Date(today); monthAgo.setMonth(monthAgo.getMonth() - 1);
-                    startDateInput.value = monthAgo.toISOString().split('T')[0]; break;
+                    var monthAgo = new Date(today);
+                    monthAgo.setMonth(monthAgo.getMonth() - 1);
+                    startDateInput.value = monthAgo.toISOString().split('T')[0];
+                    break;
             }
             loadSales();
         }
@@ -1017,33 +1096,30 @@
         function clearFilters() {
             document.getElementById('filter-start-date').value = '';
             document.getElementById('filter-end-date').value = '';
-            document.getElementById('filter-user').value = 'all';
+            document.getElementById('filter-date-period').value = 'all';
+            document.getElementById('filter-staff').value = 'all';
             document.getElementById('filter-payment').value = 'all';
-            document.getElementById('filter-search').value = '';
-            document.querySelectorAll('.date-chip').forEach(function(c) { c.classList.remove('active'); });
+            document.getElementById('filter-customer').value = 'all';
             document.getElementById('filter-status').value = 'all';
-            document.querySelectorAll('.status-pill').forEach(function(btn) {
-                btn.classList.toggle('active', btn.dataset.status === 'all');
-            });
-            if (advancedOpen) toggleAdvanced();
+            document.getElementById('filter-search').value = '';
             loadSales();
         }
 
         // Event listeners
         document.getElementById('filter-start-date').addEventListener('change', loadSales);
         document.getElementById('filter-end-date').addEventListener('change', loadSales);
-        document.getElementById('filter-user').addEventListener('change', loadSales);
+        document.getElementById('filter-date-period').addEventListener('change', function() { setDateFilter(this.value); });
+        document.getElementById('filter-staff').addEventListener('change', loadSales);
+        document.getElementById('filter-customer').addEventListener('change', applyClientSideFilters);
         document.getElementById('filter-payment').addEventListener('change', applyClientSideFilters);
+        document.getElementById('filter-status').addEventListener('change', applyClientSideFilters);
         document.getElementById('filter-search').addEventListener('input', applyClientSideFilters);
         document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDrawer(); });
 
         // Initialize
         loadUserInfo();
         loadUsersFilter();
-        loadSales().then(function() {
-            var tabParam = new URLSearchParams(window.location.search).get('tab');
-            if (tabParam === 'summary') switchTab('summary');
-        });
+        loadSales();
     </script>
     <script src="/static/js/session.js"></script>
     </div><!-- /main-wrapper -->

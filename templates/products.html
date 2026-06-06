@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Products - POS System</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=7">
+    <script src="/static/js/loading.js?v=1" defer></script>
     <script src="/static/js/ui.js"></script>
     <style>
         .products-main { padding: 1.5rem; overflow-y: auto; height: calc(100vh - 70px); transition: margin-right 0.3s ease; }
@@ -90,29 +91,29 @@
             </div>
         </div>
         <div class="sidebar-nav">
-            <div class="sidebar-section-title">Overview</div>
-            <a href="/" class="sidebar-item"><span class="sidebar-icon">&#128202;</span><span class="sidebar-label">Dashboard</span></a>
-            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">&#128722;</span><span class="sidebar-label">Point of Sale</span></a>
+            <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span><span class="sidebar-label">Home</span></a>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Sales</div>
-            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">&#128203;</span><span class="sidebar-label">Sales History</span></a>
-            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">&#128200;</span><span class="sidebar-label">Reports</span></a>
+            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">🛒</span><span class="sidebar-label">Point of Sale</span></a>
+            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">📋</span><span class="sidebar-label">Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Inventory</div>
-            <a href="/products" class="sidebar-item admin-only active"><span class="sidebar-icon">&#128230;</span><span class="sidebar-label">Products</span></a>
-            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">&#127981;</span><span class="sidebar-label">Suppliers</span></a>
-            <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-icon">&#128204;</span><span class="sidebar-label">Purchase Orders</span></a>
+            <div class="sidebar-section-title admin-only">Products</div>
+            <a href="/products" class="sidebar-item admin-only active"><span class="sidebar-icon">📦</span><span class="sidebar-label">Inventory</span></a>
+            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">🏭</span><span class="sidebar-label">Suppliers</span></a>
+            <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-icon">📌</span><span class="sidebar-label">Purchase Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Customers</div>
-            <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">&#128101;</span><span class="sidebar-label">Customers</span></a>
+            <div class="sidebar-section-title admin-only">People</div>
+            <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">👥</span><span class="sidebar-label">Customers</span></a>
+            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">👤</span><span class="sidebar-label">Users</span></a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Analytics</div>
+            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">📊</span><span class="sidebar-label">Reports</span></a>
             <div class="sidebar-divider admin-only"></div>
             <div class="sidebar-section-title admin-only">Finance</div>
-            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">&#128176;</span><span class="sidebar-label">Expenses</span></a>
+            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">💰</span><span class="sidebar-label">Expenses</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Administration</div>
-            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">&#128100;</span><span class="sidebar-label">Users</span></a>
-            <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">&#9881;&#65039;</span><span class="sidebar-label">Settings</span></a>
-            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">&#127978;</span><span class="sidebar-label">Shops</span></a>
+            <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">Settings</span></a>
+            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">🏪</span><span class="sidebar-label">Shops</span></a>
         </div>
     </aside>
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -127,9 +128,9 @@
             <div class="topbar-spacer"></div>
             <div class="user-profile-container">
                 <div class="user-profile" id="user-profile-toggle">
-                    <div class="user-profile-icon" id="user-icon">A</div>
+                    <div class="user-profile-icon" id="user-icon">{{ session.get('full_name', 'A')[0] | upper }}</div>
                     <div class="user-profile-info">
-                        <span class="user-profile-name" id="user-name">Admin</span>
+                        <span class="user-profile-name" id="user-name">{{ session.get('full_name', '') }}</span>
                     </div>
                     <span class="user-profile-arrow">&#9660;</span>
                 </div>
@@ -162,7 +163,7 @@
         <div class="summary-row" id="product-summary"></div>
         <div class="search-bar"><input type="text" id="product-search" placeholder="Search products by name, SKU, size, color..."></div>
         <div class="product-list-header"><span>Product</span><span>Variants</span><span>Stock</span><span>Price</span><span>Status</span></div>
-        <div class="product-list" id="product-list"><div class="products-empty"><div class="empty-icon">📦</div><p>Loading products...</p></div></div>
+        <div class="product-list" id="product-list"><div style="padding:0.5rem 1rem;display:flex;flex-direction:column;gap:0.5rem;"><div class="skeleton skeleton-product"></div><div class="skeleton skeleton-product"></div><div class="skeleton skeleton-product"></div><div class="skeleton skeleton-product"></div><div class="skeleton skeleton-product"></div></div></div>
     </div>
 
     <!-- Side Drawer -->
@@ -521,9 +522,9 @@
             if (isAdmin) {
                 html += '<div style="margin-top:0.6rem;display:flex;gap:0.4rem;flex-wrap:wrap;">';
                 if (isOverridePrice) {
-                    html += '<button onclick="resetPriceOverride()" style="font-size:0.75rem;padding:0.25rem 0.5rem;border:1px solid #e2e8f0;background:white;border-radius:4px;cursor:pointer;color:#64748b;">Reset to Product Price</button>';
+                    html += '<button class="btn btn-secondary btn-sm" onclick="resetPriceOverride()">Reset to Product Price</button>';
                 }
-                html += '<button onclick="setVariantOverride()" style="font-size:0.75rem;padding:0.25rem 0.5rem;border:1px solid #3b82f6;background:#eff6ff;border-radius:4px;cursor:pointer;color:#1d4ed8;">' + (isOverridePrice ? 'Change Override' : 'Override Price') + '</button>';
+                html += '<button class="btn btn-primary btn-sm" onclick="setVariantOverride()">' + (isOverridePrice ? 'Change Override' : 'Override Price') + '</button>';
                 html += '</div>';
             }
             html += '</div>';
@@ -617,7 +618,7 @@
                     container.innerHTML = links.map(function(l) {
                         return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid #f1f5f9;">' +
                             '<span>' + escapeHtml(l.supplier_name) + (l.supplier_cost ? ' <span style=\'color:#94a3b8;font-size:0.78rem;\'>(' + currencySymbol + parseFloat(l.supplier_cost).toFixed(2) + ')</span>' : '') + '</span>' +
-                            '<button onclick="removeProductSupplier(' + l.id + ',' + productId + ')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.8rem;padding:0.2rem 0.4rem;" title="Remove">✕</button>' +
+                            '<button class="btn btn-danger btn-sm" onclick="removeProductSupplier(' + l.id + ',' + productId + ')" title="Remove">✕</button>' +
                             '</div>';
                     }).join('');
                 }
@@ -626,11 +627,11 @@
                 var available = allSuppliers.filter(function(s){ return linkedIds.indexOf(s.id) === -1; });
                 if (available.length > 0) {
                     container.innerHTML += '<div style="margin-top:0.5rem;display:flex;gap:0.4rem;align-items:center;">' +
-                        '<select id="add-supplier-select" style="flex:1;padding:0.3rem 0.4rem;border:1px solid #e2e8f0;border-radius:4px;font-size:0.82rem;">' +
+                        '<select id="add-supplier-select" style="flex:1;padding:0.3rem 0.4rem;border:1px solid #e2e8f0;border-radius:4px;font-size:0.82rem;height:36px;box-sizing:border-box;appearance:none;background:white url(%22data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 20 20\'%3E%3Cpath fill=\'%2364748b\' d=\'M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z\'/%3E%3C/svg%3E%22) no-repeat right 0.5rem center;padding-right:1.6rem;">' +
                         '<option value="">+ Add supplier...</option>' +
                         available.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.name) + '</option>'; }).join('') +
                         '</select>' +
-                        '<button onclick="addProductSupplier(' + productId + ')" style="padding:0.3rem 0.5rem;background:#3b82f6;color:white;border:none;border-radius:4px;font-size:0.78rem;cursor:pointer;">Add</button>' +
+                        '<button class="btn btn-primary btn-sm" onclick="addProductSupplier(' + productId + ')">Add</button>' +
                         '</div>';
                 }
             } catch(e) {

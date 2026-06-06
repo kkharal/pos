@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - POS System</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=7">
+    <script src="/static/js/loading.js?v=1" defer></script>
     <script src="/static/js/currency.js"></script>
     <script src="/static/js/ui.js"></script>
     <style>
@@ -92,29 +93,29 @@
             </div>
         </div>
         <div class="sidebar-nav">
-            <div class="sidebar-section-title">Overview</div>
-            <a href="/" class="sidebar-item"><span class="sidebar-icon">&#128202;</span><span class="sidebar-label">Dashboard</span></a>
-            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">&#128722;</span><span class="sidebar-label">Point of Sale</span></a>
+            <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span><span class="sidebar-label">Home</span></a>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Sales</div>
-            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">&#128203;</span><span class="sidebar-label">Sales History</span></a>
-            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">&#128200;</span><span class="sidebar-label">Reports</span></a>
+            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">🛒</span><span class="sidebar-label">Point of Sale</span></a>
+            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">📋</span><span class="sidebar-label">Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Inventory</div>
-            <a href="/products" class="sidebar-item admin-only"><span class="sidebar-icon">&#128230;</span><span class="sidebar-label">Products</span></a>
-            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">&#127981;</span><span class="sidebar-label">Suppliers</span></a>
-            <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-icon">&#128204;</span><span class="sidebar-label">Purchase Orders</span></a>
+            <div class="sidebar-section-title admin-only">Products</div>
+            <a href="/products" class="sidebar-item admin-only"><span class="sidebar-icon">📦</span><span class="sidebar-label">Inventory</span></a>
+            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">🏭</span><span class="sidebar-label">Suppliers</span></a>
+            <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-icon">📌</span><span class="sidebar-label">Purchase Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Customers</div>
-            <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">&#128101;</span><span class="sidebar-label">Customers</span></a>
+            <div class="sidebar-section-title admin-only">People</div>
+            <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">👥</span><span class="sidebar-label">Customers</span></a>
+            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">👤</span><span class="sidebar-label">Users</span></a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Analytics</div>
+            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">📊</span><span class="sidebar-label">Reports</span></a>
             <div class="sidebar-divider admin-only"></div>
             <div class="sidebar-section-title admin-only">Finance</div>
-            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">&#128176;</span><span class="sidebar-label">Expenses</span></a>
+            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">💰</span><span class="sidebar-label">Expenses</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">Administration</div>
-            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">&#128100;</span><span class="sidebar-label">Users</span></a>
-            <a href="/settings" class="sidebar-item admin-only active"><span class="sidebar-icon">&#9881;&#65039;</span><span class="sidebar-label">Settings</span></a>
-            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">&#127978;</span><span class="sidebar-label">Shops</span></a>
+            <a href="/settings" class="sidebar-item admin-only active"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">Settings</span></a>
+            <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">🏪</span><span class="sidebar-label">Shops</span></a>
         </div>
     </aside>
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -129,9 +130,9 @@
             <div class="topbar-spacer"></div>
             <div class="user-profile-container">
                 <div class="user-profile" id="user-profile-toggle">
-                    <div class="user-profile-icon" id="user-icon">A</div>
+                    <div class="user-profile-icon" id="user-icon">{{ session.get('full_name', 'A')[0] | upper }}</div>
                     <div class="user-profile-info">
-                        <span class="user-profile-name" id="user-name">Admin</span>
+                        <span class="user-profile-name" id="user-name">{{ session.get('full_name', '') }}</span>
                     </div>
                     <span class="user-profile-arrow">&#9660;</span>
                 </div>

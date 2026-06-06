@@ -9,14 +9,14 @@ A full-featured Point of Sale (POS) web application for managing one or multiple
 - ✅ **Multi-user with role-based access** (Super Admin, Shop Owner, Admin & Sales Staff)
 - ✅ **Profit tracking** (cost vs. sell price)
 - ✅ **Automated email alerts** for low stock with **configurable schedule**
-- ✅ **Advanced reports** with PDF/Excel export
-- ✅ **Sales filters** (date range, search, staff, payment method, customer)
-- ✅ **Advanced sales history** with expandable rows, daily grouping, refund tracking, CSV export
+- ✅ **Analytics reports** (Shopify-style panels: Overview, Sales, Inventory, Customers, Finance)
+- ✅ **Orders page** (operational ledger: search, filter, view, print, refund — no analytics)
+- ✅ **Sales filters** (date range, search, staff, payment method, customer, status pills)
 - ✅ **Discount management** at point of sale
 - ✅ **Receipt printing** with custom branding
 - ✅ **Session timeout** for security
 - ✅ **Per-shop name, icon & currency**
-- ✅ **Dashboard with charts** and analytics
+- ✅ **Shopify-style dashboard** with focused KPIs, trend chart, and activity feed
 - ✅ **Background scheduler** for automated tasks
 - ✅ **Advanced POS** with category tabs, held carts, refunds, keyboard shortcuts
 - ✅ **Product management** with master-detail layout, variant grouping, and price overrides
@@ -184,67 +184,62 @@ The system has **four roles**, each with distinct permissions:
 - Automatic stock deduction on sale
 - Sales staff cannot see cost prices
 
-### 📈 Sales & Reporting
-- **Sales History with Filters**:
+### � Orders (Operational Ledger)
+- **Transactions Table**:
+  - Invoice numbers (`INV-123`) with blue clickable links
   - Filter by date range (Today, Yesterday, This Week, This Month, Custom)
-  - Search by sale ID, product name, or **customer name**
-  - Filter by staff member
-  - **Filter by payment method** (Cash, Card, Transfer)
-  - Real-time search results
-- **Sales Summary Bar**: Transaction count, total revenue, average sale, discounts, profit (admin), refunds, payment breakdown
-- **Daily Grouping**: Sales grouped by date with per-day subtotals (count, total, profit)
-- **Expandable Sale Rows**: Click any row to expand inline item details, amount received/change, and refund info
-- **Sale Timeline**: Mini timeline in expanded view showing sale creation and linked refund events
-- **Sale Status Badge**: Completed (green), Partially Paid (yellow), Unpaid/credit (red), Partial Refund (orange), Refunded (red) per sale
-- **View Refund Details**: Dedicated modal showing each refund's items, quantities, reason, and amount
-- **Receipt Reprint**: Reprint any past sale receipt with full details (payment, customer, items, discounts)
-- **Customer Name Column**: See which customer made each purchase
-- **Payment Method Column**: Payment type badge (Cash, Card, Transfer) per sale
-- **Discount Column**: Highlighted discount amounts on sales with discounts applied
-- **Profit per Sale**: Admin-only column showing profit on each transaction
-- **Export Sales CSV**: Download filtered sales data as CSV file
-- **Advanced Reports & Analytics**:
-  - **Sales trend chart**: Line chart of daily revenue and profit over time
-  - **Payment method breakdown**: Doughnut chart showing Cash/Card/Transfer split
-  - **Revenue by category**: Pie chart of sales per product category
-  - **Hourly sales heatmap**: Bar chart showing busiest hours of the day
-  - **Profit margin trend**: Daily margin % line chart (admin only)
-  - **Discount summary**: Total discounts, discounted sale count, average discount
-  - **Refund summary**: Total refunded, refund count, refund rate, top refunded products
-  - **Staff performance**: Revenue, transactions, avg sale per staff with % of revenue bars
-  - **Customer insights**: Top customers by spend, repeat customer count
-  - **Period comparison**: Current vs previous period with % change indicators
-  - **Slow-moving stock**: Products with 0-1 sales in period (dead inventory detection)
-  - **Auto-load on page open**: Report generates automatically for last 7 days
-  - Quick range buttons: Today, This Week, This Month, This Quarter, This Year
-  - Daily sales breakdown with margin % column
-  - Top selling products and full product performance tables
-  - **PDF/Excel Export**: Download reports in both formats
-  - **Inventory reports**: Current stock, movements, most active products, low stock alerts
-- **Cash Flow Reports** (Admin Only):
-  - **Cash flow summary**: Total cash in, credit given, net cash flow, outstanding, overdue
-  - **Cash flow breakdown**: Walk-in cash, credit payments received, invoice count
-  - **Cash flow trend chart**: Daily cash collected vs credit given (bar chart)
-  - **Collection methods chart**: Payment method breakdown for credit collections (doughnut)
-  - **Receivables aging**: Visual cards + horizontal bar chart (0-30, 31-60, 61-90, 90+ days)
-  - **Outstanding by customer table**: Balance, invoices, earliest due date, credit utilization bar
-  - Quick ranges: Today, This Week, This Month, This Quarter
-  - **Export to PDF or Excel**
-- **Enhanced Dashboard**:
-  - Sales trend charts (last 7 days)
-  - Today vs Yesterday comparison
-  - Best sellers widget
-  - Recent sales activity
-  - **Cash Flow Overview** (Admin): Cash collected today, credit sales today, total outstanding, overdue amount
-- **UI/UX Enhancements**:
-  - **Left sidebar navigation** with collapsible icon-only mode and grouped sections (Overview, Sales, Inventory, Customers, Administration)
-  - Sticky topbar with shop switcher (Super Admin), user profile dropdown, and sidebar toggle button
-  - Customizable shop icon picker (40 emoji options) in Settings — icon appears in the sidebar across all pages
-  - CSS variables for consistent theming and easy customization
-  - Toast notifications replacing browser alerts (success, error, warning, info)
-  - Mobile-responsive sidebar (slides in/out with overlay at ≤900px)
-  - Full-screen loading overlay for long-running operations
+  - Search by invoice #, product name, or customer name
+  - Filter by staff member, payment method, status
+  - Status pill badges: Completed, Unpaid, Partially Paid, Refunded, Partial Refund
+  - Day-grouped rows with daily subtotals
+  - Inline actions: Print (🖨) and View Refunds (↩) per row
+  - Click row to open detail drawer
+- **Summary Tab** (light KPIs only):
+  - Transaction count, Revenue, Avg Order, Discounts, Refunds, Outstanding
+  - Payment methods breakdown (Cash, Card, Transfer, Credit, Partial)
+  - ❌ No charts, no profit, no analytics (belongs in Reports)
+- **Detail Drawer**: Invoice #, customer, payment, items table, totals, Print/Refund actions
+- **Export CSV**: Download filtered sales data
+- **URL state persistence**: Filters, tab, and status survive page refresh
+
+### 📊 Reports & Analytics (Shopify-style Panels)
+- **Two-panel layout**: Left nav (5 panels) + focused content area
+- **Overview Panel** (auto-loads this month):
+  - Revenue, Profit, Orders, Avg Order KPI cards with trend indicators
+  - Revenue trend chart (line)
+  - Top 5 products list
+- **Sales Panel**: Revenue trend, transactions trend, hourly breakdown, discount/refund summaries
+- **Inventory Panel**: Stock levels, movements, slow movers, reorder alerts
+- **Customers Panel**: Top customers, repeat rate, lifetime value
+- **Finance Panel**: P&L statement, cash flow, expense breakdown, margins
+- **Per-panel features**:
+  - Own date bar with quick-chips (Today, Week, Month, Quarter, Year)
+  - Export dropdown (PDF/Excel)
+  - Period comparison with % change indicators
+- **Advanced Analytics**:
+  - Staff performance tables
+  - Revenue by category
+  - Profit margin trends
+  - Receivables aging report
+  - Cash flow trend charts
+- **Shopify-style Dashboard** (focused signals, not full reports):
+  - 6 KPI cards with vs-yesterday change indicators
+  - 7-day sales trend chart (clean line)
+  - Top products list (simple name + sold count)
+  - Recent activity feed (last 8 transactions)
+  - Alert banner for low stock (dismissible)
+  - Quick action buttons (New Sale, Add Product, Reports, Orders)
+- **Shopify-style UI/UX** (consistent across all pages):
+  - **Design system**: `#f8fafc` backgrounds, 12px radius cards, `#e2e8f0` borders, `#3b82f6` primary blue
+  - **Left sidebar navigation** with collapsible icon-only mode and grouped sections
+  - **Orders page**: Clean table with INV-# links, pill badges, inline print/refund actions, slide-out drawer
+  - **Reports page**: Two-panel layout (left nav + focused content panels), auto-loading overview
+  - **Settings page**: Categorized navigation (Shop, Inventory, Notifications, Security, Backup)
+  - **Dashboard**: Signal-focused with KPI cards, trend chart, activity feed
+  - Sticky topbar with shop switcher, user dropdown
+  - Toast notifications, loading overlays, mobile-responsive sidebar
   - Smooth animations and transitions throughout
+  - **Clean separation**: Orders = operations (DO), Reports = analytics (UNDERSTAND)
 
 ## Installation
 
@@ -292,7 +287,7 @@ The start script will automatically:
 - ✓ Generate SECRET_KEY (if not set)
 - ✓ Start the application with Gunicorn (production) or Flask (development)
 
-Then open your browser to: **http://localhost:5000**
+Then open your browser to: **http://localhost:8080**
 
 > **Production deployment?** See [Production Deployment](#-production-deployment-https-with-nginx) for HTTPS setup with Nginx.
 
@@ -566,7 +561,7 @@ dig yourdomain.com +short
 #### Quick Setup (Automated)
 
 ```bash
-# 1. Start the app (generates SECRET_KEY, runs gunicorn on 127.0.0.1:5000)
+# 1. Start the app (generates SECRET_KEY, runs gunicorn on 127.0.0.1:8080)
 ./start.sh
 
 # 2. Set up Nginx reverse proxy + SSL
@@ -578,17 +573,17 @@ That's it! Your app is now live at `https://yourdomain.com`.
 #### What the script does:
 1. Installs Nginx and Certbot
 2. Configures UFW firewall (allows HTTP/HTTPS/SSH, blocks outbound scanning ports)
-3. Creates Nginx reverse proxy config (forwards 443 → 127.0.0.1:5000)
+3. Creates Nginx reverse proxy config (forwards 443 → 127.0.0.1:8080)
 4. Obtains free Let's Encrypt SSL certificate
 5. Sets up automatic certificate renewal
 
 #### Architecture
 
 ```
-Internet → HTTPS (443) → Nginx → HTTP (127.0.0.1:5000) → Gunicorn/Flask
+Internet → HTTPS (443) → Nginx → HTTP (127.0.0.1:8080) → Gunicorn/Flask
 ```
 
-Port 5000 is **never exposed** to the internet. Nginx handles SSL termination.
+Port 8080 is **never exposed** to the internet. Nginx handles SSL termination.
 
 #### Manual Setup (if you prefer)
 
@@ -608,7 +603,7 @@ server {
     client_max_body_size 200M;
 
     location / {
-        proxy_pass http://127.0.0.1:5000;
+        proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -650,9 +645,9 @@ sudo certbot install --nginx -d yourdomain.com
 |----------|---------|-------------|
 | `SECRET_KEY` | *(required)* | Flask session encryption key. Auto-generated by `start.sh` |
 | `HOST` | `127.0.0.1` | Bind address (keep as localhost behind Nginx) |
-| `PORT` | `5000` | App port |
+| `PORT` | `8080` | App port |
 | `FLASK_DEBUG` | `0` | **Never** set to `1` in production |
-| `ALLOWED_ORIGINS` | `http://localhost:5000` | Comma-separated CORS origins |
+| `ALLOWED_ORIGINS` | `http://localhost:8080` | Comma-separated CORS origins |
 | `GUNICORN_WORKERS` | `4` | Number of worker processes |
 | `RUN_MODE` | `production` | Set to `development` for Flask dev server |
 
@@ -667,7 +662,7 @@ After deployment, the following ports are active on the server:
 | 22 | TCP | SSH (remote access) | Yes |
 | 80 | TCP | HTTP (auto-redirects to HTTPS) | Yes |
 | 443 | TCP | HTTPS (Nginx serves the app) | Yes |
-| 5000 | TCP | Gunicorn/Flask app | **No** — bound to `127.0.0.1` only |
+| 8080 | TCP | Gunicorn/Flask app | **No** — bound to `127.0.0.1` only |
 | 3306 | TCP | MySQL database | **No** — localhost only by default |
 
 **Outbound (blocked by UFW):**
@@ -675,7 +670,6 @@ After deployment, the following ports are active on the server:
 | Port | Reason |
 |------|--------|
 | 23 | Telnet scanning (common abuse vector) |
-| 8080 | HTTP-proxy scanning (common abuse vector) |
 
 > Only ports **22, 80, 443** are reachable from the internet. The app and database are never directly exposed.
 
@@ -786,17 +780,12 @@ When you first start the application, two accounts are created:
   - Outstanding by customer with credit utilization
   - **Export to PDF or Excel**
 
-#### Settings
-- **Shop Name**: Customize shop name (appears everywhere including receipts)
-- **Currency**: Choose from 20+ currencies or set custom symbol
-- **Session Timeout**: Configure auto-logout time (5 min - 24 hours)
-- **Email Configuration**:
-  - Configure SMTP settings (server, port, credentials)
-  - Test email functionality
-- **Low Stock Alerts & Scheduler**:
-  - Set global low stock threshold
-  - Configure automatic alert schedule (customizable check times)
-  - Manual low stock check trigger
+#### Settings (Categorized Navigation)
+- **🏪 Shop**: Shop name, icon (emoji picker), currency, address, phone
+- **📦 Inventory**: Low stock threshold, per-product reorder levels
+- **🔔 Notifications**: SMTP email config, low stock alert schedule, test email
+- **🔒 Security**: Session timeout (5 min - 24 hours), password policies
+- **🗄️ Backup & Restore**: Database backup/restore (Super Admin only)
 
 #### Customers
 - **Add wholesale customers** with name, phone, email, address, credit limit

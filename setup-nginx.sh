@@ -4,7 +4,7 @@
 # Nginx Reverse Proxy + SSL Setup for POS System
 # ─────────────────────────────────────────────────────────────────────────────
 # This script installs Nginx, configures it as a reverse proxy for the Flask/
-# Gunicorn app running on 127.0.0.1:5000, and obtains a free SSL certificate
+# Gunicorn app running on 127.0.0.1:8080, and obtains a free SSL certificate
 # from Let's Encrypt using Certbot.
 #
 # Usage:
@@ -94,7 +94,6 @@ if command -v ufw &>/dev/null; then
     # Block dangerous outbound ports (prevent abuse if compromised)
     ufw deny out 23/tcp > /dev/null 2>&1 || true    # Telnet
     ufw deny out 25/tcp > /dev/null 2>&1 || true    # SMTP
-    ufw deny out 8080/tcp > /dev/null 2>&1 || true  # HTTP-proxy scanning
     ufw deny out 3389/tcp > /dev/null 2>&1 || true  # RDP
 
     # Enable UFW if not already active
@@ -102,7 +101,7 @@ if command -v ufw &>/dev/null; then
         echo "y" | ufw enable > /dev/null 2>&1
     fi
 
-    echo "  ✓ UFW configured (HTTP, HTTPS, SSH allowed; outbound 23,8080 blocked)"
+    echo "  ✓ UFW configured (HTTP, HTTPS, SSH allowed; outbound 23 blocked)"
 else
     echo "  ⚠ UFW not found. Install for enhanced security: sudo apt install ufw"
 fi
@@ -138,7 +137,7 @@ server {
     client_max_body_size 200M;
 
     location / {
-        proxy_pass http://localhost:5000;
+        proxy_pass http://localhost:8080;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -158,7 +157,7 @@ server {
     # Rate limit login and API endpoints
     location /login {
         limit_req zone=login_limit burst=3 nodelay;
-        proxy_pass http://localhost:5000;
+        proxy_pass http://localhost:8080;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -167,7 +166,7 @@ server {
 
     location /api/ {
         limit_req zone=api_limit burst=20 nodelay;
-        proxy_pass http://localhost:5000;
+        proxy_pass http://localhost:8080;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -176,7 +175,7 @@ server {
 
     # Cache static files
     location /static/ {
-        proxy_pass http://localhost:5000/static/;
+        proxy_pass http://localhost:8080/static/;
         expires 7d;
         add_header Cache-Control "public, immutable";
     }
@@ -252,7 +251,7 @@ echo ""
 echo "    🔒 https://${DOMAIN}"
 echo ""
 echo "  Architecture:"
-echo "    User → HTTPS (443) → Nginx → HTTP (127.0.0.1:5000) → Gunicorn"
+echo "    User → HTTPS (443) → Nginx → HTTP (127.0.0.1:8080) → Gunicorn"
 echo ""
 echo "  Make sure the app is running:"
 echo "    cd $(pwd) && ./start.sh"
