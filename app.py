@@ -4305,33 +4305,23 @@ def manage_scheduler_settings():
         return jsonify({'success': False, 'error': f'Invalid timezone: {timezone}'}), 400
 
     try:
-        # Update times using atomic INSERT...ON DUPLICATE KEY UPDATE to prevent race conditions
+        # Update times using DELETE + INSERT to prevent duplicate key errors
         shop_id = get_settings_shop_id()
 
         def _upsert_setting(key, value):
+            # Always delete first (no-op if doesn't exist), then insert
             if shop_id is not None:
+                cursor.execute("DELETE FROM settings WHERE `key` = ? AND shop_id = ?", (key, shop_id))
                 cursor.execute(
-                    "INSERT INTO settings (`key`, value, shop_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)",
+                    "INSERT INTO settings (`key`, value, shop_id) VALUES (?, ?, ?)",
                     (key, value, shop_id)
                 )
             else:
-                # For NULL shop_id, we need to handle differently since NULL != NULL in UNIQUE constraints
+                cursor.execute("DELETE FROM settings WHERE `key` = ? AND shop_id IS NULL", (key,))
                 cursor.execute(
-                    "UPDATE settings SET value = ? WHERE `key` = ? AND shop_id IS NULL",
-                    (value, key)
+                    "INSERT INTO settings (`key`, value, shop_id) VALUES (?, ?, NULL)",
+                    (key, value)
                 )
-                if cursor.rowcount == 0:
-                    try:
-                        cursor.execute(
-                            "INSERT INTO settings (`key`, value, shop_id) VALUES (?, ?, NULL)",
-                            (key, value)
-                        )
-                    except Exception:
-                        # If duplicate, just update (handles race condition)
-                        cursor.execute(
-                            "UPDATE settings SET value = ? WHERE `key` = ? AND shop_id IS NULL",
-                            (value, key)
-                        )
 
         _upsert_setting('scheduler_times', json.dumps(times))
         _upsert_setting('scheduler_timezone', timezone)
