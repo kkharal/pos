@@ -228,6 +228,7 @@ def init_db():
             cost_price DECIMAL(12,2) NOT NULL DEFAULT 0,
             price DECIMAL(12,2) NOT NULL,
             stock_quantity INT NOT NULL DEFAULT 0,
+            is_active TINYINT(1) NOT NULL DEFAULT 1,
             sku VARCHAR(255) UNIQUE,
             description TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -355,7 +356,24 @@ def init_db():
         """
     )
 
-    # ── 11. Purchase orders ───────────────────────────────────────────────────
+    # ── 11. Product-Supplier links ───────────────────────────────────────────
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS product_suppliers (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            product_id INT NOT NULL,
+            supplier_id INT NOT NULL,
+            supplier_cost DECIMAL(12,2) NULL,
+            supplier_sku VARCHAR(100) NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_product_supplier (product_id, supplier_id),
+            FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
+            FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """
+    )
+
+    # ── 12. Purchase orders ───────────────────────────────────────────────────
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS purchase_orders (
@@ -373,7 +391,7 @@ def init_db():
         """
     )
 
-    # ── 12. PO items ──────────────────────────────────────────────────────────
+    # ── 13. PO items ──────────────────────────────────────────────────────────
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS po_items (
@@ -529,6 +547,8 @@ def init_db():
         cursor.execute("ALTER TABLE products ADD COLUMN color VARCHAR(50) NULL")
     if not _column_exists(cursor, "products", "variant_group"):
         cursor.execute("ALTER TABLE products ADD COLUMN variant_group VARCHAR(100) NULL")
+    if not _column_exists(cursor, "products", "is_active"):
+        cursor.execute("ALTER TABLE products ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1")
 
     # Users extras
     if not _column_exists(cursor, "users", "last_login"):
@@ -554,6 +574,25 @@ def init_db():
         "customers", "suppliers", "purchase_orders", "invoices", "payments",
         "product_audit_log",
     ]
+
+    # Ensure product_suppliers exists for supplier linking in inventory.
+    # Older installs may miss this table even though the API expects it.
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS product_suppliers (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            product_id INT NOT NULL,
+            supplier_id INT NOT NULL,
+            supplier_cost DECIMAL(12,2) NULL,
+            supplier_sku VARCHAR(100) NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_product_supplier (product_id, supplier_id),
+            FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE,
+            FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """
+    )
+
     for tbl in _shop_tables:
         if not _column_exists(cursor, tbl, "shop_id"):
             cursor.execute(f"ALTER TABLE {tbl} ADD COLUMN shop_id INT NULL")

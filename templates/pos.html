@@ -533,7 +533,7 @@
             <div class="pos-picker">
                 <div class="pos-search-bar">
                     <span class="search-icon">🔍</span>
-                    <input type="text" id="search-products" placeholder="Search products..." autocomplete="off">
+                    <input type="text" id="search-products" placeholder="Search by name SKU size color..." autocomplete="off">
                     <span class="search-shortcut">/</span>
                 </div>
                 <div class="pos-categories" id="category-tabs"></div>
@@ -865,12 +865,21 @@
             filter = filter || '';
             syncUrlState();
             var container = document.getElementById('product-list');
+            var normalized = filter.toLowerCase().trim();
+            var terms = normalized ? normalized.split(/\s+/).filter(Boolean) : [];
             var filtered = products.filter(function(p) {
-                var matchesSearch = p.name.toLowerCase().includes(filter.toLowerCase()) ||
-                    p.category.toLowerCase().includes(filter.toLowerCase()) ||
-                    (p.sku && p.sku.toLowerCase().includes(filter.toLowerCase())) ||
-                    (p.size && p.size.toLowerCase().includes(filter.toLowerCase())) ||
-                    (p.color && p.color.toLowerCase().includes(filter.toLowerCase()));
+                var haystack = [
+                    p.name || '',
+                    p.sku || '',
+                    p.size || '',
+                    p.color || '',
+                    p.category || ''
+                ].join(' ').toLowerCase();
+
+                // Require every typed term to match one of the searchable fields.
+                var matchesSearch = terms.length === 0 || terms.every(function(term) {
+                    return haystack.includes(term);
+                });
                 var matchesCategory = activeCategory === 'All' || p.category === activeCategory;
                 return matchesSearch && matchesCategory;
             });
@@ -1297,7 +1306,7 @@
             var query = (document.getElementById('wholesale-search').value || '').toLowerCase().trim();
             var container = document.getElementById('wholesale-results');
 
-            if (!query && wholesaleCustomers.length === 0) {
+            if (!query) {
                 container.style.display = 'none';
                 return;
             }

@@ -21,6 +21,7 @@ from email.utils import formataddr
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import atexit
+import fcntl
 import logging
 
 app = Flask(__name__)
@@ -237,90 +238,168 @@ def _advance_date(date_str, frequency):
 # Initialize the background scheduler
 scheduler = BackgroundScheduler()
 
-def load_scheduler_jobs():
-    """Load and configure scheduler jobs from database settings"""
+# Tracks last known per-shop config: {shop_id: {'times': [...], 'timezone': '...'}}
+_last_scheduler_config = {}
+
+def _read_all_shop_configs():
+    """Read scheduler times and timezone for every shop from DB.
+    Falls back to global (shop_id IS NULL) settings if a shop has none set.
+    Returns {shop_id: {'times': [...], 'timezone': '...'}}"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        shops = cursor.execute('SELECT id, name FROM shops ORDER BY id').fetchall()
 
-        # Get scheduler times from database (global setting)
-        times_row = cursor.execute(
+        # Global fallback values
+        g_tz = cursor.execute(
+            'SELECT value FROM settings WHERE `key` = ? AND shop_id IS NULL', ('scheduler_timezone',)
+        ).fetchone()
+        g_times = cursor.execute(
             'SELECT value FROM settings WHERE `key` = ? AND shop_id IS NULL', ('scheduler_times',)
         ).fetchone()
+        global_tz = g_tz['value'] if g_tz and g_tz['value'] else 'UTC'
+        global_times = json.loads(g_times['value']) if g_times else ["09:00", "12:00", "18:00"]
+
+        result = {}
+        for shop in shops:
+            sid = shop['id']
+            tz_row = cursor.execute(
+                'SELECT value FROM settings WHERE `key` = ? AND shop_id = ?', ('scheduler_timezone', sid)
+            ).fetchone()
+            times_row = cursor.execute(
+                'SELECT value FROM settings WHERE `key` = ? AND shop_id = ?', ('scheduler_times', sid)
+            ).fetchone()
+            result[sid] = {
+                'name': shop['name'],
+                'timezone': tz_row['value'] if tz_row and tz_row['value'] else global_tz,
+                'times': json.loads(times_row['value']) if times_row else global_times,
+            }
         conn.close()
+        return result
+    except Exception as e:
+        print(f"[SCHEDULER] Error reading configs: {e}")
+        return {}
 
-        if times_row:
-            times = json.loads(times_row['value'])
-        else:
-            # Default times if not set
-            times = ["09:00", "12:00", "18:00"]
+def load_scheduler_jobs():
+    """Rebuild all low-stock-check jobs from per-shop DB config.
+    Only modifies jobs if the scheduler is running in this process."""
+    global _last_scheduler_config
+    if not scheduler.running:
+        print("[SCHEDULER] load_scheduler_jobs called in non-scheduler worker, skipping")
+        return
 
+    configs = _read_all_shop_configs()
+
+    try:
         # Remove all existing low stock check jobs
         for job in scheduler.get_jobs():
             if job.id.startswith('low_stock_check_'):
                 scheduler.remove_job(job.id)
 
-        # Add jobs for each configured time
-        for idx, time_str in enumerate(times):
-            try:
-                hour, minute = map(int, time_str.split(':'))
-                job_id = f'low_stock_check_{idx}'
-                scheduler.add_job(
-                    func=scheduled_low_stock_check,
-                    trigger=CronTrigger(hour=hour, minute=minute),
-                    id=job_id,
-                    name=f'Low Stock Check - {time_str}',
-                    replace_existing=True
-                )
-                print(f"[SCHEDULER] Added job: {time_str}")
-            except Exception as e:
-                print(f"[SCHEDULER] Error adding job for time {time_str}: {str(e)}")
+        # Add one job per (shop, time) combination
+        for shop_id, cfg in configs.items():
+            timezone = cfg['timezone']
+            for idx, time_str in enumerate(cfg['times']):
+                try:
+                    hour, minute = map(int, time_str.split(':'))
+                    job_id = f'low_stock_check_{shop_id}_{idx}'
+                    scheduler.add_job(
+                        func=_run_low_stock_check_for_shop,
+                        args=[shop_id, cfg['name']],
+                        trigger=CronTrigger(hour=hour, minute=minute, timezone=timezone),
+                        id=job_id,
+                        name=f'Low Stock Check - {cfg["name"]} {time_str}',
+                        replace_existing=True
+                    )
+                    print(f"[SCHEDULER] Shop '{cfg['name']}': job {time_str} ({timezone})")
+                except Exception as e:
+                    print(f"[SCHEDULER] Error adding job {time_str} for shop {shop_id}: {e}")
 
-        print(f"[SCHEDULER] Loaded {len(times)} scheduled low stock checks")
+        _last_scheduler_config = {sid: {'times': c['times'], 'timezone': c['timezone']} for sid, c in configs.items()}
+        print(f"[SCHEDULER] Loaded jobs for {len(configs)} shop(s)")
 
     except Exception as e:
-        print(f"[SCHEDULER] Error loading scheduler jobs: {str(e)}")
-        # Fallback to default times
-        scheduler.add_job(
-            func=scheduled_low_stock_check,
-            trigger=CronTrigger(hour=9, minute=0),
-            id='low_stock_check_0',
-            name='Low Stock Check - 09:00',
-            replace_existing=True
-        )
-        scheduler.add_job(
-            func=scheduled_low_stock_check,
-            trigger=CronTrigger(hour=12, minute=0),
-            id='low_stock_check_1',
-            name='Low Stock Check - 12:00',
-            replace_existing=True
-        )
-        scheduler.add_job(
-            func=scheduled_low_stock_check,
-            trigger=CronTrigger(hour=18, minute=0),
-            id='low_stock_check_2',
-            name='Low Stock Check - 18:00',
-            replace_existing=True
-        )
+        print(f"[SCHEDULER] Error loading jobs: {e}")
 
-# Load scheduler jobs and start the scheduler
-load_scheduler_jobs()
+def _scheduler_config_watcher():
+    """Runs every minute. Reloads jobs if any shop's DB config changed."""
+    global _last_scheduler_config
+    configs = _read_all_shop_configs()
+    changed = False
+    for sid, cfg in configs.items():
+        last = _last_scheduler_config.get(sid, {})
+        if cfg['times'] != last.get('times') or cfg['timezone'] != last.get('timezone'):
+            changed = True
+            break
+    if changed or set(configs.keys()) != set(_last_scheduler_config.keys()):
+        print("[SCHEDULER] Config change detected — reloading jobs")
+        load_scheduler_jobs()
 
-# Add recurring expense processor - runs daily at 00:05
-scheduler.add_job(
-    func=scheduled_recurring_expenses,
-    trigger=CronTrigger(hour=0, minute=5),
-    id='recurring_expenses_daily',
-    name='Recurring Expenses - Daily 00:05',
-    replace_existing=True
-)
-print("[SCHEDULER] Added recurring expense job: daily at 00:05")
+# Load scheduler jobs and start the scheduler (only in one worker process)
+_scheduler_lock_file = None
 
-scheduler.start()
-print("[SCHEDULER] Background scheduler started")
+def _start_scheduler_once():
+    """Start scheduler in only one process using a file lock to prevent duplicates in multi-worker setups."""
+    global _scheduler_lock_file
+    try:
+        _scheduler_lock_file = open('/tmp/pos_scheduler.lock', 'w')
+        fcntl.flock(_scheduler_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except (IOError, OSError):
+        if _scheduler_lock_file:
+            _scheduler_lock_file.close()
+            _scheduler_lock_file = None
+        print("[SCHEDULER] Scheduler already running in another worker, skipping")
+        return
 
-# Shut down the scheduler when exiting the app
-atexit.register(lambda: scheduler.shutdown())
+    configs = _read_all_shop_configs()
+
+    # Add one job per (shop, time) combination
+    for shop_id, cfg in configs.items():
+        timezone = cfg['timezone']
+        for idx, time_str in enumerate(cfg['times']):
+            try:
+                hour, minute = map(int, time_str.split(':'))
+                job_id = f'low_stock_check_{shop_id}_{idx}'
+                scheduler.add_job(
+                    func=_run_low_stock_check_for_shop,
+                    args=[shop_id, cfg['name']],
+                    trigger=CronTrigger(hour=hour, minute=minute, timezone=timezone),
+                    id=job_id,
+                    name=f'Low Stock Check - {cfg["name"]} {time_str}',
+                    replace_existing=True
+                )
+                print(f"[SCHEDULER] Shop '{cfg['name']}': job {time_str} ({timezone})")
+            except Exception as e:
+                print(f"[SCHEDULER] Error adding job {time_str} for shop {shop_id}: {e}")
+
+    _last_scheduler_config.update({sid: {'times': c['times'], 'timezone': c['timezone']} for sid, c in configs.items()})
+
+    # Add recurring expense processor - runs daily at 00:05
+    scheduler.add_job(
+        func=scheduled_recurring_expenses,
+        trigger=CronTrigger(hour=0, minute=5),
+        id='recurring_expenses_daily',
+        name='Recurring Expenses - Daily 00:05',
+        replace_existing=True
+    )
+    print("[SCHEDULER] Added recurring expense job: daily at 00:05")
+
+    # Config watcher — picks up DB changes within 1 minute automatically
+    scheduler.add_job(
+        func=_scheduler_config_watcher,
+        trigger=CronTrigger(minute='*'),
+        id='config_watcher',
+        name='Scheduler Config Watcher',
+        replace_existing=True
+    )
+    print("[SCHEDULER] Added config watcher job")
+
+    scheduler.start()
+    print("[SCHEDULER] Background scheduler started")
+
+    atexit.register(lambda: scheduler.shutdown())
+
+_start_scheduler_once()
 
 # Decorator for login required
 def login_required(f):
@@ -598,7 +677,7 @@ def get_shops():
         for shop in result:
             sid = shop['id']
             shop['product_count'] = conn.execute(
-                'SELECT COUNT(*) FROM products WHERE shop_id = ?', (sid,)
+                'SELECT COUNT(*) FROM products WHERE shop_id = ? AND is_active = 1', (sid,)
             ).fetchone()[0]
             shop['customer_count'] = conn.execute(
                 'SELECT COUNT(*) FROM customers WHERE shop_id = ?', (sid,)
@@ -739,7 +818,7 @@ def get_products():
     conn = get_db_connection()
     flt_sql, flt_params = shop_filter()
     products = conn.execute(
-        f'SELECT * FROM products WHERE 1=1 {flt_sql} ORDER BY name', flt_params
+        f'SELECT * FROM products WHERE is_active = 1 {flt_sql} ORDER BY name', flt_params
     ).fetchall()
     conn.close()
 
@@ -1007,10 +1086,29 @@ def delete_product(product_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     flt_sql, flt_params = shop_filter()
-    cursor.execute(f'DELETE FROM products WHERE id=? {flt_sql}', [product_id] + flt_params)
-    conn.commit()
-    conn.close()
-    return jsonify({'success': True})
+    try:
+        # Ensure variant exists in current shop scope.
+        product = cursor.execute(
+            f'SELECT id FROM products WHERE id=? AND is_active = 1 {flt_sql}',
+            [product_id] + flt_params
+        ).fetchone()
+        if not product:
+            conn.close()
+            return jsonify({'success': False, 'error': 'Variant not found'}), 404
+
+        # Soft delete to preserve historical reporting and transaction history.
+        cursor.execute(
+            f'UPDATE products SET is_active = 0 WHERE id=? AND is_active = 1 {flt_sql}',
+            [product_id] + flt_params
+        )
+
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return jsonify({'success': False, 'error': str(e)}), 400
 
 # API Routes - Stock Management
 @app.route('/api/products/<int:product_id>/stock', methods=['POST'])
@@ -1029,7 +1127,7 @@ def update_stock(product_id):
         # Get current stock (scoped to shop)
         flt_sql, flt_params = shop_filter()
         product = cursor.execute(
-            f'SELECT stock_quantity, shop_id FROM products WHERE id=? {flt_sql}',
+            f'SELECT stock_quantity, shop_id FROM products WHERE id=? AND is_active = 1 {flt_sql}',
             [product_id] + flt_params
         ).fetchone()
         if not product:
@@ -1169,7 +1267,7 @@ def create_sale():
         # Calculate total cost
         total_cost = 0
         for item in items:
-            product = cursor.execute('SELECT cost_price FROM products WHERE id=?', (item['product_id'],)).fetchone()
+            product = cursor.execute('SELECT cost_price FROM products WHERE id=? AND is_active = 1', (item['product_id'],)).fetchone()
             if product:
                 total_cost += product['cost_price'] * item['quantity']
 
@@ -1184,7 +1282,7 @@ def create_sale():
         for item in items:
             product_id = item['product_id']
             quantity = item['quantity']
-            product = cursor.execute('SELECT stock_quantity, name FROM products WHERE id=?', (product_id,)).fetchone()
+            product = cursor.execute('SELECT stock_quantity, name FROM products WHERE id=? AND is_active = 1', (product_id,)).fetchone()
             if not product:
                 conn.rollback()
                 return jsonify({'success': False, 'error': f'Product ID {product_id} not found'}), 404
@@ -2326,14 +2424,14 @@ def get_inventory_report():
                     (stock_quantity * price) as potential_revenue,
                     (stock_quantity * (price - cost_price)) as potential_profit
                 FROM products
-                WHERE 1=1 {flt_sql}
+                WHERE is_active = 1 {flt_sql}
                 ORDER BY stock_value DESC
             '''
         else:
             inventory_query = f'''
                 SELECT name, sku, category, stock_quantity, price
                 FROM products
-                WHERE 1=1 {flt_sql}
+                WHERE is_active = 1 {flt_sql}
                 ORDER BY stock_quantity DESC
             '''
 
@@ -2376,7 +2474,7 @@ def get_inventory_report():
         low_stock_query = f'''
             SELECT name, sku, stock_quantity, category
             FROM products
-            WHERE stock_quantity < 5 {flt_sql}
+            WHERE is_active = 1 AND stock_quantity < 5 {flt_sql}
             ORDER BY stock_quantity ASC
         '''
 
@@ -2398,7 +2496,7 @@ def get_inventory_report():
         slow_moving_query = f'''
             SELECT p.id, p.name, p.sku, p.category, p.stock_quantity, p.price
             FROM products p
-            WHERE p.stock_quantity > 0 {flt_sql}
+            WHERE p.is_active = 1 AND p.stock_quantity > 0 {flt_sql}
             ORDER BY p.name
         '''
         all_products_list = cursor.execute(slow_moving_query, flt_params).fetchall()
@@ -3291,14 +3389,14 @@ def export_inventory_report(format):
                        (stock_quantity * cost_price) as stock_value,
                        (stock_quantity * price) as potential_revenue
                 FROM products
-                WHERE 1=1 {flt_sql}
+                WHERE is_active = 1 {flt_sql}
                 ORDER BY stock_value DESC
             ''', flt_params).fetchall()
         else:
             inventory = cursor.execute(f'''
                 SELECT name, sku, category, stock_quantity, price
                 FROM products
-                WHERE 1=1 {flt_sql}
+                WHERE is_active = 1 {flt_sql}
                 ORDER BY stock_quantity DESC
             ''', flt_params).fetchall()
 
@@ -3335,7 +3433,7 @@ def export_inventory_report(format):
         low_stock = cursor.execute(f'''
             SELECT name, sku, stock_quantity, category
             FROM products
-            WHERE stock_quantity < 5 {flt_sql}
+            WHERE is_active = 1 AND stock_quantity < 5 {flt_sql}
             ORDER BY stock_quantity ASC
         ''', flt_params).fetchall()
 
@@ -3343,7 +3441,7 @@ def export_inventory_report(format):
         all_products_list = cursor.execute(f'''
             SELECT id, name, sku, category, stock_quantity, price
             FROM products
-            WHERE stock_quantity > 0 {flt_sql}
+            WHERE is_active = 1 AND stock_quantity > 0 {flt_sql}
             ORDER BY name
         ''', flt_params).fetchall()
 
@@ -4077,20 +4175,67 @@ def generate_inventory_excel(shop_name, currency, start_date, end_date, inventor
 @app.route('/api/scheduler/status', methods=['GET'])
 @admin_required
 def get_scheduler_status():
-    """Get status of scheduled jobs"""
-    jobs = []
-    for job in scheduler.get_jobs():
-        jobs.append({
-            'id': job.id,
-            'name': job.name,
-            'next_run': job.next_run_time.strftime('%Y-%m-%d %H:%M:%S') if job.next_run_time else None,
-            'trigger': str(job.trigger)
-        })
+    """Get status of scheduled jobs - reads from database settings for consistency across workers"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-    return jsonify({
-        'scheduler_running': scheduler.running,
-        'jobs': jobs
-    })
+        shop_id = get_settings_shop_id()
+
+        def _get(key):
+            if shop_id is not None:
+                row = cursor.execute(
+                    'SELECT value FROM settings WHERE `key` = ? AND shop_id = ?', (key, shop_id)
+                ).fetchone()
+                if row and row['value']:
+                    return row['value']
+            row = cursor.execute(
+                'SELECT value FROM settings WHERE `key` = ? AND shop_id IS NULL', (key,)
+            ).fetchone()
+            return row['value'] if row and row['value'] else None
+
+        times_val = _get('scheduler_times')
+        tz_val = _get('scheduler_timezone')
+        conn.close()
+
+        times = json.loads(times_val) if times_val else ["09:00", "12:00", "18:00"]
+        timezone = tz_val if tz_val else 'UTC'
+
+        # Build job info from settings (consistent across all workers)
+        import pytz
+        from datetime import datetime as dt
+        tz = pytz.timezone(timezone)
+        now = dt.now(tz)
+
+        jobs = []
+        for idx, time_str in enumerate(times):
+            hour, minute = map(int, time_str.split(':'))
+            next_run = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            if next_run <= now:
+                next_run = next_run.replace(day=next_run.day + 1) if next_run.month == now.month else next_run
+                try:
+                    from datetime import timedelta
+                    next_run = now.replace(hour=hour, minute=minute, second=0, microsecond=0) + timedelta(days=1)
+                except Exception:
+                    pass
+            jobs.append({
+                'id': f'low_stock_check_{idx}',
+                'name': f'Low Stock Check - {time_str}',
+                'next_run': next_run.strftime('%Y-%m-%d %H:%M:%S'),
+                'trigger': f'cron[hour={hour}, minute={minute}]'
+            })
+
+        return jsonify({
+            'scheduler_running': True,
+            'jobs': jobs,
+            'timezone': timezone
+        })
+    except Exception as e:
+        return jsonify({
+            'scheduler_running': False,
+            'jobs': [],
+            'error': str(e)
+        })
 
 @app.route('/api/scheduler/trigger-now', methods=['POST'])
 @admin_required
@@ -4105,26 +4250,38 @@ def trigger_low_stock_now():
 @app.route('/api/settings/scheduler', methods=['GET', 'PUT'])
 @admin_required
 def manage_scheduler_settings():
-    """Manage scheduler times for low stock alerts"""
+    """Manage scheduler times and timezone for low stock alerts"""
     conn = get_db_connection()
     cursor = conn.cursor()
 
     if request.method == 'GET':
-        times_row = cursor.execute(
-            'SELECT value FROM settings WHERE `key` = ? AND shop_id IS NULL', ('scheduler_times',)
-        ).fetchone()
+        shop_id = get_settings_shop_id()
 
-        if times_row:
-            times = json.loads(times_row['value'])
-        else:
-            times = ["09:00", "12:00", "18:00"]
+        def _get_setting(key):
+            # Try shop-specific first, fall back to global
+            if shop_id is not None:
+                row = cursor.execute(
+                    'SELECT value FROM settings WHERE `key` = ? AND shop_id = ?', (key, shop_id)
+                ).fetchone()
+                if row and row['value']:
+                    return row['value']
+            row = cursor.execute(
+                'SELECT value FROM settings WHERE `key` = ? AND shop_id IS NULL', (key,)
+            ).fetchone()
+            return row['value'] if row and row['value'] else None
+
+        times_val = _get_setting('scheduler_times')
+        tz_val = _get_setting('scheduler_timezone')
+        times = json.loads(times_val) if times_val else ["09:00", "12:00", "18:00"]
+        timezone = tz_val if tz_val else 'UTC'
 
         conn.close()
-        return jsonify({'times': times})
+        return jsonify({'times': times, 'timezone': timezone})
 
-    # PUT - Update scheduler times
+    # PUT - Update scheduler times and timezone
     data = request.json
     times = data.get('times', [])
+    timezone = data.get('timezone', 'UTC')
 
     # Validate times
     if not times or not isinstance(times, list):
@@ -4141,29 +4298,62 @@ def manage_scheduler_settings():
             conn.close()
             return jsonify({'success': False, 'error': f'Invalid time format: {time_str}. Use HH:MM (24-hour format)'}), 400
 
+    # Validate timezone
+    import pytz
+    if timezone not in pytz.all_timezones:
+        conn.close()
+        return jsonify({'success': False, 'error': f'Invalid timezone: {timezone}'}), 400
+
     try:
-        # Update database
-        cursor.execute(
-            """
-            INSERT INTO settings (`key`, value, shop_id)
-            VALUES (?, ?, NULL)
-            ON DUPLICATE KEY UPDATE value = VALUES(value)
-            """,
-            ('scheduler_times', json.dumps(times))
-        )
+        # Update times — use UPDATE first, INSERT only if no row exists
+        # (ON DUPLICATE KEY UPDATE doesn't work for NULL shop_id in MySQL UNIQUE keys)
+        shop_id = get_settings_shop_id()
+
+        def _upsert_setting(key, value):
+            if shop_id is not None:
+                cursor.execute(
+                    "UPDATE settings SET value = ? WHERE `key` = ? AND shop_id = ?",
+                    (value, key, shop_id)
+                )
+                if cursor.rowcount == 0:
+                    cursor.execute(
+                        "INSERT INTO settings (`key`, value, shop_id) VALUES (?, ?, ?)",
+                        (key, value, shop_id)
+                    )
+            else:
+                cursor.execute(
+                    "UPDATE settings SET value = ? WHERE `key` = ? AND shop_id IS NULL",
+                    (value, key)
+                )
+                if cursor.rowcount == 0:
+                    cursor.execute(
+                        "INSERT INTO settings (`key`, value, shop_id) VALUES (?, ?, NULL)",
+                        (key, value)
+                    )
+
+        _upsert_setting('scheduler_times', json.dumps(times))
+        _upsert_setting('scheduler_timezone', timezone)
 
         conn.commit()
         conn.close()
 
-        # Reload scheduler jobs with new times
+        # Reload scheduler jobs with new times and timezone
         load_scheduler_jobs()
 
-        return jsonify({'success': True, 'times': times})
+        return jsonify({'success': True, 'times': times, 'timezone': timezone})
 
     except Exception as e:
         conn.rollback()
         conn.close()
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/settings/timezones', methods=['GET'])
+@login_required
+def list_timezones():
+    """Return list of common timezones for the UI dropdown"""
+    import pytz
+    common = sorted(pytz.common_timezones)
+    return jsonify({'timezones': common})
 
 # --- Products: Export CSV ---
 @app.route('/api/products/export-csv', methods=['GET'])

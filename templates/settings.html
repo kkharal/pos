@@ -290,10 +290,18 @@
                 <!-- Alert Schedule -->
                 <div class="s-card">
                     <div class="s-card-title">Automatic Alert Schedule</div>
-                    <div class="s-card-desc">Configure when automatic low-stock checks run. Times are in 24-hour format.</div>
+                    <div class="s-card-desc">Configure when automatic low-stock checks run. Times are in 24-hour format based on your selected timezone.</div>
 
                     <div id="scheduler-status" class="s-banner s-banner-info">
                         <span>🕐</span><span><strong>Automatic Email Alerts:</strong> Loading...</span>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="font-weight:600;font-size:0.88rem;margin-bottom:0.3rem;display:block;">Timezone</label>
+                        <select id="scheduler-timezone" style="padding:0.45rem 0.6rem;border:1px solid #e2e8f0;border-radius:8px;font-size:0.88rem;width:100%;max-width:320px;">
+                            <option value="UTC">Loading timezones...</option>
+                        </select>
+                        <div style="font-size:0.78rem;color:#6b7280;margin-top:0.25rem;">Alerts will fire at the scheduled times in this timezone, regardless of server location.</div>
                     </div>
 
                     <div id="scheduler-times-list"></div>
@@ -816,13 +824,32 @@
 
         // ── INVENTORY: Scheduler ─────────────────────────────────────────
         var schedulerTimes = [];
+        var schedulerTimezone = 'UTC';
+
+        async function loadTimezones() {
+            try {
+                var response = await fetch('/api/settings/timezones');
+                var data = await response.json();
+                var select = document.getElementById('scheduler-timezone');
+                select.innerHTML = '';
+                data.timezones.forEach(function(tz) {
+                    var opt = document.createElement('option');
+                    opt.value = tz;
+                    opt.textContent = tz;
+                    if (tz === schedulerTimezone) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            } catch (error) { console.error('Failed to load timezones', error); }
+        }
 
         async function loadSchedulerTimes() {
             try {
                 var response = await fetch('/api/settings/scheduler');
                 var data = await response.json();
                 schedulerTimes = data.times || ['09:00', '12:00', '18:00'];
+                schedulerTimezone = data.timezone || 'UTC';
                 renderSchedulerTimes();
+                await loadTimezones();
             } catch (error) { schedulerTimes = ['09:00', '12:00', '18:00']; renderSchedulerTimes(); }
         }
         function renderSchedulerTimes() {
@@ -850,13 +877,14 @@
                 if (parts.length === 2) return parts[0].padStart(2, '0') + ':' + parts[1].padStart(2, '0');
                 return time;
             });
+            var selectedTimezone = document.getElementById('scheduler-timezone').value;
             try {
                 var response = await fetch('/api/settings/scheduler', {
                     method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ times: formattedTimes })
+                    body: JSON.stringify({ times: formattedTimes, timezone: selectedTimezone })
                 });
                 var result = await response.json();
-                if (response.ok) { showMessage('success', 'Schedule updated!'); schedulerTimes = result.times; renderSchedulerTimes(); loadSchedulerStatus(); }
+                if (response.ok) { showMessage('success', 'Schedule updated!'); schedulerTimes = result.times; schedulerTimezone = result.timezone; renderSchedulerTimes(); loadSchedulerStatus(); }
                 else { showMessage('error', result.error || 'Error saving schedule'); }
             } catch (error) { showMessage('error', 'Error saving schedule'); }
         }
