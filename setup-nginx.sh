@@ -4,7 +4,7 @@
 # Nginx Reverse Proxy + SSL Setup for POS System
 # ─────────────────────────────────────────────────────────────────────────────
 # This script installs Nginx, configures it as a reverse proxy for the Flask/
-# Gunicorn app running on 127.0.0.1:8080, and obtains a free SSL certificate
+# Gunicorn app running on 127.0.0.1:5000, and obtains a free SSL certificate
 # from Let's Encrypt using Certbot.
 #
 # Usage:
@@ -137,7 +137,7 @@ server {
     client_max_body_size 200M;
 
     location / {
-        proxy_pass http://localhost:8080;
+        proxy_pass http://localhost:5000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -157,7 +157,7 @@ server {
     # Rate limit login and API endpoints
     location /login {
         limit_req zone=login_limit burst=3 nodelay;
-        proxy_pass http://localhost:8080;
+        proxy_pass http://localhost:5000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -166,7 +166,7 @@ server {
 
     location /api/ {
         limit_req zone=api_limit burst=20 nodelay;
-        proxy_pass http://localhost:8080;
+        proxy_pass http://localhost:5000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -175,7 +175,7 @@ server {
 
     # Cache static files
     location /static/ {
-        proxy_pass http://localhost:8080/static/;
+        proxy_pass http://localhost:5000/static/;
         expires 7d;
         add_header Cache-Control "public, immutable";
     }
@@ -251,7 +251,7 @@ echo ""
 echo "    🔒 https://${DOMAIN}"
 echo ""
 echo "  Architecture:"
-echo "    User → HTTPS (443) → Nginx → HTTP (127.0.0.1:8080) → Gunicorn"
+echo "    User → HTTPS (443) → Nginx → HTTP (127.0.0.1:5000) → Gunicorn"
 echo ""
 echo "  Make sure the app is running:"
 echo "    cd $(pwd) && ./start.sh"
