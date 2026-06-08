@@ -50,8 +50,8 @@ Notes:
 
 ## Inventory Report
 
-- Total Products:
-    Count of active products returned by inventory query.
+- Total Variants:
+    Count of active product rows (SKU/size/color variants) returned by inventory query.
 - Total Stock:
     `SUM(products.stock_quantity)` across active products.
 - Stock Value (admin view):

@@ -241,6 +241,56 @@ The system has **four roles**, each with distinct permissions:
   - Smooth animations and transitions throughout
   - **Clean separation**: Orders = operations (DO), Reports = analytics (UNDERSTAND)
 
+### 📐 Report Metric Definitions
+
+This section explains how key KPIs are calculated in the Reports pages.
+
+#### Overview Panel
+- **Revenue**: Sum of sales total amount in the selected period.
+- **Gross Profit**: Sales-side gross profit before operating expenses (`total_amount - total_cost`).
+- **Expenses**: Sum of expense entries in the selected period.
+- **Transactions**: Count of completed sales transactions.
+
+#### Sales Panel
+- **Revenue**: `SUM(total_amount)`
+- **Transactions**: `COUNT(sales)`
+- **Avg Order Value (AOV)**: `AVG(total_amount)`
+- **Gross Profit** (admin): `SUM(total_amount - total_cost)`
+- **Discounts**: `SUM(discount_amount)`
+- **Refunds**: `SUM(refund_amount)` from returns in the selected range
+
+#### Inventory Panel
+- **Total Variants**: Count of active product rows (SKU/size/color variants), not grouped product names.
+- **Total Stock**: Sum of stock quantity across active variants.
+- **Stock Value** (admin): `SUM(stock_quantity * cost_price)`
+- **Potential Revenue** (admin): `SUM(stock_quantity * price)`
+- **Potential Profit** (admin): `SUM(stock_quantity * (price - cost_price))`
+
+#### Customers Panel
+- **Visits**: Number of sales grouped by customer name.
+- **Total Spent**: Sum of sale totals for that customer.
+- **Avg Spend (row)**: Average order value for that customer.
+- **Avg Spend (KPI)**: Average of displayed top-customer totals in current UI.
+
+#### Finance Panel (P&L)
+- **Revenue**: `SUM(sales.total_amount)`
+- **COGS**: `SUM(sales.total_cost)`
+- **Gross Profit**: `Revenue - COGS`
+- **Expenses**: `SUM(expenses.amount)`
+- **Net Profit**: `Gross Profit - Expenses`
+- **Refunds**: `SUM(sale_returns.refund_amount)`
+- **Net Revenue**: `Revenue - Refunds`
+- **Gross Margin %**: `(Gross Profit / Net Revenue) * 100` (0 when Net Revenue is 0)
+- **Net Margin %**: `(Net Profit / Net Revenue) * 100` (0 when Net Revenue is 0)
+
+#### POS and Cashflow Logic
+- **Item subtotal**: `price * quantity`
+- **Cart total**: `subtotal - item_discounts - cart_discount`
+- **Available credit**: `credit_limit - balance`
+- **Net cash flow**: `total_collected - credit_given`
+
+For full formula details (including weighted average cost and aging bucket logic), see `docs/formula.md`.
+
 ## Installation
 
 ### 🚀 Quick Start (Recommended)
