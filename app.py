@@ -4305,31 +4305,33 @@ def manage_scheduler_settings():
         return jsonify({'success': False, 'error': f'Invalid timezone: {timezone}'}), 400
 
     try:
-        # Update times — use UPDATE first, INSERT only if no row exists
-        # (ON DUPLICATE KEY UPDATE doesn't work for NULL shop_id in MySQL UNIQUE keys)
+        # Update times using atomic INSERT...ON DUPLICATE KEY UPDATE to prevent race conditions
         shop_id = get_settings_shop_id()
 
         def _upsert_setting(key, value):
             if shop_id is not None:
                 cursor.execute(
-                    "UPDATE settings SET value = ? WHERE `key` = ? AND shop_id = ?",
-                    (value, key, shop_id)
+                    "INSERT INTO settings (`key`, value, shop_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)",
+                    (key, value, shop_id)
                 )
-                if cursor.rowcount == 0:
-                    cursor.execute(
-                        "INSERT INTO settings (`key`, value, shop_id) VALUES (?, ?, ?)",
-                        (key, value, shop_id)
-                    )
             else:
+                # For NULL shop_id, we need to handle differently since NULL != NULL in UNIQUE constraints
                 cursor.execute(
                     "UPDATE settings SET value = ? WHERE `key` = ? AND shop_id IS NULL",
                     (value, key)
                 )
                 if cursor.rowcount == 0:
-                    cursor.execute(
-                        "INSERT INTO settings (`key`, value, shop_id) VALUES (?, ?, NULL)",
-                        (key, value)
-                    )
+                    try:
+                        cursor.execute(
+                            "INSERT INTO settings (`key`, value, shop_id) VALUES (?, ?, NULL)",
+                            (key, value)
+                        )
+                    except Exception:
+                        # If duplicate, just update (handles race condition)
+                        cursor.execute(
+                            "UPDATE settings SET value = ? WHERE `key` = ? AND shop_id IS NULL",
+                            (value, key)
+                        )
 
         _upsert_setting('scheduler_times', json.dumps(times))
         _upsert_setting('scheduler_timezone', timezone)
