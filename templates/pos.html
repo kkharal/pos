@@ -895,7 +895,7 @@
                 var sizeColor = [product.size, product.color].filter(Boolean).join(' / ');
                 var badge = '';
                 if (outOfStock) badge = '<span class="pos-product-badge out">Out of stock</span>';
-                else if (lowStock) badge = '<span class="pos-product-badge low">Low stock</span>';
+                else if (lowStock) badge = '<span class="pos-product-badge low">Stock: ' + product.stock_quantity + '</span>';
 
                 return '<div class="pos-product-card' + (outOfStock ? ' disabled' : '') + '" onclick="' + (outOfStock ? '' : 'addToCart(' + product.id + ')') + '">' +
                     '<div class="pos-product-name">' + product.name + '</div>' +
