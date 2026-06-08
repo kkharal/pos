@@ -335,6 +335,20 @@
             finally { hideLoading(); }
         }
 
+        async function loadGlobalThreshold() {
+            try {
+                const response = await fetch('/api/settings/email');
+                if (!response.ok) return;
+                const data = await response.json();
+                const threshold = parseInt(data.low_stock_threshold, 10);
+                if (!Number.isNaN(threshold) && threshold >= 0) {
+                    globalThreshold = threshold;
+                }
+            } catch (error) {
+                console.error('Error loading global low stock threshold:', error);
+            }
+        }
+
         function groupProducts() {
             groupedProducts = {};
             products.forEach(p => {
@@ -940,7 +954,11 @@
         });
 
         // Init
-        Promise.all([loadUserInfo(), loadProducts()]);
+        (async function initPage() {
+            await loadUserInfo();
+            await loadGlobalThreshold();
+            await loadProducts();
+        })();
     </script>
     <script src="/static/js/session.js"></script>
     <script>
