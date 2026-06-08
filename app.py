@@ -5615,7 +5615,7 @@ def restore_database():
     """Restore the database from an uploaded .sql file."""
     import subprocess
     import tempfile
-    from database import DB_CONFIG, DB_NAME
+    from database import DB_CONFIG, DB_NAME, init_db
 
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
@@ -5675,6 +5675,9 @@ def restore_database():
         if restore_result.returncode != 0:
             err = restore_result.stderr.decode('utf-8', errors='replace')
             return jsonify({'error': f'Restore failed: {err}'}), 500
+
+        # Bring older backups up to the current schema before the app serves them.
+        init_db()
 
         return jsonify({'message': 'Database restored successfully. Please log in again.'})
 
