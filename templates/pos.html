@@ -151,7 +151,12 @@
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }
-        .pos-product-badge.low { background: #fef3c7; color: #92400e; }
+        .pos-product-badge.stock {
+            background: #f1f5f9;
+            color: #475569;
+            text-transform: none;
+            letter-spacing: 0;
+        }
         .pos-product-badge.out { background: #fee2e2; color: #991b1b; }
 
         /* Empty state */
@@ -895,7 +900,7 @@
                 var sizeColor = [product.size, product.color].filter(Boolean).join(' / ');
                 var badge = '';
                 if (outOfStock) badge = '<span class="pos-product-badge out">Out of stock</span>';
-                else if (lowStock) badge = '<span class="pos-product-badge low">Stock: ' + product.stock_quantity + '</span>';
+                else if (lowStock) badge = '<span class="pos-product-badge stock">Stock: ' + product.stock_quantity + '</span>';
 
                 return '<div class="pos-product-card' + (outOfStock ? ' disabled' : '') + '" onclick="' + (outOfStock ? '' : 'addToCart(' + product.id + ')') + '">' +
                     '<div class="pos-product-name">' + product.name + '</div>' +
