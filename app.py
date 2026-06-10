@@ -74,6 +74,19 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
         email_settings = get_shop_email_settings(cursor, shop_id)
         alert_email = email_settings.get('alert_email', '')
         threshold = int(email_settings.get('low_stock_threshold') or 5)
+        
+        # Fetch actual scheduled times for this shop
+        times_row = cursor.execute(
+            'SELECT value FROM settings WHERE `key` = ? AND shop_id = ?', ('scheduler_times', shop_id)
+        ).fetchone()
+        scheduled_times = json.loads(times_row['value']) if times_row else []
+        
+        # If no shop-specific times, try global fallback
+        if not scheduled_times:
+            g_times = cursor.execute(
+                'SELECT value FROM settings WHERE `key` = ? AND shop_id IS NULL', ('scheduler_times',)
+            ).fetchone()
+            scheduled_times = json.loads(g_times['value']) if g_times else ["09:00", "12:00", "18:00"]
 
         if not alert_email:
             print(f"[SCHEDULER] Shop '{shop_name}' (id={shop_id}): no alert email configured, skipping")
@@ -130,6 +143,14 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
 
         products_html += '</table>'
         plain_text = '\n'.join(plain_lines)
+        
+        # Build schedule message based on actual configured times
+        if len(scheduled_times) == 1:
+            schedule_msg = f"Scheduled checks run at {scheduled_times[0]} daily."
+        elif len(scheduled_times) == 2:
+            schedule_msg = f"Scheduled checks run at {scheduled_times[0]} and {scheduled_times[1]} daily."
+        else:
+            schedule_msg = f"Scheduled checks run at {', '.join(scheduled_times[:-1])} and {scheduled_times[-1]} daily."
 
         email_body = f'''
         <html>
@@ -146,7 +167,7 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
                 </div>
                 <p style="margin-top: 20px; color: #6c757d; font-size: 0.9em;">
                     This is an automated alert from {shop_name}.<br>
-                    Scheduled checks run at 09:00, 12:00, and 18:00 daily.
+                    {schedule_msg}
                 </p>
             </div>
         </body>
