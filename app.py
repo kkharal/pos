@@ -15,6 +15,7 @@ from reportlab.lib.units import inch
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 import smtplib
+from html import unescape
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.utils import formataddr
@@ -80,10 +81,11 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
             return
 
         low_stock_products = cursor.execute('''
-            SELECT id, name, sku, category, stock_quantity,
+                        SELECT id, name, sku, category, size, color, stock_quantity,
                    COALESCE(low_stock_threshold, ?) as threshold
             FROM products
             WHERE shop_id = ?
+                            AND is_active = 1
               AND stock_quantity <= COALESCE(low_stock_threshold, ?)
             ORDER BY stock_quantity ASC
         ''', (threshold, shop_id, threshold)).fetchall()
@@ -95,25 +97,39 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
             return
 
         # Build email body
-        products_html = '<table style="width: 100%; border-collapse: collapse; margin-top: 20px;">'
+        products_html = '<table style="width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed;">'
         products_html += '<tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">'
-        products_html += '<th style="padding: 12px; text-align: left;">Product</th>'
-        products_html += '<th style="padding: 12px; text-align: left;">SKU</th>'
-        products_html += '<th style="padding: 12px; text-align: left;">Category</th>'
-        products_html += '<th style="padding: 12px; text-align: center;">Stock</th>'
-        products_html += '<th style="padding: 12px; text-align: center;">Threshold</th>'
+        products_html += '<th style="padding: 12px; text-align: left; width: 52%;">Product</th>'
+        products_html += '<th style="padding: 12px; text-align: left; width: 14%; white-space: nowrap;">SKU</th>'
+        products_html += '<th style="padding: 12px; text-align: center; width: 8%; white-space: nowrap;">Size</th>'
+        products_html += '<th style="padding: 12px; text-align: left; width: 16%; white-space: nowrap;">Color</th>'
+        products_html += '<th style="padding: 12px; text-align: center; width: 10%; white-space: nowrap;">Stock</th>'
         products_html += '</tr>'
+
+        plain_lines = [
+            f'Scheduled Low Stock Alert - {shop_name}',
+            '',
+            f'Total low stock items: {len(low_stock_products)}',
+            '',
+            'Product | SKU | Size | Color | Stock',
+            '-' * 90,
+        ]
 
         for product in low_stock_products:
             products_html += '<tr style="border-bottom: 1px solid #dee2e6;">'
-            products_html += f'<td style="padding: 10px;">{product["name"]}</td>'
-            products_html += f'<td style="padding: 10px;">{product["sku"] or "-"}</td>'
-            products_html += f'<td style="padding: 10px;">{product["category"]}</td>'
-            products_html += f'<td style="padding: 10px; text-align: center; color: #e74c3c; font-weight: bold;">{product["stock_quantity"]}</td>'
-            products_html += f'<td style="padding: 10px; text-align: center;">{product["threshold"]}</td>'
+            products_html += f'<td style="padding: 10px; word-break: break-word;">{product["name"]}</td>'
+            products_html += f'<td style="padding: 10px; white-space: nowrap;">{product["sku"] or "-"}</td>'
+            products_html += f'<td style="padding: 10px; text-align: center; white-space: nowrap;">{product["size"] or "-"}</td>'
+            products_html += f'<td style="padding: 10px; white-space: nowrap;">{product["color"] or "-"}</td>'
+            products_html += f'<td style="padding: 10px; text-align: center; color: #e74c3c; font-weight: bold; white-space: nowrap;">{product["stock_quantity"]}</td>'
             products_html += '</tr>'
+            plain_lines.append(
+                f'{product["name"]} | {product["sku"] or "-"} | {product["size"] or "-"} | '
+                f'{product["color"] or "-"} | {product["stock_quantity"]}'
+            )
 
         products_html += '</table>'
+        plain_text = '\n'.join(plain_lines)
 
         email_body = f'''
         <html>
@@ -142,7 +158,8 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
             alert_email,
             f'{shop_name} - Scheduled Low Stock Alert ({len(low_stock_products)} items)',
             email_body,
-            from_name=shop_name
+            from_name=shop_name,
+            text_body=plain_text
         )
 
         print(f"[SCHEDULER] ✓ Alert sent for shop '{shop_name}': {len(low_stock_products)} low stock item(s)")
@@ -3080,10 +3097,11 @@ def check_low_stock():
         # Get low stock products scoped to this shop
         flt_sql, flt_params = shop_filter()
         low_stock_products = cursor.execute(f'''
-            SELECT id, name, sku, category, stock_quantity,
+            SELECT id, name, sku, category, size, color, stock_quantity,
                    COALESCE(low_stock_threshold, ?) as threshold
             FROM products
-            WHERE stock_quantity <= COALESCE(low_stock_threshold, ?)
+                        WHERE is_active = 1
+                            AND stock_quantity <= COALESCE(low_stock_threshold, ?)
             {('AND ' + flt_sql) if flt_sql else ''}
             ORDER BY stock_quantity ASC
         ''', (threshold, threshold, *flt_params)).fetchall()
@@ -3102,25 +3120,39 @@ def check_low_stock():
         conn.close()
 
         # Generate email body
-        products_html = '<table style="width: 100%; border-collapse: collapse; margin-top: 20px;">'
+        products_html = '<table style="width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed;">'
         products_html += '<tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">'
-        products_html += '<th style="padding: 12px; text-align: left;">Product</th>'
-        products_html += '<th style="padding: 12px; text-align: left;">SKU</th>'
-        products_html += '<th style="padding: 12px; text-align: left;">Category</th>'
-        products_html += '<th style="padding: 12px; text-align: center;">Stock</th>'
-        products_html += '<th style="padding: 12px; text-align: center;">Threshold</th>'
+        products_html += '<th style="padding: 12px; text-align: left; width: 52%;">Product</th>'
+        products_html += '<th style="padding: 12px; text-align: left; width: 14%; white-space: nowrap;">SKU</th>'
+        products_html += '<th style="padding: 12px; text-align: center; width: 8%; white-space: nowrap;">Size</th>'
+        products_html += '<th style="padding: 12px; text-align: left; width: 16%; white-space: nowrap;">Color</th>'
+        products_html += '<th style="padding: 12px; text-align: center; width: 10%; white-space: nowrap;">Stock</th>'
         products_html += '</tr>'
+
+        plain_lines = [
+            f'Low Stock Alert - {shop_name}',
+            '',
+            f'Total low stock items: {len(low_stock_products)}',
+            '',
+            'Product | SKU | Size | Color | Stock',
+            '-' * 90,
+        ]
 
         for product in low_stock_products:
             products_html += '<tr style="border-bottom: 1px solid #dee2e6;">'
-            products_html += f'<td style="padding: 10px;">{product["name"]}</td>'
-            products_html += f'<td style="padding: 10px;">{product["sku"] or "-"}</td>'
-            products_html += f'<td style="padding: 10px;">{product["category"]}</td>'
-            products_html += f'<td style="padding: 10px; text-align: center; color: #e74c3c; font-weight: bold;">{product["stock_quantity"]}</td>'
-            products_html += f'<td style="padding: 10px; text-align: center;">{product["threshold"]}</td>'
+            products_html += f'<td style="padding: 10px; word-break: break-word;">{product["name"]}</td>'
+            products_html += f'<td style="padding: 10px; white-space: nowrap;">{product["sku"] or "-"}</td>'
+            products_html += f'<td style="padding: 10px; text-align: center; white-space: nowrap;">{product["size"] or "-"}</td>'
+            products_html += f'<td style="padding: 10px; white-space: nowrap;">{product["color"] or "-"}</td>'
+            products_html += f'<td style="padding: 10px; text-align: center; color: #e74c3c; font-weight: bold; white-space: nowrap;">{product["stock_quantity"]}</td>'
             products_html += '</tr>'
+            plain_lines.append(
+                f'{product["name"]} | {product["sku"] or "-"} | {product["size"] or "-"} | '
+                f'{product["color"] or "-"} | {product["stock_quantity"]}'
+            )
 
         products_html += '</table>'
+        plain_text = '\n'.join(plain_lines)
 
         email_body = f'''
         <html>
@@ -3149,7 +3181,8 @@ def check_low_stock():
             alert_email,
             f'{shop_name} - Low Stock Alert ({len(low_stock_products)} items)',
             email_body,
-            from_name=shop_name
+            from_name=shop_name,
+            text_body=plain_text
         )
 
         return jsonify({
@@ -3186,7 +3219,7 @@ def get_shop_email_settings(cursor, shop_id):
         result[key] = row['value'] if row else ''
     return result
 
-def send_email(settings, to_email, subject, html_body, from_name=None):
+def send_email(settings, to_email, subject, html_body, from_name=None, text_body=None):
     """Send email using SMTP. `to_email` may be a single address, a comma/semicolon/space-separated string, or a list of addresses.
     `from_name` if provided will be used as the display name in the From header (e.g. "Shop Name <noreply@example.com>")."""
     try:
@@ -3213,6 +3246,18 @@ def send_email(settings, to_email, subject, html_body, from_name=None):
             msg['From'] = settings['smtp_username']
         msg['To'] = ', '.join(recipients)
         msg['Subject'] = subject
+
+        if text_body is None:
+            fallback_text = re.sub(r'(?i)<br\s*/?>', '\n', html_body)
+            fallback_text = re.sub(r'(?i)</p>|</div>|</tr>|</h[1-6]>', '\n', fallback_text)
+            fallback_text = re.sub(r'(?i)</td>|</th>', ' | ', fallback_text)
+            fallback_text = re.sub(r'<[^>]+>', '', fallback_text)
+            fallback_text = unescape(fallback_text)
+            fallback_text = re.sub(r'\n\s*\n\s*\n+', '\n\n', fallback_text).strip()
+            text_body = fallback_text
+
+        text_part = MIMEText(text_body, 'plain')
+        msg.attach(text_part)
 
         html_part = MIMEText(html_body, 'html')
         msg.attach(html_part)
