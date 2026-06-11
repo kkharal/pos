@@ -561,6 +561,44 @@ def get_settings_shop_id():
         return ids[0] if ids else None
     return get_current_shop_id() or session.get('shop_id')
 
+
+def _get_initial_shop_name_for_template():
+    """Resolve a best-effort shop name for first paint in server-rendered templates."""
+    if 'user_id' not in session:
+        return 'POS System'
+
+    role = session.get('role')
+    active_shop_id = session.get('active_shop_id')
+    shop_id = active_shop_id if role in ('super_admin', 'shop_owner') and active_shop_id else session.get('shop_id')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        if shop_id:
+            shop = cursor.execute('SELECT name FROM shops WHERE id = ?', (shop_id,)).fetchone()
+        else:
+            # all-shops mode: pick first assigned/available shop for display
+            if role == 'shop_owner':
+                shop = cursor.execute(
+                    'SELECT s.name FROM shops s '
+                    'INNER JOIN user_shops us ON us.shop_id = s.id '
+                    'WHERE us.user_id = ? ORDER BY s.id LIMIT 1',
+                    (session.get('user_id'),)
+                ).fetchone()
+            else:
+                shop = cursor.execute('SELECT name FROM shops ORDER BY id LIMIT 1').fetchone()
+    finally:
+        conn.close()
+
+    return shop['name'] if shop and shop['name'] else 'POS System'
+
+
+@app.context_processor
+def inject_template_globals():
+    return {
+        'initial_shop_name': _get_initial_shop_name_for_template()
+    }
+
 # Authentication routes
 @app.route('/api/public/shop-name', methods=['GET'])
 def get_public_shop_name():
@@ -3377,15 +3415,15 @@ def send_email(settings, to_email, subject, html_body, from_name=None, text_body
 @app.route('/api/reports/sales/export/<format>', methods=['GET'])
 @login_required
 def export_sales_report(format):
-    """Export sales report to PDF or Excel"""
+    """Export sales report to Excel."""
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
     if not start_date or not end_date:
         return jsonify({'success': False, 'error': 'Start and end dates are required'}), 400
 
-    if format not in ['pdf', 'excel']:
-        return jsonify({'success': False, 'error': 'Invalid format'}), 400
+    if format != 'excel':
+        return jsonify({'success': False, 'error': 'Only Excel export is supported'}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -3469,10 +3507,7 @@ def export_sales_report(format):
 
         conn.close()
 
-        if format == 'pdf':
-            return generate_sales_pdf(shop_name, currency, start_date, end_date, summary, daily_sales, top_products, is_admin)
-        else:
-            return generate_sales_excel(shop_name, currency, start_date, end_date, summary, daily_sales, top_products, is_admin)
+        return generate_sales_excel(shop_name, currency, start_date, end_date, summary, daily_sales, top_products, is_admin)
 
     except Exception as e:
         conn.close()
@@ -3481,15 +3516,15 @@ def export_sales_report(format):
 @app.route('/api/reports/inventory/export/<format>', methods=['GET'])
 @login_required
 def export_inventory_report(format):
-    """Export inventory report to PDF or Excel"""
+    """Export inventory report to Excel."""
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
     if not start_date or not end_date:
         return jsonify({'success': False, 'error': 'Start and end dates are required'}), 400
 
-    if format not in ['pdf', 'excel']:
-        return jsonify({'success': False, 'error': 'Invalid format'}), 400
+    if format != 'excel':
+        return jsonify({'success': False, 'error': 'Only Excel export is supported'}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -3597,10 +3632,7 @@ def export_inventory_report(format):
 
         conn.close()
 
-        if format == 'pdf':
-            return generate_inventory_pdf(shop_name, currency, start_date, end_date, inventory, stock_movements, top_movements, low_stock, slow_moving, is_admin)
-        else:
-            return generate_inventory_excel(shop_name, currency, start_date, end_date, inventory, stock_movements, top_movements, low_stock, slow_moving, is_admin)
+        return generate_inventory_excel(shop_name, currency, start_date, end_date, inventory, stock_movements, top_movements, low_stock, slow_moving, is_admin)
 
     except Exception as e:
         conn.close()
@@ -3610,15 +3642,15 @@ def export_inventory_report(format):
 @login_required
 @admin_required
 def export_cashflow_report(format):
-    """Export cash flow report to PDF or Excel"""
+    """Export cash flow report to Excel."""
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
     if not start_date or not end_date:
         return jsonify({'success': False, 'error': 'Start and end dates are required'}), 400
 
-    if format not in ['pdf', 'excel']:
-        return jsonify({'success': False, 'error': 'Invalid format'}), 400
+    if format != 'excel':
+        return jsonify({'success': False, 'error': 'Only Excel export is supported'}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -3676,10 +3708,7 @@ def export_cashflow_report(format):
             'net_cash_flow': total_collected - credit_given
         }
 
-        if format == 'pdf':
-            return generate_cashflow_pdf(shop_name, currency, start_date, end_date, summary, customer_outstanding)
-        else:
-            return generate_cashflow_excel(shop_name, currency, start_date, end_date, summary, customer_outstanding)
+        return generate_cashflow_excel(shop_name, currency, start_date, end_date, summary, customer_outstanding)
 
     except Exception as e:
         conn.close()
@@ -6473,14 +6502,14 @@ def get_pnl_report():
 @login_required
 @admin_required
 def export_pnl_report(format):
-    """Export P&L report to PDF or Excel"""
+    """Export P&L report to Excel."""
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
     if not start_date or not end_date:
         return jsonify({'success': False, 'error': 'Start and end dates are required'}), 400
-    if format not in ['pdf', 'excel']:
-        return jsonify({'success': False, 'error': 'Invalid format'}), 400
+    if format != 'excel':
+        return jsonify({'success': False, 'error': 'Only Excel export is supported'}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -6543,10 +6572,7 @@ def export_pnl_report(format):
             'expenses_by_category': [dict(row) for row in exp_cats]
         }
 
-        if format == 'pdf':
-            return generate_pnl_pdf(shop_name, currency, start_date, end_date, pnl_data)
-        else:
-            return generate_pnl_excel(shop_name, currency, start_date, end_date, pnl_data)
+        return generate_pnl_excel(shop_name, currency, start_date, end_date, pnl_data)
 
     except Exception as e:
         conn.close()
