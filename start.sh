@@ -286,6 +286,17 @@ mkdir -p logs
 
 LOG_FILE="logs/app.log"
 
+# Run a quick syntax smoke check before starting the server
+if [ -x "./scripts/smoke_check.sh" ]; then
+    echo "Running pre-start smoke check..."
+    if ! ./scripts/smoke_check.sh; then
+        echo "❌ Smoke check failed. Server startup aborted."
+        echo "Fix the reported Python error(s), then rerun ./start.sh"
+        exit 1
+    fi
+    echo "✓ Smoke check passed"
+fi
+
 # Start the application
 echo ""
 echo "=========================================="

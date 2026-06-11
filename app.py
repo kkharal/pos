@@ -110,13 +110,13 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
             return
 
         # Build email body
-        products_html = '<table style="width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed;">'
-        products_html += '<tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">'
-        products_html += '<th style="padding: 12px; text-align: left; width: 52%;">Product</th>'
-        products_html += '<th style="padding: 12px; text-align: left; width: 14%; white-space: nowrap;">SKU</th>'
-        products_html += '<th style="padding: 12px; text-align: center; width: 8%; white-space: nowrap;">Size</th>'
-        products_html += '<th style="padding: 12px; text-align: left; width: 16%; white-space: nowrap;">Color</th>'
-        products_html += '<th style="padding: 12px; text-align: center; width: 10%; white-space: nowrap;">Stock</th>'
+        products_html = '<table class="low-stock-table" style="width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed;">'
+        products_html += '<tr class="low-stock-head" style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">'
+        products_html += '<th style="padding: 12px; text-align: left; width: 40%;">Product</th>'
+        products_html += '<th style="padding: 12px; text-align: left; width: 20%;">SKU</th>'
+        products_html += '<th style="padding: 12px; text-align: center; width: 14%;">Size</th>'
+        products_html += '<th style="padding: 12px; text-align: left; width: 16%;">Color</th>'
+        products_html += '<th style="padding: 12px; text-align: center; width: 10%;">Stock</th>'
         products_html += '</tr>'
 
         plain_lines = [
@@ -129,12 +129,12 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
         ]
 
         for product in low_stock_products:
-            products_html += '<tr style="border-bottom: 1px solid #dee2e6;">'
-            products_html += f'<td style="padding: 10px; word-break: break-word;">{product["name"]}</td>'
-            products_html += f'<td style="padding: 10px; white-space: nowrap;">{product["sku"] or "-"}</td>'
-            products_html += f'<td style="padding: 10px; text-align: center; white-space: nowrap;">{product["size"] or "-"}</td>'
-            products_html += f'<td style="padding: 10px; white-space: nowrap;">{product["color"] or "-"}</td>'
-            products_html += f'<td style="padding: 10px; text-align: center; color: #e74c3c; font-weight: bold; white-space: nowrap;">{product["stock_quantity"]}</td>'
+            products_html += '<tr class="low-stock-row" style="border-bottom: 1px solid #dee2e6;">'
+            products_html += f'<td class="low-stock-cell" data-label="Product" style="padding: 10px; word-break: break-word; overflow-wrap: anywhere;">{product["name"]}</td>'
+            products_html += f'<td class="low-stock-cell" data-label="SKU" style="padding: 10px; word-break: break-word; overflow-wrap: anywhere;">{product["sku"] or "-"}</td>'
+            products_html += f'<td class="low-stock-cell" data-label="Size" style="padding: 10px; text-align: center; word-break: break-word;">{product["size"] or "-"}</td>'
+            products_html += f'<td class="low-stock-cell" data-label="Color" style="padding: 10px; word-break: break-word; overflow-wrap: anywhere;">{product["color"] or "-"}</td>'
+            products_html += f'<td class="low-stock-cell low-stock-value" data-label="Stock" style="padding: 10px; text-align: center; color: #e74c3c; font-weight: bold;">{product["stock_quantity"]}</td>'
             products_html += '</tr>'
             plain_lines.append(
                 f'{product["name"]} | {product["sku"] or "-"} | {product["size"] or "-"} | '
@@ -154,8 +154,38 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
 
         email_body = f'''
         <html>
+        <head>
+            <style>
+                @media only screen and (max-width: 600px) {{
+                    .email-wrap {{ padding: 12px !important; }}
+                    .low-stock-table {{ table-layout: auto !important; }}
+                    .low-stock-head {{ display: none !important; }}
+                    .low-stock-row {{
+                        display: block !important;
+                        border: 1px solid #e5e7eb !important;
+                        border-radius: 8px !important;
+                        margin-bottom: 10px !important;
+                    }}
+                    .low-stock-cell {{
+                        display: block !important;
+                        width: 100% !important;
+                        box-sizing: border-box !important;
+                        text-align: left !important;
+                        padding: 8px 10px !important;
+                        border-bottom: 1px solid #f1f5f9 !important;
+                    }}
+                    .low-stock-cell:last-child {{ border-bottom: none !important; }}
+                    .low-stock-cell::before {{
+                        content: attr(data-label) ': ';
+                        font-weight: 700;
+                        color: #374151;
+                    }}
+                    .low-stock-value {{ color: #e74c3c !important; font-weight: 700 !important; }}
+                }}
+            </style>
+        </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+            <div class="email-wrap" style="max-width: 800px; margin: 0 auto; padding: 20px;">
                 <h2 style="color: #e74c3c; border-bottom: 3px solid #e74c3c; padding-bottom: 10px;">
                     ⚠️ Scheduled Low Stock Alert
                 </h2>
@@ -3141,13 +3171,13 @@ def check_low_stock():
         conn.close()
 
         # Generate email body
-        products_html = '<table style="width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed;">'
-        products_html += '<tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">'
-        products_html += '<th style="padding: 12px; text-align: left; width: 52%;">Product</th>'
-        products_html += '<th style="padding: 12px; text-align: left; width: 14%; white-space: nowrap;">SKU</th>'
-        products_html += '<th style="padding: 12px; text-align: center; width: 8%; white-space: nowrap;">Size</th>'
-        products_html += '<th style="padding: 12px; text-align: left; width: 16%; white-space: nowrap;">Color</th>'
-        products_html += '<th style="padding: 12px; text-align: center; width: 10%; white-space: nowrap;">Stock</th>'
+        products_html = '<table class="low-stock-table" style="width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed;">'
+        products_html += '<tr class="low-stock-head" style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">'
+        products_html += '<th style="padding: 12px; text-align: left; width: 40%;">Product</th>'
+        products_html += '<th style="padding: 12px; text-align: left; width: 20%;">SKU</th>'
+        products_html += '<th style="padding: 12px; text-align: center; width: 14%;">Size</th>'
+        products_html += '<th style="padding: 12px; text-align: left; width: 16%;">Color</th>'
+        products_html += '<th style="padding: 12px; text-align: center; width: 10%;">Stock</th>'
         products_html += '</tr>'
 
         plain_lines = [
@@ -3160,12 +3190,12 @@ def check_low_stock():
         ]
 
         for product in low_stock_products:
-            products_html += '<tr style="border-bottom: 1px solid #dee2e6;">'
-            products_html += f'<td style="padding: 10px; word-break: break-word;">{product["name"]}</td>'
-            products_html += f'<td style="padding: 10px; white-space: nowrap;">{product["sku"] or "-"}</td>'
-            products_html += f'<td style="padding: 10px; text-align: center; white-space: nowrap;">{product["size"] or "-"}</td>'
-            products_html += f'<td style="padding: 10px; white-space: nowrap;">{product["color"] or "-"}</td>'
-            products_html += f'<td style="padding: 10px; text-align: center; color: #e74c3c; font-weight: bold; white-space: nowrap;">{product["stock_quantity"]}</td>'
+            products_html += '<tr class="low-stock-row" style="border-bottom: 1px solid #dee2e6;">'
+            products_html += f'<td class="low-stock-cell" data-label="Product" style="padding: 10px; word-break: break-word; overflow-wrap: anywhere;">{product["name"]}</td>'
+            products_html += f'<td class="low-stock-cell" data-label="SKU" style="padding: 10px; word-break: break-word; overflow-wrap: anywhere;">{product["sku"] or "-"}</td>'
+            products_html += f'<td class="low-stock-cell" data-label="Size" style="padding: 10px; text-align: center; word-break: break-word;">{product["size"] or "-"}</td>'
+            products_html += f'<td class="low-stock-cell" data-label="Color" style="padding: 10px; word-break: break-word; overflow-wrap: anywhere;">{product["color"] or "-"}</td>'
+            products_html += f'<td class="low-stock-cell low-stock-value" data-label="Stock" style="padding: 10px; text-align: center; color: #e74c3c; font-weight: bold;">{product["stock_quantity"]}</td>'
             products_html += '</tr>'
             plain_lines.append(
                 f'{product["name"]} | {product["sku"] or "-"} | {product["size"] or "-"} | '
@@ -3177,8 +3207,38 @@ def check_low_stock():
 
         email_body = f'''
         <html>
+        <head>
+            <style>
+                @media only screen and (max-width: 600px) {{
+                    .email-wrap {{ padding: 12px !important; }}
+                    .low-stock-table {{ table-layout: auto !important; }}
+                    .low-stock-head {{ display: none !important; }}
+                    .low-stock-row {{
+                        display: block !important;
+                        border: 1px solid #e5e7eb !important;
+                        border-radius: 8px !important;
+                        margin-bottom: 10px !important;
+                    }}
+                    .low-stock-cell {{
+                        display: block !important;
+                        width: 100% !important;
+                        box-sizing: border-box !important;
+                        text-align: left !important;
+                        padding: 8px 10px !important;
+                        border-bottom: 1px solid #f1f5f9 !important;
+                    }}
+                    .low-stock-cell:last-child {{ border-bottom: none !important; }}
+                    .low-stock-cell::before {{
+                        content: attr(data-label) ': ';
+                        font-weight: 700;
+                        color: #374151;
+                    }}
+                    .low-stock-value {{ color: #e74c3c !important; font-weight: 700 !important; }}
+                }}
+            </style>
+        </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+            <div class="email-wrap" style="max-width: 800px; margin: 0 auto; padding: 20px;">
                 <h2 style="color: #e74c3c; border-bottom: 3px solid #e74c3c; padding-bottom: 10px;">
                     ⚠️ Low Stock Alert
                 </h2>
