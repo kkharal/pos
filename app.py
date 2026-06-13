@@ -2110,6 +2110,7 @@ def get_sales_report():
     is_admin = session.get('role') in ('admin', 'super_admin', 'shop_owner')
     flt_sql, flt_params = shop_filter('s')
     flt_sql_plain, flt_params_plain = shop_filter()
+    flt_sql_sr, flt_params_sr = shop_filter('sr')
 
     try:
         # Add time to include the entire end date
@@ -2243,6 +2244,38 @@ def get_sales_report():
             FROM sale_returns WHERE return_date BETWEEN ? AND ? {flt_sql_plain}
         ''', [start_date_time, end_date_time] + flt_params_plain).fetchone()
 
+        refund_profit_impact = cursor.execute(f'''
+            SELECT
+                COALESCE(SUM(sr.refund_amount), 0) as total_refunded,
+                COALESCE(SUM(
+                    CASE
+                        WHEN COALESCE(s.total_amount, 0) > 0
+                            THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
+                        ELSE 0
+                    END
+                ), 0) as refunded_cogs
+            FROM sale_returns sr
+            JOIN sales s ON s.id = sr.sale_id
+            WHERE sr.return_date BETWEEN ? AND ? {flt_sql_sr}
+        ''', [start_date_time, end_date_time] + flt_params_sr).fetchone()
+
+        daily_refund_impact = cursor.execute(f'''
+            SELECT
+                DATE(sr.return_date) as return_date,
+                COALESCE(SUM(sr.refund_amount), 0) as refunded,
+                COALESCE(SUM(
+                    CASE
+                        WHEN COALESCE(s.total_amount, 0) > 0
+                            THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
+                        ELSE 0
+                    END
+                ), 0) as refunded_cogs
+            FROM sale_returns sr
+            JOIN sales s ON s.id = sr.sale_id
+            WHERE sr.return_date BETWEEN ? AND ? {flt_sql_sr}
+            GROUP BY DATE(sr.return_date)
+        ''', [start_date_time, end_date_time] + flt_params_sr).fetchall()
+
         # Top refunded products
         top_refunded_query = cursor.execute(f'''
             SELECT sr.items_json, sr.refund_amount
@@ -2351,6 +2384,33 @@ def get_sales_report():
         prev_summary_query += f' FROM sales s WHERE sale_date BETWEEN ? AND ? {flt_sql}'
         prev_summary = cursor.execute(prev_summary_query, [prev_start_str, prev_end_str] + flt_params).fetchone()
 
+        prev_refund_impact = cursor.execute(f'''
+            SELECT
+                COALESCE(SUM(sr.refund_amount), 0) as total_refunded,
+                COALESCE(SUM(
+                    CASE
+                        WHEN COALESCE(s.total_amount, 0) > 0
+                            THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
+                        ELSE 0
+                    END
+                ), 0) as refunded_cogs
+            FROM sale_returns sr
+            JOIN sales s ON s.id = sr.sale_id
+            WHERE sr.return_date BETWEEN ? AND ? {flt_sql_sr}
+        ''', [prev_start_str, prev_end_str] + flt_params_sr).fetchone()
+
+        daily_sales_list = [dict(row) for row in daily_sales]
+        if is_admin:
+            refund_by_date = {str(r['return_date']): dict(r) for r in daily_refund_impact}
+            for d in daily_sales_list:
+                day_key = str(d['sale_date'])
+                impact = refund_by_date.get(day_key)
+                base_profit = float(d.get('daily_profit') or 0)
+                if impact:
+                    d['daily_profit'] = base_profit - float(impact.get('refunded') or 0) + float(impact.get('refunded_cogs') or 0)
+                else:
+                    d['daily_profit'] = base_profit
+
         # Build response
         response = {
             'summary': {
@@ -2361,7 +2421,7 @@ def get_sales_report():
                 'discounted_count': discount_summary['discounted_count'] or 0,
                 'avg_discount': discount_summary['avg_discount'] or 0,
             },
-            'daily_sales': [dict(row) for row in daily_sales],
+            'daily_sales': daily_sales_list,
             'top_products': top_products_formatted,
             'product_performance': performance_formatted,
             'payment_breakdown': [dict(row) for row in payment_breakdown],
@@ -2389,8 +2449,15 @@ def get_sales_report():
         }
 
         if is_admin:
-            response['summary']['total_profit'] = summary['total_profit'] or 0
-            response['period_comparison']['prev_total_profit'] = prev_summary['total_profit'] or 0
+            base_profit = float(summary['total_profit'] or 0)
+            cur_refunded = float(refund_profit_impact['total_refunded'] or 0)
+            cur_refunded_cogs = float(refund_profit_impact['refunded_cogs'] or 0)
+            response['summary']['total_profit'] = base_profit - cur_refunded + cur_refunded_cogs
+
+            prev_base_profit = float(prev_summary['total_profit'] or 0)
+            prev_refunded = float(prev_refund_impact['total_refunded'] or 0)
+            prev_refunded_cogs = float(prev_refund_impact['refunded_cogs'] or 0)
+            response['period_comparison']['prev_total_profit'] = prev_base_profit - prev_refunded + prev_refunded_cogs
 
         conn.close()
         return jsonify(response)
@@ -2945,6 +3012,7 @@ def get_dashboard_stats():
     is_admin = session.get('role') in ('admin', 'super_admin', 'shop_owner')
     flt_sql, flt_params = shop_filter()
     flt_sql_s, flt_params_s = shop_filter('s')
+    flt_sql_sr, flt_params_sr = shop_filter('sr')
 
     # Total products
     total_products = conn.execute(
@@ -2975,6 +3043,37 @@ def get_dashboard_stats():
         WHERE DATE(sale_date) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) {flt_sql_s}
     ''', flt_params_s).fetchone()
 
+    # Refund impact for today/yesterday (revenue and COGS reversal)
+    today_refunds = conn.execute(f'''
+        SELECT
+            COALESCE(SUM(sr.refund_amount), 0) as refunded,
+            COALESCE(SUM(
+                CASE
+                    WHEN COALESCE(s.total_amount, 0) > 0
+                        THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
+                    ELSE 0
+                END
+            ), 0) as refunded_cogs
+        FROM sale_returns sr
+        JOIN sales s ON s.id = sr.sale_id
+        WHERE DATE(sr.return_date) = CURDATE() {flt_sql_sr}
+    ''', flt_params_sr).fetchone()
+
+    yesterday_refunds = conn.execute(f'''
+        SELECT
+            COALESCE(SUM(sr.refund_amount), 0) as refunded,
+            COALESCE(SUM(
+                CASE
+                    WHEN COALESCE(s.total_amount, 0) > 0
+                        THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
+                    ELSE 0
+                END
+            ), 0) as refunded_cogs
+        FROM sale_returns sr
+        JOIN sales s ON s.id = sr.sale_id
+        WHERE DATE(sr.return_date) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) {flt_sql_sr}
+    ''', flt_params_sr).fetchone()
+
     # Total sales count today
     today_count = conn.execute(f'''
         SELECT COUNT(*) as count
@@ -3001,6 +3100,39 @@ def get_dashboard_stats():
         GROUP BY DATE(sale_date)
         ORDER BY date ASC
     ''', flt_params_s).fetchall()
+
+    refund_trend = cursor.execute(f'''
+        SELECT
+            DATE(sr.return_date) as date,
+            COALESCE(SUM(sr.refund_amount), 0) as refunded,
+            COALESCE(SUM(
+                CASE
+                    WHEN COALESCE(s.total_amount, 0) > 0
+                        THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
+                    ELSE 0
+                END
+            ), 0) as refunded_cogs
+        FROM sale_returns sr
+        JOIN sales s ON s.id = sr.sale_id
+        WHERE DATE(sr.return_date) >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) {flt_sql_sr}
+        GROUP BY DATE(sr.return_date)
+        ORDER BY date ASC
+    ''', flt_params_sr).fetchall()
+
+    sales_trend_list = [dict(row) for row in sales_trend]
+    refund_trend_map = {str(r['date']): dict(r) for r in refund_trend}
+    for d in sales_trend_list:
+        day_key = str(d['date'])
+        impact = refund_trend_map.get(day_key)
+        if not impact:
+            continue
+        d['total_sales'] = float(d.get('total_sales') or 0) - float(impact.get('refunded') or 0)
+        d['total_cost'] = float(d.get('total_cost') or 0) - float(impact.get('refunded_cogs') or 0)
+
+    today_total_net = float(today_sales['total'] or 0) - float(today_refunds['refunded'] or 0)
+    today_cost_net = float(today_sales['cost'] or 0) - float(today_refunds['refunded_cogs'] or 0)
+    yesterday_total_net = float(yesterday_sales['total'] or 0) - float(yesterday_refunds['refunded'] or 0)
+    yesterday_cost_net = float(yesterday_sales['cost'] or 0) - float(yesterday_refunds['refunded_cogs'] or 0)
 
     # Best selling products (last 7 days)
     recent_items_json = cursor.execute(f'''
@@ -3104,11 +3236,11 @@ def get_dashboard_stats():
         'total_products': total_products,
         'low_stock_items': low_stock,
         'out_of_stock_items': out_of_stock,
-        'today_sales': today_sales['total'],
+        'today_sales': today_total_net,
         'today_sales_count': today_count,
-        'yesterday_sales': yesterday_sales['total'],
+        'yesterday_sales': yesterday_total_net,
         'yesterday_count': yesterday_count,
-        'sales_trend': [dict(row) for row in sales_trend],
+        'sales_trend': sales_trend_list,
         'best_sellers': [dict(row) for row in best_sellers],
         'recent_sales': [dict(row) for row in recent_sales],
         'avg_transaction': avg_transaction,
@@ -3117,9 +3249,9 @@ def get_dashboard_stats():
 
     # Only show profit to admins
     if is_admin:
-        stats['today_cost'] = today_sales['cost']
-        stats['today_profit'] = today_sales['total'] - today_sales['cost']
-        stats['yesterday_profit'] = yesterday_sales['total'] - yesterday_sales['cost']
+        stats['today_cost'] = today_cost_net
+        stats['today_profit'] = today_total_net - today_cost_net
+        stats['yesterday_profit'] = yesterday_total_net - yesterday_cost_net
         stats['cash_flow'] = cash_flow
 
     return jsonify(stats)
@@ -6401,6 +6533,7 @@ def get_pnl_report():
     cursor = conn.cursor()
     flt_sql_s, flt_params_s = shop_filter('s')
     flt_sql_e, flt_params_e = shop_filter('e')
+    flt_sql_sr, flt_params_sr = shop_filter('sr')
 
     try:
         end_date_time = end_date + ' 23:59:59'
@@ -6428,6 +6561,20 @@ def get_pnl_report():
         ''', [start_date_time, end_date_time] + flt_params_plain).fetchone()
         total_refunds = float(refund_data['total_refunds'] or 0)
 
+        refunded_cogs_data = cursor.execute(f'''
+            SELECT COALESCE(SUM(
+                CASE
+                    WHEN COALESCE(s.total_amount, 0) > 0
+                        THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
+                    ELSE 0
+                END
+            ), 0) as refunded_cogs
+            FROM sale_returns sr
+            JOIN sales s ON s.id = sr.sale_id
+            WHERE sr.return_date BETWEEN ? AND ? {flt_sql_sr}
+        ''', [start_date_time, end_date_time] + flt_params_sr).fetchone()
+        total_refunded_cogs = float(refunded_cogs_data['refunded_cogs'] or 0)
+
         # ─── Discounts ───
         discount_data = cursor.execute(f'''
             SELECT COALESCE(SUM(discount_amount), 0) as total_discounts
@@ -6438,6 +6585,8 @@ def get_pnl_report():
 
         # Net revenue = revenue - refunds (discounts already factored in total_amount)
         net_revenue = total_revenue - total_refunds
+        net_cogs = total_cogs - total_refunded_cogs
+        gross_profit = net_revenue - net_cogs
 
         # ─── Expenses by Category ───
         expenses_by_category = cursor.execute(f'''
@@ -6476,6 +6625,24 @@ def get_pnl_report():
             ORDER BY the_date ASC
         ''', [start_date, end_date] + flt_params_e).fetchall()
 
+        daily_refunds = cursor.execute(f'''
+            SELECT
+                DATE(sr.return_date) as the_date,
+                COALESCE(SUM(sr.refund_amount), 0) as refunds,
+                COALESCE(SUM(
+                    CASE
+                        WHEN COALESCE(s.total_amount, 0) > 0
+                            THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
+                        ELSE 0
+                    END
+                ), 0) as refunded_cogs
+            FROM sale_returns sr
+            JOIN sales s ON s.id = sr.sale_id
+            WHERE sr.return_date BETWEEN ? AND ? {flt_sql_sr}
+            GROUP BY DATE(sr.return_date)
+            ORDER BY the_date ASC
+        ''', [start_date_time, end_date_time] + flt_params_sr).fetchall()
+
         # Merge daily data
         daily_map = {}
         for row in daily_revenue:
@@ -6493,6 +6660,14 @@ def get_pnl_report():
             if d not in daily_map:
                 daily_map[d] = {'date': d, 'revenue': 0, 'cogs': 0, 'gross_profit': 0, 'expenses': 0, 'net_profit': 0}
             daily_map[d]['expenses'] = float(row['expenses'])
+
+        for row in daily_refunds:
+            d = str(row['the_date'])
+            if d not in daily_map:
+                daily_map[d] = {'date': d, 'revenue': 0, 'cogs': 0, 'gross_profit': 0, 'expenses': 0, 'net_profit': 0}
+            daily_map[d]['revenue'] -= float(row['refunds'] or 0)
+            daily_map[d]['cogs'] -= float(row['refunded_cogs'] or 0)
+            daily_map[d]['gross_profit'] = daily_map[d]['revenue'] - daily_map[d]['cogs']
 
         for d in daily_map:
             daily_map[d]['net_profit'] = daily_map[d]['gross_profit'] - daily_map[d]['expenses']
@@ -6526,6 +6701,24 @@ def get_pnl_report():
                 ORDER BY month ASC
             ''', [start_date, end_date] + flt_params_e).fetchall()
 
+            monthly_refunds = cursor.execute(f'''
+                SELECT
+                    DATE_FORMAT(sr.return_date, '%Y-%m') as month,
+                    COALESCE(SUM(sr.refund_amount), 0) as refunds,
+                    COALESCE(SUM(
+                        CASE
+                            WHEN COALESCE(s.total_amount, 0) > 0
+                                THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
+                            ELSE 0
+                        END
+                    ), 0) as refunded_cogs
+                FROM sale_returns sr
+                JOIN sales s ON s.id = sr.sale_id
+                WHERE sr.return_date BETWEEN ? AND ? {flt_sql_sr}
+                GROUP BY DATE_FORMAT(sr.return_date, '%Y-%m')
+                ORDER BY month ASC
+            ''', [start_date_time, end_date_time] + flt_params_sr).fetchall()
+
             monthly_map = {}
             for row in monthly_rev:
                 m = row['month']
@@ -6541,6 +6734,13 @@ def get_pnl_report():
                 if m not in monthly_map:
                     monthly_map[m] = {'month': m, 'revenue': 0, 'cogs': 0, 'gross_profit': 0, 'expenses': 0, 'net_profit': 0}
                 monthly_map[m]['expenses'] = float(row['expenses'])
+            for row in monthly_refunds:
+                m = row['month']
+                if m not in monthly_map:
+                    monthly_map[m] = {'month': m, 'revenue': 0, 'cogs': 0, 'gross_profit': 0, 'expenses': 0, 'net_profit': 0}
+                monthly_map[m]['revenue'] -= float(row['refunds'] or 0)
+                monthly_map[m]['cogs'] -= float(row['refunded_cogs'] or 0)
+                monthly_map[m]['gross_profit'] = monthly_map[m]['revenue'] - monthly_map[m]['cogs']
             for m in monthly_map:
                 monthly_map[m]['net_profit'] = monthly_map[m]['gross_profit'] - monthly_map[m]['expenses']
             monthly_pnl = sorted(monthly_map.values(), key=lambda x: x['month'])
@@ -6557,6 +6757,21 @@ def get_pnl_report():
             FROM sales s WHERE sale_date BETWEEN ? AND ? {flt_sql_s}
         ''', [prev_start_str, prev_end_str] + flt_params_s).fetchone()
 
+        prev_refunds = cursor.execute(f'''
+            SELECT
+                COALESCE(SUM(sr.refund_amount), 0) as refunds,
+                COALESCE(SUM(
+                    CASE
+                        WHEN COALESCE(s.total_amount, 0) > 0
+                            THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
+                        ELSE 0
+                    END
+                ), 0) as refunded_cogs
+            FROM sale_returns sr
+            JOIN sales s ON s.id = sr.sale_id
+            WHERE sr.return_date BETWEEN ? AND ? {flt_sql_sr}
+        ''', [prev_start_str, prev_end_str] + flt_params_sr).fetchone()
+
         prev_exp = cursor.execute(f'''
             SELECT COALESCE(SUM(amount), 0) as expenses
             FROM expenses e WHERE expense_date BETWEEN ? AND ? {flt_sql_e}
@@ -6564,7 +6779,9 @@ def get_pnl_report():
 
         prev_revenue = float(prev_rev['revenue'] or 0)
         prev_cogs = float(prev_rev['cogs'] or 0)
-        prev_gross = prev_revenue - prev_cogs
+        prev_refunded_amt = float(prev_refunds['refunds'] or 0)
+        prev_refunded_cogs = float(prev_refunds['refunded_cogs'] or 0)
+        prev_gross = (prev_revenue - prev_refunded_amt) - (prev_cogs - prev_refunded_cogs)
         prev_expenses = float(prev_exp['expenses'] or 0)
         prev_net = prev_gross - prev_expenses
 
@@ -6580,7 +6797,7 @@ def get_pnl_report():
                 'total_revenue': total_revenue,
                 'total_refunds': total_refunds,
                 'net_revenue': net_revenue,
-                'total_cogs': total_cogs,
+                'total_cogs': net_cogs,
                 'gross_profit': gross_profit,
                 'gross_margin': gross_margin,
                 'total_expenses': total_expenses,
