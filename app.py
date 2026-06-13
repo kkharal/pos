@@ -1576,12 +1576,14 @@ def get_sale(sale_id):
 
     # Subtract already-refunded quantities
     refunds = conn.execute(
-        'SELECT items_json FROM sale_returns WHERE sale_id = ?', (sale_id,)
+        'SELECT items_json, refund_amount FROM sale_returns WHERE sale_id = ?', (sale_id,)
     ).fetchall()
     conn.close()
 
     refunded_qty = {}
+    refund_total = 0.0
     for refund in refunds:
+        refund_total += float(refund.get('refund_amount') or 0)
         for ri in json.loads(refund['items_json']):
             pid = ri['product_id']
             refunded_qty[pid] = refunded_qty.get(pid, 0) + ri['quantity']
@@ -1593,6 +1595,9 @@ def get_sale(sale_id):
         item['refunded_quantity'] = already
         item['quantity'] = max(0, original - already)
 
+    sale_dict['refund_total'] = round(refund_total, 2)
+    sale_dict['remaining_refundable_amount'] = round(max(0, float(sale_dict.get('total_amount') or 0) - refund_total), 2)
+
     return jsonify(sale_dict)
 
 @app.route('/api/refunds', methods=['POST'])
@@ -1601,7 +1606,6 @@ def create_refund():
     data = request.json
     sale_id = data.get('sale_id')
     items = data.get('items', [])
-    refund_amount = data.get('refund_amount', 0)
     reason = data.get('reason', '')
 
     if not sale_id or not items:
@@ -1612,11 +1616,87 @@ def create_refund():
 
     try:
         flt_sql, flt_params = shop_filter()
-        sale = cursor.execute(f'SELECT id FROM sales WHERE id=? {flt_sql}', [sale_id] + flt_params).fetchone()
+        sale = cursor.execute(
+            f'SELECT id, total_amount, discount_amount, items_json FROM sales WHERE id=? {flt_sql}',
+            [sale_id] + flt_params
+        ).fetchone()
         if not sale:
             return jsonify({'error': 'Sale not found'}), 404
 
+        sale_items = json.loads(sale['items_json'])
+        sale_items_by_id = {}
+        gross_sale_total = 0.0
+        for si in sale_items:
+            pid = int(si['product_id'])
+            qty = int(si.get('quantity', 0) or 0)
+            price = float(si.get('price', 0) or 0)
+            sale_items_by_id[pid] = {
+                'quantity': qty,
+                'price': price,
+                'name': si.get('name', f'Product #{pid}')
+            }
+            gross_sale_total += price * qty
+
+        refunded_rows = cursor.execute(
+            'SELECT items_json, refund_amount FROM sale_returns WHERE sale_id = ?',
+            (sale_id,)
+        ).fetchall()
+
+        already_refunded_qty = {}
+        total_refunded_so_far = 0.0
+        for rr in refunded_rows:
+            total_refunded_so_far += float(rr.get('refund_amount') or 0)
+            for ri in json.loads(rr['items_json']):
+                pid = int(ri['product_id'])
+                already_refunded_qty[pid] = already_refunded_qty.get(pid, 0) + int(ri.get('quantity', 0) or 0)
+
+        normalized_items = []
+        selected_gross_total = 0.0
         for item in items:
+            product_id = int(item['product_id'])
+            quantity = int(item.get('quantity', 0) or 0)
+            if quantity <= 0:
+                continue
+
+            if product_id not in sale_items_by_id:
+                return jsonify({'error': f'Product #{product_id} is not in sale #{sale_id}'}), 400
+
+            sold_qty = sale_items_by_id[product_id]['quantity']
+            already_qty = already_refunded_qty.get(product_id, 0)
+            remaining_qty = sold_qty - already_qty
+            if quantity > remaining_qty:
+                return jsonify({'error': f'Refund quantity for {sale_items_by_id[product_id]["name"]} exceeds remaining refundable quantity ({remaining_qty})'}), 400
+
+            line_price = float(sale_items_by_id[product_id]['price'])
+            selected_gross_total += line_price * quantity
+
+            normalized_items.append({
+                'product_id': product_id,
+                'name': item.get('name') or sale_items_by_id[product_id]['name'],
+                'price': line_price,
+                'quantity': quantity
+            })
+
+        if not normalized_items:
+            return jsonify({'error': 'No refundable items selected'}), 400
+
+        sale_total_after_discount = float(sale['total_amount'] or 0)
+        remaining_refundable_amount = max(0.0, sale_total_after_discount - total_refunded_so_far)
+        if remaining_refundable_amount <= 0:
+            return jsonify({'error': 'This sale is already fully refunded'}), 400
+
+        if gross_sale_total > 0:
+            discount_factor = sale_total_after_discount / gross_sale_total
+        else:
+            discount_factor = 1.0
+        discount_factor = max(0.0, min(1.0, discount_factor))
+
+        computed_refund_amount = round(selected_gross_total * discount_factor, 2)
+        refund_amount = min(computed_refund_amount, round(remaining_refundable_amount, 2))
+        if refund_amount <= 0:
+            return jsonify({'error': 'Refund amount is zero after discount allocation'}), 400
+
+        for item in normalized_items:
             product_id = item['product_id']
             quantity = item['quantity']
             cursor.execute(
@@ -1631,10 +1711,10 @@ def create_refund():
         cursor.execute('''
             INSERT INTO sale_returns (shop_id, sale_id, user_id, items_json, refund_amount, reason)
             VALUES (?, ?, ?, ?, ?, ?)
-        ''', (get_current_shop_id(), sale_id, session.get('user_id'), json.dumps(items), refund_amount, reason))
+        ''', (get_current_shop_id(), sale_id, session.get('user_id'), json.dumps(normalized_items), refund_amount, reason))
 
         conn.commit()
-        return jsonify({'success': True, 'refund_id': cursor.lastrowid}), 201
+        return jsonify({'success': True, 'refund_id': cursor.lastrowid, 'refund_amount': refund_amount}), 201
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'error': str(e)}), 400
