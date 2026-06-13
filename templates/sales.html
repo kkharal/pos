@@ -535,6 +535,11 @@
                 .replace(/'/g, '&#39;');
         }
 
+        function itemVariantText(item) {
+            if (!item) return '';
+            return [item.size, item.color].filter(Boolean).join(' / ');
+        }
+
         // ── Orders Summary Bar ─────────────────────────────────────
         function renderSummaryTab() {
             var bar = document.getElementById('orders-summary-bar');
@@ -581,7 +586,12 @@
             body += '<div class="order-details-section"><div class="order-details-section-title">Items</div><div class="order-details-items">';
             (sale.items || []).forEach(function(item) {
                 var lineTotal = (item.price || 0) * (item.quantity || 0);
-                body += '<div class="order-details-item"><span class="order-details-item-name">' + escapeHtml(item.name || 'Item') + ' x' + (item.quantity || 0) + '</span><span class="order-details-item-price">' + currencySymbol + lineTotal.toFixed(2) + '</span></div>';
+                var variant = itemVariantText(item);
+                var nameHtml = escapeHtml(item.name || 'Item') + ' x' + (item.quantity || 0);
+                if (variant) {
+                    nameHtml += '<div style="font-size:0.74rem; color:#94a3b8; margin-top:2px;">' + escapeHtml(variant) + '</div>';
+                }
+                body += '<div class="order-details-item"><span class="order-details-item-name">' + nameHtml + '</span><span class="order-details-item-price">' + currencySymbol + lineTotal.toFixed(2) + '</span></div>';
             });
             body += '</div></div>';
 
@@ -783,7 +793,12 @@
             body += '<thead><tr style="background:#f8fafc;"><th style="padding:0.5rem 0.6rem; text-align:left; font-size:0.72rem; text-transform:uppercase; color:#64748b; font-weight:600;">Product</th><th style="padding:0.5rem 0.6rem; text-align:center; font-size:0.72rem; text-transform:uppercase; color:#64748b; font-weight:600;">Qty</th><th style="padding:0.5rem 0.6rem; text-align:right; font-size:0.72rem; text-transform:uppercase; color:#64748b; font-weight:600;">Price</th><th style="padding:0.5rem 0.6rem; text-align:right; font-size:0.72rem; text-transform:uppercase; color:#64748b; font-weight:600;">Total</th></tr></thead><tbody>';
             sale.items.forEach(function(item) {
                 var lineTotal = item.price * item.quantity;
-                body += '<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:0.5rem 0.6rem; font-weight:500;">' + item.name + '</td><td style="padding:0.5rem 0.6rem; text-align:center; color:#64748b;">' + item.quantity + '</td><td style="padding:0.5rem 0.6rem; text-align:right; color:#64748b;">' + currencySymbol + item.price.toFixed(2) + '</td><td style="padding:0.5rem 0.6rem; text-align:right; font-weight:600;">' + currencySymbol + lineTotal.toFixed(2) + '</td></tr>';
+                var variant = itemVariantText(item);
+                var productNameCell = escapeHtml(item.name || 'Item');
+                if (variant) {
+                    productNameCell += '<div style="font-size:0.74rem; color:#94a3b8; margin-top:2px; font-weight:400;">' + escapeHtml(variant) + '</div>';
+                }
+                body += '<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:0.5rem 0.6rem; font-weight:500;">' + productNameCell + '</td><td style="padding:0.5rem 0.6rem; text-align:center; color:#64748b;">' + item.quantity + '</td><td style="padding:0.5rem 0.6rem; text-align:right; color:#64748b;">' + currencySymbol + item.price.toFixed(2) + '</td><td style="padding:0.5rem 0.6rem; text-align:right; font-weight:600;">' + currencySymbol + lineTotal.toFixed(2) + '</td></tr>';
             });
             body += '</tbody></table>';
 
@@ -840,7 +855,11 @@
 
             sale.items.forEach(function(item) {
                 var itemTotal = item.price * item.quantity;
-                receiptHtml += '<div style="display:flex; justify-content:space-between; font-size:0.85rem; margin:0.2rem 0;"><span>' + item.name + ' x' + item.quantity + '</span><span>' + currencySymbol + itemTotal.toFixed(2) + '</span></div>';
+                var variant = itemVariantText(item);
+                receiptHtml += '<div style="display:flex; justify-content:space-between; font-size:0.85rem; margin:0.2rem 0;"><span>' + escapeHtml(item.name || 'Item') + ' x' + item.quantity + '</span><span>' + currencySymbol + itemTotal.toFixed(2) + '</span></div>';
+                if (variant) {
+                    receiptHtml += '<div style="font-size:0.75rem; color:#666; margin:0 0 0.2rem 0.35rem;">' + escapeHtml(variant) + '</div>';
+                }
             });
 
             receiptHtml += '<hr style="border:none; border-top:1px dashed #999;">';

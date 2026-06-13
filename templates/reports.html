@@ -224,7 +224,7 @@
 
                 <div class="kpi-grid" id="overview-kpis">
                     <div class="kpi-card">
-                        <div class="kpi-label">Revenue</div>
+                        <div class="kpi-label">Net Sales</div>
                         <div class="kpi-value" id="ov-revenue">—</div>
                         <div id="ov-revenue-trend"></div>
                     </div>
@@ -244,9 +244,9 @@
                     </div>
                 </div>
 
-                <!-- Revenue Trend -->
+                <!-- Net Sales Trend -->
                 <div class="chart-card" style="margin-bottom:1.25rem;">
-                    <div class="chart-card-title">Revenue Trend (This Month)</div>
+                    <div class="chart-card-title">Net Sales Trend (This Month)</div>
                     <canvas id="overview-trend-chart" height="200"></canvas>
                 </div>
 
@@ -270,7 +270,7 @@
                 <div class="section-header">
                     <div>
                         <div class="section-title">Sales</div>
-                        <div class="section-desc">Revenue, transactions, and product performance</div>
+                        <div class="section-desc">Net sales, refunds, transactions, and product performance</div>
                     </div>
                     <button class="export-btn" onclick="exportReport('sales','excel')">⬇ Export Excel</button>
                 </div>
@@ -290,7 +290,8 @@
                 </div>
 
                 <div class="kpi-grid" id="sales-kpis">
-                    <div class="kpi-card"><div class="kpi-label">Revenue</div><div class="kpi-value" id="s-revenue">—</div><div id="s-revenue-trend"></div></div>
+                    <div class="kpi-card"><div class="kpi-label">Net Sales</div><div class="kpi-value" id="s-revenue">—</div><div id="s-revenue-trend"></div></div>
+                    <div class="kpi-card"><div class="kpi-label">Gross Sales</div><div class="kpi-value blue" id="s-gross-sales">—</div></div>
                     <div class="kpi-card"><div class="kpi-label">Transactions</div><div class="kpi-value blue" id="s-transactions">—</div><div id="s-txn-trend"></div></div>
                     <div class="kpi-card"><div class="kpi-label">Avg Order Value</div><div class="kpi-value" id="s-aov">—</div></div>
                     <div class="kpi-card"><div class="kpi-label">Discounts</div><div class="kpi-value orange" id="s-discounts">—</div></div>
@@ -300,7 +301,7 @@
 
                 <div class="chart-grid chart-grid-2">
                     <div class="chart-card">
-                        <div class="chart-card-title">Sales Trend</div>
+                        <div class="chart-card-title">Net Sales Trend</div>
                         <canvas id="sales-trend-chart" height="220"></canvas>
                     </div>
                     <div class="chart-card">
@@ -337,7 +338,7 @@
                         <div class="data-card-title">Daily Breakdown</div>
                     </div>
                     <table class="data-table">
-                        <thead><tr><th>Date</th><th class="text-right">Transactions</th><th class="text-right">Revenue</th><th class="text-right admin-only">Gross Profit</th><th class="text-right admin-only">Gross Margin</th></tr></thead>
+                        <thead><tr><th>Date</th><th class="text-right">Transactions</th><th class="text-right">Net Sales</th><th class="text-right admin-only">Gross Profit</th><th class="text-right admin-only">Gross Margin</th></tr></thead>
                         <tbody id="sales-daily-body"><tr><td colspan="5" class="text-center">No data</td></tr></tbody>
                     </table>
                 </div>
@@ -691,11 +692,11 @@
             renderTrendBadge('ov-transactions-trend', data.summary.transaction_count, pc.prev_transaction_count);
             if (isAdmin) renderTrendBadge('ov-profit-trend', data.summary.total_profit, pc.prev_total_profit);
 
-            // Revenue trend chart
+            // Net sales trend chart
             destroyChart('ovTrend');
             var ctx = document.getElementById('overview-trend-chart').getContext('2d');
             var labels = data.daily_sales.map(function(d) { return new Date(d.sale_date).toLocaleDateString(undefined, {month:'short', day:'numeric'}); });
-            var datasets = [{ label: 'Revenue', data: data.daily_sales.map(function(d) { return d.daily_sales || 0; }), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', fill: true, tension: 0.3, borderWidth: 2 }];
+            var datasets = [{ label: 'Net Sales', data: data.daily_sales.map(function(d) { return d.daily_sales || 0; }), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', fill: true, tension: 0.3, borderWidth: 2 }];
             if (isAdmin) datasets.push({ label: 'Profit', data: data.daily_sales.map(function(d) { return d.daily_profit || 0; }), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,106,0.08)', fill: true, tension: 0.3, borderWidth: 2 });
             charts.ovTrend = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: datasets }, options: { responsive: true, plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 11 } } } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v) { return currencySymbol + v; } } } } } });
 
@@ -746,6 +747,7 @@
 
             var s = data.summary;
             document.getElementById('s-revenue').textContent = currencySymbol + s.total_sales.toFixed(2);
+            document.getElementById('s-gross-sales').textContent = currencySymbol + (s.gross_sales || 0).toFixed(2);
             document.getElementById('s-transactions').textContent = s.transaction_count;
             document.getElementById('s-aov').textContent = currencySymbol + s.avg_transaction.toFixed(2);
             document.getElementById('s-discounts').textContent = currencySymbol + (s.total_discount || 0).toFixed(2);
@@ -757,11 +759,11 @@
             renderTrendBadge('s-txn-trend', s.transaction_count, pc.prev_transaction_count);
             if (isAdmin) renderTrendBadge('s-profit-trend', s.total_profit, pc.prev_total_profit);
 
-            // Sales trend chart
+            // Net sales trend chart
             destroyChart('salesTrend');
             var ctx = document.getElementById('sales-trend-chart').getContext('2d');
             var labels = data.daily_sales.map(function(d) { return new Date(d.sale_date).toLocaleDateString(undefined, {month:'short', day:'numeric'}); });
-            var ds = [{ label: 'Revenue', data: data.daily_sales.map(function(d) { return d.daily_sales || 0; }), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', fill: true, tension: 0.3, borderWidth: 2 }];
+            var ds = [{ label: 'Net Sales', data: data.daily_sales.map(function(d) { return d.daily_sales || 0; }), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', fill: true, tension: 0.3, borderWidth: 2 }];
             if (isAdmin) ds.push({ label: 'Profit', data: data.daily_sales.map(function(d) { return d.daily_profit || 0; }), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,106,0.08)', fill: true, tension: 0.3, borderWidth: 2 });
             charts.salesTrend = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: ds }, options: { responsive: true, plugins: { legend: { position: 'top', labels: { boxWidth: 10 } } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v) { return currencySymbol + v; } } } } } });
 

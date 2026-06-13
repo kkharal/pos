@@ -1787,7 +1787,31 @@ def export_sales_csv():
 
     for s in sales_rows:
         items = json.loads(s['items_json'])
-        item_names = ', '.join(f"{i['name']} x{i['quantity']}" for i in items)
+        grouped_items = {}
+        for item in items:
+            name = item.get('name', 'Item')
+            variant_parts = []
+            if item.get('size'):
+                variant_parts.append(f"Size: {item['size']}")
+            if item.get('color'):
+                variant_parts.append(f"Color: {item['color']}")
+            variant_label = ', '.join(variant_parts)
+
+            if name not in grouped_items:
+                grouped_items[name] = []
+
+            grouped_items[name].append({
+                'variant': variant_label,
+                'quantity': item.get('quantity', 0)
+            })
+
+        item_names = ', '.join(
+            f"{name} (" + '; '.join(
+                f"{entry['variant']} x{entry['quantity']}" if entry['variant'] else f"x{entry['quantity']}"
+                for entry in entries
+            ) + ")"
+            for name, entries in grouped_items.items()
+        )
         discount = s['discount_amount'] or 0
         subtotal = s['total_amount'] + discount
         row = [s['id'], s['sale_date'], s['full_name'] or s['username'] or '',
@@ -2253,7 +2277,14 @@ def get_sales_report():
                             THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
                         ELSE 0
                     END
-                ), 0) as refunded_cogs
+                ), 0) as refunded_cogs,
+                COALESCE(SUM(
+                    CASE
+                        WHEN COALESCE(s.total_amount, 0) > 0
+                            THEN LEAST(sr.refund_amount, s.total_amount) / s.total_amount * COALESCE(s.discount_amount, 0)
+                        ELSE 0
+                    END
+                ), 0) as refunded_discount
             FROM sale_returns sr
             JOIN sales s ON s.id = sr.sale_id
             WHERE sr.return_date BETWEEN ? AND ? {flt_sql_sr}
@@ -2399,25 +2430,36 @@ def get_sales_report():
             WHERE sr.return_date BETWEEN ? AND ? {flt_sql_sr}
         ''', [prev_start_str, prev_end_str] + flt_params_sr).fetchone()
 
+        gross_total_sales = float(summary['total_sales'] or 0)
+        current_refunded_total = float(refund_summary['total_refunded'] or 0)
+        net_total_sales = gross_total_sales - current_refunded_total
+        prev_gross_total_sales = float(prev_summary['total_sales'] or 0)
+        prev_refunded_total = float(prev_refund_impact['total_refunded'] or 0)
+        prev_net_total_sales = prev_gross_total_sales - prev_refunded_total
+
+        refund_by_date = {str(r['return_date']): dict(r) for r in daily_refund_impact}
         daily_sales_list = [dict(row) for row in daily_sales]
-        if is_admin:
-            refund_by_date = {str(r['return_date']): dict(r) for r in daily_refund_impact}
-            for d in daily_sales_list:
-                day_key = str(d['sale_date'])
-                impact = refund_by_date.get(day_key)
+        for d in daily_sales_list:
+            day_key = str(d['sale_date'])
+            impact = refund_by_date.get(day_key)
+            base_daily_sales = float(d.get('daily_sales') or 0)
+            refunded = float((impact or {}).get('refunded') or 0)
+            d['gross_sales'] = base_daily_sales
+            d['daily_sales'] = base_daily_sales - refunded
+
+            if is_admin:
                 base_profit = float(d.get('daily_profit') or 0)
-                if impact:
-                    d['daily_profit'] = base_profit - float(impact.get('refunded') or 0) + float(impact.get('refunded_cogs') or 0)
-                else:
-                    d['daily_profit'] = base_profit
+                refunded_cogs = float((impact or {}).get('refunded_cogs') or 0)
+                d['daily_profit'] = base_profit - refunded + refunded_cogs
 
         # Build response
         response = {
             'summary': {
                 'transaction_count': summary['transaction_count'] or 0,
-                'total_sales': summary['total_sales'] or 0,
+                'gross_sales': gross_total_sales,
+                'total_sales': net_total_sales,
                 'avg_transaction': summary['avg_transaction'] or 0,
-                'total_discount': discount_summary['total_discount'] or 0,
+                'total_discount': max(0.0, float(discount_summary['total_discount'] or 0) - float(refund_profit_impact['refunded_discount'] or 0)),
                 'discounted_count': discount_summary['discounted_count'] or 0,
                 'avg_discount': discount_summary['avg_discount'] or 0,
             },
@@ -2443,7 +2485,8 @@ def get_sales_report():
                 'prev_start': prev_start.strftime('%Y-%m-%d'),
                 'prev_end': prev_end.strftime('%Y-%m-%d'),
                 'prev_transaction_count': prev_summary['transaction_count'] or 0,
-                'prev_total_sales': prev_summary['total_sales'] or 0,
+                'prev_gross_sales': prev_gross_total_sales,
+                'prev_total_sales': prev_net_total_sales,
                 'prev_avg_transaction': prev_summary['avg_transaction'] or 0
             }
         }
@@ -3053,7 +3096,14 @@ def get_dashboard_stats():
                         THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
                     ELSE 0
                 END
-            ), 0) as refunded_cogs
+            ), 0) as refunded_cogs,
+            COALESCE(SUM(
+                CASE
+                    WHEN COALESCE(s.total_amount, 0) > 0
+                        THEN LEAST(sr.refund_amount, s.total_amount) / s.total_amount * COALESCE(s.discount_amount, 0)
+                    ELSE 0
+                END
+            ), 0) as refunded_discount
         FROM sale_returns sr
         JOIN sales s ON s.id = sr.sale_id
         WHERE DATE(sr.return_date) = CURDATE() {flt_sql_sr}
@@ -3068,7 +3118,14 @@ def get_dashboard_stats():
                         THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
                     ELSE 0
                 END
-            ), 0) as refunded_cogs
+            ), 0) as refunded_cogs,
+            COALESCE(SUM(
+                CASE
+                    WHEN COALESCE(s.total_amount, 0) > 0
+                        THEN LEAST(sr.refund_amount, s.total_amount) / s.total_amount * COALESCE(s.discount_amount, 0)
+                    ELSE 0
+                END
+            ), 0) as refunded_discount
         FROM sale_returns sr
         JOIN sales s ON s.id = sr.sale_id
         WHERE DATE(sr.return_date) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) {flt_sql_sr}
@@ -3244,7 +3301,7 @@ def get_dashboard_stats():
         'best_sellers': [dict(row) for row in best_sellers],
         'recent_sales': [dict(row) for row in recent_sales],
         'avg_transaction': avg_transaction,
-        'total_discount_today': today_sales['discount']
+        'total_discount_today': max(0.0, float(today_sales['discount'] or 0) - float(today_refunds['refunded_discount'] or 0))
     }
 
     # Only show profit to admins
