@@ -4,22 +4,24 @@ This file documents how key report metrics are calculated in the current impleme
 
 ## Finance Report (P&L)
 
-- Revenue:
+- Gross Revenue:
     `SUM(sales.total_amount)`
+- Total Refunds:
+    `SUM(sale_returns.refund_amount)`
+- **Net Revenue (primary):**
+    `Gross Revenue - Total Refunds`
 - COGS:
     `SUM(sales.total_cost)`
+- Refunded COGS:
+    `SUM(LEAST(refund_amount, total_amount) * (total_cost / total_amount))` per refund
+- Net COGS:
+    `COGS - Refunded COGS`
 - Gross Profit:
-    `Revenue - COGS`
+    `Net Revenue - Net COGS`
 - Expenses:
     `SUM(expenses.amount)`
 - Net Profit:
     `Gross Profit - Expenses`
-
-Additional finance fields:
-- Total Refunds:
-    `SUM(sale_returns.refund_amount)`
-- Net Revenue:
-    `Revenue - Refunds`
 - Gross Margin (%):
     `(Gross Profit / Net Revenue) * 100` (0 if Net Revenue is 0)
 - Net Margin (%):
@@ -27,18 +29,33 @@ Additional finance fields:
 
 ## Sales Report
 
-- Revenue:
-    `SUM(sales.total_amount)`
+- Gross Sales:
+    `SUM(sales.total_amount)` (shown as supporting KPI)
+- Refunds:
+    `SUM(sale_returns.refund_amount)` for `return_date` in selected range
+- **Net Sales (primary KPI):**
+    `Gross Sales - Refunds`
 - Transactions:
     `COUNT(sales.id)`
 - Avg Order Value (AOV):
     `AVG(sales.total_amount)`
-- Gross Profit (admin view):
-    `SUM(sales.total_amount - sales.total_cost)`
+- Gross Sales Discounts:
+    `SUM(sales.discount_amount)`
+- Refunded Discount (proportional):
+    `SUM(LEAST(refund_amount, total_amount) / total_amount × discount_amount)` per refund
+- **Net Discounts:**
+    `Gross Discounts - Refunded Discount`
+- Daily Net Sales (per row):
+    `daily gross sales - refunds processed on that date`
+- Daily Gross Profit (per row, admin view):
+    `daily gross profit - daily refunds + daily refunded COGS`
+
+Refund date rule: refunds are subtracted on the date the return is **processed**, not the original sale date.
 
 Notes:
-- Discounts shown in sales report are `SUM(discount_amount)`.
-- Refunds shown are from `sale_returns` in selected date range.
+- Discounts shown are `SUM(discount_amount)`.
+- Refunds card still shown separately alongside Net Sales for full transparency.
+- Previous-period comparison also uses net sales for both current and prior periods.
 
 ## Customer Report
 
@@ -65,10 +82,10 @@ Notes:
 
 Overview combines values from Sales and P&L endpoints for the month:
 
-- Revenue:
-    From Sales summary `total_sales`.
+- **Net Sales (primary KPI):**
+    From Sales summary `total_sales` (= Gross Sales − Refunds).
 - Gross Profit:
-    From Sales summary `total_profit` (sales gross profit before expenses).
+    From Sales summary `total_profit` (net of refunded COGS, before expenses).
 - Expenses:
     From P&L summary `total_expenses`.
 - Transactions:

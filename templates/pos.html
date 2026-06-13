@@ -1811,12 +1811,15 @@
         }
 
         // Refund
+        var currentRefundSale = null;
+
         function openRefundModal() {
             document.getElementById('refund-sale-id').value = '';
             document.getElementById('refund-items-container').innerHTML = '';
             document.getElementById('refund-items-section').style.display = 'none';
             document.getElementById('refund-reason').value = '';
             document.getElementById('refund-total-display').textContent = '';
+            currentRefundSale = null;
             document.getElementById('refund-modal').classList.add('active');
         }
 
@@ -1843,6 +1846,27 @@
             var items = sale.items || [];
             var refundableItems = items.filter(function(item) { return item.quantity > 0; });
 
+            var grossOriginalTotal = items.reduce(function(sum, item) {
+                var unitPrice = parseFloat(item.price) || 0;
+                var originalQty = parseInt(item.original_quantity || item.quantity || 0, 10) || 0;
+                return sum + (unitPrice * originalQty);
+            }, 0);
+
+            var saleTotal = parseFloat(sale.total_amount) || 0;
+            var discountFactor = grossOriginalTotal > 0 ? (saleTotal / grossOriginalTotal) : 1;
+            discountFactor = Math.max(0, Math.min(1, discountFactor));
+            var alreadyRefunded = parseFloat(sale.refund_total || 0) || 0;
+            var remainingRefundableAmount = Math.max(0, saleTotal - alreadyRefunded);
+
+            currentRefundSale = {
+                id: sale.id,
+                discountFactor: discountFactor,
+                grossOriginalTotal: grossOriginalTotal,
+                saleTotal: saleTotal,
+                alreadyRefunded: alreadyRefunded,
+                remainingRefundableAmount: remainingRefundableAmount
+            };
+
             if (refundableItems.length === 0) {
                 document.getElementById('refund-items-container').innerHTML =
                     '<div style="margin-bottom:0.75rem; padding:0.75rem; background:#f8f9fa; border-radius:4px; font-size:0.9rem;"><strong>Sale #' + sale.id + '</strong> \u2022 ' + parseUTC(sale.sale_date).toLocaleDateString() + ' \u2022 Total: ' + currencySymbol + parseFloat(sale.total_amount).toFixed(2) + '</div>' +
@@ -1852,7 +1876,7 @@
             }
 
             document.getElementById('refund-items-container').innerHTML =
-                '<div style="margin-bottom:0.75rem; padding:0.75rem; background:#f8f9fa; border-radius:4px; font-size:0.9rem;"><strong>Sale #' + sale.id + '</strong> \u2022 ' + parseUTC(sale.sale_date).toLocaleDateString() + ' \u2022 Total: ' + currencySymbol + parseFloat(sale.total_amount).toFixed(2) + '</div>' +
+                '<div style="margin-bottom:0.75rem; padding:0.75rem; background:#f8f9fa; border-radius:4px; font-size:0.9rem;"><strong>Sale #' + sale.id + '</strong> \u2022 ' + parseUTC(sale.sale_date).toLocaleDateString() + ' \u2022 Total: ' + currencySymbol + parseFloat(sale.total_amount).toFixed(2) + '<br><span style="color:#64748b; font-size:0.82rem;">Already refunded: ' + currencySymbol + alreadyRefunded.toFixed(2) + ' \u2022 Remaining: ' + currencySymbol + remainingRefundableAmount.toFixed(2) + (discountFactor < 0.999 ? ' \u2022 Discount-aware refund enabled' : '') + '</span></div>' +
                 refundableItems.map(function(item) {
                     return '<div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem; padding:0.6rem; background:#fff; border:1px solid #e9ecef; border-radius:4px;">' +
                         '<input type="checkbox" id="rc-' + item.product_id + '" value="' + item.product_id + '" data-name="' + (item.name || '').replace(/"/g, '&quot;') + '" data-price="' + item.price + '" checked onchange="updateRefundTotal()">' +
@@ -1866,17 +1890,33 @@
             updateRefundTotal();
         }
 
-        function updateRefundTotal() {
+        function getDiscountAwareRefundAmount() {
             var checkboxes = document.querySelectorAll('#refund-items-container input[type="checkbox"]');
-            var total = 0;
+            var grossSelectedTotal = 0;
             checkboxes.forEach(function(cb) {
                 if (cb.checked) {
-                    var qty = parseInt(document.getElementById('rq-' + cb.value).value) || 0;
-                    total += parseFloat(cb.dataset.price) * qty;
+                    var qty = parseInt(document.getElementById('rq-' + cb.value).value, 10) || 0;
+                    grossSelectedTotal += (parseFloat(cb.dataset.price) || 0) * qty;
                 }
             });
+
+            var factor = currentRefundSale ? currentRefundSale.discountFactor : 1;
+            var computed = grossSelectedTotal * factor;
+            var remaining = currentRefundSale ? currentRefundSale.remainingRefundableAmount : computed;
+            return {
+                grossSelectedTotal: grossSelectedTotal,
+                discountFactor: factor,
+                amount: Math.min(computed, remaining)
+            };
+        }
+
+        function updateRefundTotal() {
+            var pricing = getDiscountAwareRefundAmount();
+            var total = pricing.amount;
             document.getElementById('refund-total-display').textContent = total > 0
-                ? 'Refund Amount: ' + currencySymbol + total.toFixed(2) : '';
+                ? 'Refund Amount: ' + currencySymbol + total.toFixed(2) +
+                  (pricing.discountFactor < 0.999 ? ' (discount-adjusted from ' + currencySymbol + pricing.grossSelectedTotal.toFixed(2) + ')' : '')
+                : '';
         }
 
         async function submitRefund() {
@@ -1894,7 +1934,8 @@
 
             if (returnItems.length === 0) { showToast('Select at least one item to return.', 'warning'); return; }
 
-            var refundAmount = returnItems.reduce(function(sum, item) { return sum + item.price * item.quantity; }, 0);
+            var pricing = getDiscountAwareRefundAmount();
+            var refundAmount = pricing.amount;
             if (!confirm('Process refund of ' + currencySymbol + refundAmount.toFixed(2) + ' for ' + returnItems.length + ' item type(s)?')) return;
 
             showLoading();
@@ -1906,7 +1947,9 @@
                 });
 
                 if (response.ok) {
-                    showToast('Refund of ' + currencySymbol + refundAmount.toFixed(2) + ' processed. Stock restocked.', 'success');
+                    var result = await response.json();
+                    var actualRefund = parseFloat(result.refund_amount || refundAmount) || refundAmount;
+                    showToast('Refund of ' + currencySymbol + actualRefund.toFixed(2) + ' processed. Stock restocked.', 'success');
                     closeRefundModal();
                     loadProducts();
                 } else {
