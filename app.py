@@ -3492,6 +3492,8 @@ def export_sales_report(format):
                     product_stats[product_id] = {
                         'name': item['name'],
                         'sku': item.get('sku', 'N/A'),
+                        'size': item.get('size') or '-',
+                        'color': item.get('color') or '-',
                         'quantity': 0,
                         'revenue': 0,
                         'cost': 0
@@ -3546,7 +3548,7 @@ def export_inventory_report(format):
         # Current inventory
         if is_admin:
             inventory = cursor.execute(f'''
-                SELECT name, sku, category, stock_quantity, cost_price, price,
+                SELECT name, sku, size, color, category, stock_quantity, cost_price, price,
                        (stock_quantity * cost_price) as stock_value,
                        (stock_quantity * price) as potential_revenue
                 FROM products
@@ -3555,7 +3557,7 @@ def export_inventory_report(format):
             ''', flt_params).fetchall()
         else:
             inventory = cursor.execute(f'''
-                SELECT name, sku, category, stock_quantity, price
+                SELECT name, sku, size, color, category, stock_quantity, price
                 FROM products
                 WHERE is_active = 1 {flt_sql}
                 ORDER BY stock_quantity DESC
@@ -3578,21 +3580,21 @@ def export_inventory_report(format):
         # Top active products in period
         top_movements = cursor.execute(f'''
             SELECT
-                p.name, p.sku,
+                p.name, p.sku, p.size, p.color,
                 COUNT(*) as activity_count,
                 SUM(CASE WHEN sh.quantity_change > 0 THEN sh.quantity_change ELSE 0 END) as total_added,
                 SUM(CASE WHEN sh.quantity_change < 0 THEN ABS(sh.quantity_change) ELSE 0 END) as total_removed
             FROM stock_history sh
             JOIN products p ON sh.product_id = p.id
             WHERE sh.created_at BETWEEN ? AND ? {flt_sql_sh}
-            GROUP BY sh.product_id, p.name, p.sku
+            GROUP BY sh.product_id, p.name, p.sku, p.size, p.color
             ORDER BY activity_count DESC
             LIMIT 10
         ''', [start_date_time, end_date_time] + flt_params_sh).fetchall()
 
         # Low stock
         low_stock = cursor.execute(f'''
-            SELECT name, sku, stock_quantity, category
+            SELECT name, sku, size, color, stock_quantity, category
             FROM products
             WHERE is_active = 1 AND stock_quantity < 5 {flt_sql}
             ORDER BY stock_quantity ASC
@@ -3600,7 +3602,7 @@ def export_inventory_report(format):
 
         # Slow-moving stock (0–1 sales in period)
         all_products_list = cursor.execute(f'''
-            SELECT id, name, sku, category, stock_quantity, price
+            SELECT id, name, sku, size, color, category, stock_quantity, price
             FROM products
             WHERE is_active = 1 AND stock_quantity > 0 {flt_sql}
             ORDER BY name
@@ -3624,6 +3626,7 @@ def export_inventory_report(format):
             if qty_sold <= 1:
                 slow_moving.append({
                     'name': p['name'], 'sku': p['sku'] or '-',
+                    'size': p['size'] or '-', 'color': p['color'] or '-',
                     'category': p['category'], 'stock_quantity': p['stock_quantity'],
                     'quantity_sold': qty_sold,
                     'stock_value': p['stock_quantity'] * p['price']
@@ -3951,6 +3954,13 @@ def generate_sales_excel(shop_name, currency, start_date, end_date, summary, dai
     ws = wb.active
     ws.title = "Sales Report"
 
+    def _fmt_variant(value):
+        """Normalize variant values so size/color can be text or numeric."""
+        if value is None:
+            return '-'
+        text = str(value).strip()
+        return text if text else '-'
+
     # Header styling
     header_fill = PatternFill(start_color="3498db", end_color="3498db", fill_type="solid")
     header_font = Font(bold=True, color="FFFFFF", size=12)
@@ -4014,7 +4024,7 @@ def generate_sales_excel(shop_name, currency, start_date, end_date, summary, dai
         ws[f'A{row}'].font = Font(bold=True, size=12)
         row += 1
 
-        headers = ['Product', 'SKU', 'Quantity', 'Revenue']
+        headers = ['Product', 'SKU', 'Size', 'Color', 'Quantity', 'Revenue']
         if is_admin:
             headers.append('Profit')
 
@@ -4028,11 +4038,13 @@ def generate_sales_excel(shop_name, currency, start_date, end_date, summary, dai
         for product in top_products:
             ws.cell(row=row, column=1, value=product['name']).border = border
             ws.cell(row=row, column=2, value=product['sku']).border = border
-            ws.cell(row=row, column=3, value=product['quantity']).border = border
-            ws.cell(row=row, column=4, value=f"{currency}{product['revenue']:.2f}").border = border
+            ws.cell(row=row, column=3, value=_fmt_variant(product.get('size'))).border = border
+            ws.cell(row=row, column=4, value=_fmt_variant(product.get('color'))).border = border
+            ws.cell(row=row, column=5, value=product['quantity']).border = border
+            ws.cell(row=row, column=6, value=f"{currency}{product['revenue']:.2f}").border = border
             if is_admin:
                 profit = product['revenue'] - product['cost']
-                ws.cell(row=row, column=5, value=f"{currency}{profit:.2f}").border = border
+                ws.cell(row=row, column=7, value=f"{currency}{profit:.2f}").border = border
             row += 1
 
     # Auto-size columns
@@ -4200,6 +4212,13 @@ def generate_inventory_excel(shop_name, currency, start_date, end_date, inventor
     """Generate Excel for inventory report"""
     wb = Workbook()
 
+    def _fmt_variant(value):
+        """Normalize variant values so size/color can be text or numeric."""
+        if value is None:
+            return '-'
+        text = str(value).strip()
+        return text if text else '-'
+
     header_fill = PatternFill(start_color="3498db", end_color="3498db", fill_type="solid")
     red_fill = PatternFill(start_color="e74c3c", end_color="e74c3c", fill_type="solid")
     orange_fill = PatternFill(start_color="e67e22", end_color="e67e22", fill_type="solid")
@@ -4265,17 +4284,22 @@ def generate_inventory_excel(shop_name, currency, start_date, end_date, inventor
     ws2['A1'].font = Font(bold=True, size=14)
     row2 = 3
     if is_admin:
-        inv_headers = ['Product', 'SKU', 'Category', 'Stock', 'Cost Price', 'Sell Price', 'Stock Value']
+        inv_headers = ['Product', 'SKU', 'Size', 'Color', 'Category', 'Stock', 'Cost Price', 'Sell Price', 'Stock Value']
     else:
-        inv_headers = ['Product', 'SKU', 'Category', 'Stock', 'Sell Price']
+        inv_headers = ['Product', 'SKU', 'Size', 'Color', 'Category', 'Stock', 'Sell Price']
     inv_rows = []
     for item in inventory:
         if is_admin:
-            inv_rows.append([item['name'], item['sku'] or '-', item['category'], item['stock_quantity'],
-                             round(item['cost_price'], 2), round(item['price'], 2), round(item['stock_value'], 2)])
+            inv_rows.append([
+                item['name'], item['sku'] or '-', _fmt_variant(item.get('size')), _fmt_variant(item.get('color')),
+                item['category'], item['stock_quantity'],
+                round(item['cost_price'], 2), round(item['price'], 2), round(item['stock_value'], 2)
+            ])
         else:
-            inv_rows.append([item['name'], item['sku'] or '-', item['category'],
-                             item['stock_quantity'], round(item['price'], 2)])
+            inv_rows.append([
+                item['name'], item['sku'] or '-', _fmt_variant(item.get('size')), _fmt_variant(item.get('color')),
+                item['category'], item['stock_quantity'], round(item['price'], 2)
+            ])
     write_section(ws2, row2, "Current Inventory", inv_headers, inv_rows)
 
     # ---- Sheet 3: Stock Movements ----
@@ -4292,27 +4316,32 @@ def generate_inventory_excel(shop_name, currency, start_date, end_date, inventor
     ws4 = wb.create_sheet("Most Active Products")
     ws4['A1'] = f"Most Active Products: {start_date} to {end_date}"
     ws4['A1'].font = Font(bold=True, size=14)
-    tm_headers = ['Product', 'SKU', 'Activities', 'Total Added', 'Total Removed']
-    tm_rows = [[r['name'], r['sku'] or '-', r['activity_count'], int(r['total_added']), int(r['total_removed'])]
-               for r in top_movements] if top_movements else [['No data', '', '', '', '']]
+    tm_headers = ['Product', 'SKU', 'Size', 'Color', 'Activities', 'Total Added', 'Total Removed']
+    tm_rows = [[
+        r['name'], r['sku'] or '-', _fmt_variant(r.get('size')), _fmt_variant(r.get('color')),
+        r['activity_count'], int(r['total_added']), int(r['total_removed'])
+    ] for r in top_movements] if top_movements else [['No data', '', '', '', '', '', '']]
     write_section(ws4, 3, "Most Active Products", tm_headers, tm_rows)
 
     # ---- Sheet 5: Slow-Moving Stock ----
     ws5 = wb.create_sheet("Slow-Moving Stock")
     ws5['A1'] = "Slow-Moving Stock (0–1 sales in period)"
     ws5['A1'].font = Font(bold=True, size=14)
-    sml_headers = ['Product', 'SKU', 'Category', 'Stock', 'Qty Sold', 'Stock Value']
-    sml_rows = [[i['name'], i['sku'], i['category'], i['stock_quantity'], i['quantity_sold'], round(i['stock_value'], 2)]
-                for i in slow_moving] if slow_moving else [['No data', '', '', '', '', '']]
+    sml_headers = ['Product', 'SKU', 'Size', 'Color', 'Category', 'Stock', 'Qty Sold', 'Stock Value']
+    sml_rows = [[
+        i['name'], i['sku'], _fmt_variant(i.get('size')), _fmt_variant(i.get('color')),
+        i['category'], i['stock_quantity'], i['quantity_sold'], round(i['stock_value'], 2)
+    ] for i in slow_moving] if slow_moving else [['No data', '', '', '', '', '', '', '']]
     write_section(ws5, 3, "Slow-Moving Stock", sml_headers, sml_rows, fill=orange_fill)
 
     # ---- Sheet 6: Low Stock Alerts ----
     ws6 = wb.create_sheet("Low Stock Alerts")
     ws6['A1'] = "Low Stock Alerts (< 5 units)"
     ws6['A1'].font = Font(bold=True, size=14)
-    ls_headers = ['Product', 'SKU', 'Category', 'Stock']
-    ls_rows = [[i['name'], i['sku'] or '-', i['category'], i['stock_quantity']]
-               for i in low_stock] if low_stock else [['No low stock items', '', '', '']]
+    ls_headers = ['Product', 'SKU', 'Size', 'Color', 'Category', 'Stock']
+    ls_rows = [[
+        i['name'], i['sku'] or '-', _fmt_variant(i.get('size')), _fmt_variant(i.get('color')), i['category'], i['stock_quantity']
+    ] for i in low_stock] if low_stock else [['No low stock items', '', '', '', '', '']]
     write_section(ws6, 3, "Low Stock Alerts", ls_headers, ls_rows, fill=red_fill)
 
     # Auto-size all sheets
