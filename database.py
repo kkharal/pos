@@ -512,6 +512,25 @@ def init_db():
         """
     )
 
+    # ── 19. Scheduled alert send log (idempotency guard) ─────────────────────
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS alert_send_log (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            shop_id INT NOT NULL,
+            alert_type VARCHAR(64) NOT NULL,
+            slot_date DATE NOT NULL,
+            slot_time CHAR(5) NOT NULL,
+            timezone_name VARCHAR(64) NOT NULL,
+            item_count INT NULL,
+            sent_at TIMESTAMP NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uq_alert_slot (shop_id, alert_type, slot_date, slot_time, timezone_name),
+            INDEX idx_alert_shop_created (shop_id, created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """
+    )
+
     # ── Migration: add columns to existing tables ────────────────────────────
 
     # Sales: total_cost column (profit tracking)
