@@ -80,6 +80,12 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
             'SELECT value FROM settings WHERE `key` = ? AND shop_id = ?', ('scheduler_times', shop_id)
         ).fetchone()
         scheduled_times = json.loads(times_row['value']) if times_row else []
+
+        # Fetch timezone for this shop (fallback to global, then UTC)
+        tz_row = cursor.execute(
+            'SELECT value FROM settings WHERE `key` = ? AND shop_id = ?', ('scheduler_timezone', shop_id)
+        ).fetchone()
+        timezone = tz_row['value'] if tz_row and tz_row['value'] else None
         
         # If no shop-specific times, try global fallback
         if not scheduled_times:
@@ -87,6 +93,12 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
                 'SELECT value FROM settings WHERE `key` = ? AND shop_id IS NULL', ('scheduler_times',)
             ).fetchone()
             scheduled_times = json.loads(g_times['value']) if g_times else ["09:00", "12:00", "18:00"]
+
+        if not timezone:
+            g_tz = cursor.execute(
+                'SELECT value FROM settings WHERE `key` = ? AND shop_id IS NULL', ('scheduler_timezone',)
+            ).fetchone()
+            timezone = g_tz['value'] if g_tz and g_tz['value'] else 'UTC'
 
         if not alert_email:
             print(f"[SCHEDULER] Shop '{shop_name}' (id={shop_id}): no alert email configured, skipping")
@@ -103,10 +115,29 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
             ORDER BY stock_quantity ASC
         ''', (threshold, shop_id, threshold)).fetchall()
 
-        conn.close()
-
         if not low_stock_products:
             print(f"[SCHEDULER] Shop '{shop_name}': no low stock items found")
+            conn.close()
+            return
+
+        # Dedupe guard: only one send per shop per alert slot (date+time in shop timezone).
+        slot_date, slot_time = _get_current_slot_for_timezone(timezone)
+        claimed = _claim_alert_slot(
+            cursor,
+            shop_id,
+            'scheduled_low_stock',
+            slot_date,
+            slot_time,
+            timezone,
+        )
+        conn.commit()
+        conn.close()
+
+        if not claimed:
+            print(
+                f"[SCHEDULER] Duplicate blocked for shop '{shop_name}' "
+                f"at slot {slot_date} {slot_time} ({timezone})"
+            )
             return
 
         # Build email body
@@ -204,19 +235,109 @@ def _run_low_stock_check_for_shop(shop_id, shop_name):
         </html>
         '''
 
-        send_email(
-            email_settings,
-            alert_email,
-            f'{shop_name} - Scheduled Low Stock Alert ({len(low_stock_products)} items)',
-            email_body,
-            from_name=shop_name,
-            text_body=plain_text
-        )
+        try:
+            send_email(
+                email_settings,
+                alert_email,
+                f'{shop_name} - Scheduled Low Stock Alert ({len(low_stock_products)} items)',
+                email_body,
+                from_name=shop_name,
+                text_body=plain_text
+            )
+            _mark_alert_slot_sent(
+                shop_id,
+                'scheduled_low_stock',
+                slot_date,
+                slot_time,
+                timezone,
+                len(low_stock_products),
+            )
+        except Exception:
+            # Release the claim if send fails so a retry can still send.
+            _release_alert_slot(
+                shop_id,
+                'scheduled_low_stock',
+                slot_date,
+                slot_time,
+                timezone,
+            )
+            raise
 
         print(f"[SCHEDULER] ✓ Alert sent for shop '{shop_name}': {len(low_stock_products)} low stock item(s)")
 
     except Exception as e:
         print(f"[SCHEDULER] ✗ Error for shop '{shop_name}' (id={shop_id}): {str(e)}")
+
+
+def _get_current_slot_for_timezone(timezone_name):
+    """Return (YYYY-MM-DD, HH:MM) in the provided timezone."""
+    import pytz
+
+    try:
+        tz = pytz.timezone(timezone_name or 'UTC')
+    except Exception:
+        tz = pytz.timezone('UTC')
+        timezone_name = 'UTC'
+
+    now_local = datetime.now(tz)
+    return now_local.strftime('%Y-%m-%d'), now_local.strftime('%H:%M')
+
+
+def _claim_alert_slot(cursor, shop_id, alert_type, slot_date, slot_time, timezone_name):
+    """Try to claim a scheduled alert slot. Returns True only for first claimant."""
+    cursor.execute(
+        '''
+        INSERT IGNORE INTO alert_send_log (
+            shop_id, alert_type, slot_date, slot_time, timezone_name
+        ) VALUES (?, ?, ?, ?, ?)
+        ''',
+        (shop_id, alert_type, slot_date, slot_time, timezone_name),
+    )
+    return cursor.rowcount == 1
+
+
+def _mark_alert_slot_sent(shop_id, alert_type, slot_date, slot_time, timezone_name, item_count):
+    """Mark claimed slot as sent with item count."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            '''
+            UPDATE alert_send_log
+            SET sent_at = NOW(), item_count = ?
+            WHERE shop_id = ?
+              AND alert_type = ?
+              AND slot_date = ?
+              AND slot_time = ?
+              AND timezone_name = ?
+            ''',
+            (item_count, shop_id, alert_type, slot_date, slot_time, timezone_name),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _release_alert_slot(shop_id, alert_type, slot_date, slot_time, timezone_name):
+    """Release claimed slot when send fails, allowing retry."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            '''
+            DELETE FROM alert_send_log
+            WHERE shop_id = ?
+              AND alert_type = ?
+              AND slot_date = ?
+              AND slot_time = ?
+              AND timezone_name = ?
+              AND sent_at IS NULL
+            ''',
+            (shop_id, alert_type, slot_date, slot_time, timezone_name),
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 # ── Recurring Expense Auto-Creation ──────────────────────────────────────────

@@ -918,6 +918,9 @@ Once configured, the system will **automatically** check for low stock at your *
 - Checks all products at your configured times
 - Sends email only if low stock items are found
 - Scheduler automatically updates when you save new times
+- Duplicate prevention: only one scheduled email is allowed per shop and schedule slot (date+time+timezone)
+- If two triggers happen at the same slot, the second one is skipped automatically
+- If email sending fails, the slot lock is released so a retry can send successfully
 - No manual intervention needed after setup
 
 **Requirements:**
@@ -958,6 +961,7 @@ The application uses **MySQL** with the following main tables:
 - **invoices**: Credit/partial payment invoices linked to sales and customers (scoped by shop_id)
 - **payments**: Payment records against invoices (scoped by shop_id)
 - **settings**: Global system configuration (SMTP, session timeout, scheduler times — shared across all shops)
+- **alert_send_log**: Idempotency log for scheduled alerts (prevents duplicate sends per shop/time slot)
 - **suppliers**: Supplier contact records (scoped by shop_id)
 - **purchase_orders**: Purchase order headers and line items (scoped by shop_id)
 
