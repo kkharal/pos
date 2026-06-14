@@ -115,11 +115,14 @@ NGINX_CONF="/etc/nginx/sites-available/pos"
 cat > "$NGINX_CONF" <<EOF
 # Rate limiting
 limit_req_zone \$binary_remote_addr zone=api_limit:10m rate=10r/s;
-limit_req_zone \$binary_remote_addr zone=login_limit:10m rate=5r/m;
+limit_req_zone \$binary_remote_addr zone=login_limit:10m rate=30r/m;
 
 server {
     listen 80;
     server_name ${DOMAIN};
+
+    # Return 429 instead of 503 when request rate limits are exceeded
+    limit_req_status 429;
 
     # Logging for security audits
     access_log /var/log/nginx/pos_access.log combined buffer=32k flush=5s;
@@ -137,7 +140,7 @@ server {
     client_max_body_size 200M;
 
     location / {
-        proxy_pass http://localhost:5000;
+        proxy_pass http://127.0.0.1:5000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -156,8 +159,8 @@ server {
 
     # Rate limit login and API endpoints
     location /login {
-        limit_req zone=login_limit burst=3 nodelay;
-        proxy_pass http://localhost:5000;
+        limit_req zone=login_limit burst=20 nodelay;
+        proxy_pass http://127.0.0.1:5000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -166,7 +169,7 @@ server {
 
     location /api/ {
         limit_req zone=api_limit burst=20 nodelay;
-        proxy_pass http://localhost:5000;
+        proxy_pass http://127.0.0.1:5000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -175,7 +178,7 @@ server {
 
     # Cache static files
     location /static/ {
-        proxy_pass http://localhost:5000/static/;
+        proxy_pass http://127.0.0.1:5000/static/;
         expires 7d;
         add_header Cache-Control "public, immutable";
     }
