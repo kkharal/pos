@@ -762,6 +762,7 @@
 
         // --- Product Suppliers ---
         var allSuppliers = [];
+        var supplierLinkInFlight = {};
         async function loadAllSuppliers() {
             try { const r = await fetch('/api/suppliers'); allSuppliers = await r.json(); } catch(e) { allSuppliers = []; }
         }
@@ -792,7 +793,7 @@
                         '<option value="">+ Add supplier...</option>' +
                         available.map(function(s){ return '<option value="' + s.id + '">' + escapeHtml(s.name) + '</option>'; }).join('') +
                         '</select>' +
-                        '<button class="btn btn-primary btn-sm" onclick="addProductSupplier(' + productId + ')">Add</button>' +
+                        '<button class="btn btn-primary btn-sm" id="add-supplier-btn-' + productId + '" onclick="addProductSupplier(' + productId + ')">Add</button>' +
                         '</div>';
                 }
             } catch(e) {
@@ -801,10 +802,15 @@
         }
 
         async function addProductSupplier(productId) {
+            if (supplierLinkInFlight[productId]) return;
             var sel = document.getElementById('add-supplier-select');
             var suppId = sel ? sel.value : '';
             if (!suppId) return;
+            var addBtn = document.getElementById('add-supplier-btn-' + productId);
             try {
+                supplierLinkInFlight[productId] = true;
+                if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Adding...'; }
+                if (sel) sel.disabled = true;
                 // Link all variants of this group to the supplier
                 var group = groupedProducts[selectedGroup];
                 if (!group) return;
@@ -818,6 +824,11 @@
                 showToast('Supplier linked!', 'success');
                 loadProductSuppliers(productId);
             } catch(e) { showToast('Error linking supplier', 'error'); }
+            finally {
+                supplierLinkInFlight[productId] = false;
+                if (addBtn) { addBtn.disabled = false; addBtn.textContent = 'Add'; }
+                if (sel) sel.disabled = false;
+            }
         }
 
         async function removeProductSupplier(linkId, productId) {
@@ -878,6 +889,8 @@
 
         document.getElementById('add-product-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (e.target.dataset.submitting === '1') return;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
             const fd = new FormData(e.target); const data = Object.fromEntries(fd);
             const catSel = document.getElementById('category-select'), custom = document.getElementById('custom-category-input').value.trim();
             if (catSel.value==='__custom__' && custom) data.category = custom;
@@ -887,10 +900,16 @@
             if (szSel.value==='__custom__' || szSel.style.display==='none') data.size = csz;
             delete data.custom_size;
             try {
+                e.target.dataset.submitting = '1';
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Adding...'; }
                 const r = await fetch('/api/products', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
                 if (r.ok) { showToast('Product added!','success'); closeAddProductModal(); loadProducts(); }
                 else { const err = await r.json(); showToast('Error: '+err.error,'error'); }
             } catch(e){ showToast('Error adding product','error'); }
+            finally {
+                delete e.target.dataset.submitting;
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Add Product'; }
+            }
         });
 
         // Edit Product (group-level)
@@ -1036,6 +1055,8 @@
 
         document.getElementById('variant-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (e.target.dataset.submitting === '1') return;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
             const { sizes, colors } = getVariantCombos();
             if (!sizes.length && !colors.length) { showToast('Select sizes or enter colors','warning'); return; }
             const stockInputs = document.querySelectorAll('.variant-stock-input');
@@ -1049,11 +1070,17 @@
                 description:document.getElementById('variant-description').value.trim(), sizes, colors, stock_map };
             if (!data.name||!data.category) { showToast('Name and Category required','warning'); return; }
             try {
+                e.target.dataset.submitting = '1';
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Creating...'; }
                 const r = await fetch('/api/products/create-variants', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
                 const res = await r.json();
                 if (r.ok && res.success) { showToast('Created '+res.created+' variants!','success'); closeVariantModal(); loadProducts(); }
                 else { showToast('Error: '+(res.error||'Unknown'),'error'); }
             } catch(e){ showToast('Error creating variants','error'); }
+            finally {
+                delete e.target.dataset.submitting;
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Create All Variants'; }
+            }
         });
 
         // User Info & Auth
