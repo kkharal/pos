@@ -322,7 +322,7 @@
                 <div class="form-group"><label>Category *</label>
                     <select id="category-select" name="category" required>
                         <option value="">Select or type category</option>
-                        <option value="Shirts">Shirts</option><option value="Pants">Pants</option><option value="Dresses">Dresses</option>
+                        <option value="Shirts">Shirts</option><option value="Pants">Pants</option><option value="Co-ord Sets">Co-ord Sets</option><option value="Dresses">Dresses</option>
                         <option value="Jackets">Jackets</option><option value="Shoes">Shoes</option><option value="Accessories">Accessories</option>
                         <option value="Other">Other</option><option value="__custom__">+ Add New Category...</option>
                     </select>
@@ -370,7 +370,7 @@
             <div class="modal-header"><h2>Create Product Variants</h2><button class="close-btn" onclick="closeVariantModal()">&times;</button></div>
             <form id="variant-form">
                 <div class="form-group"><label>Product Name *</label><input type="text" id="variant-name" required placeholder="e.g. Basic T-Shirt"></div>
-                <div class="form-group"><label>Category *</label><select id="variant-category" required><option value="">Select</option><option value="Shirts">Shirts</option><option value="Pants">Pants</option><option value="Dresses">Dresses</option><option value="Jackets">Jackets</option><option value="Shoes">Shoes</option><option value="Accessories">Accessories</option><option value="Other">Other</option></select></div>
+                <div class="form-group"><label>Category *</label><select id="variant-category" required><option value="">Select</option><option value="Shirts">Shirts</option><option value="Pants">Pants</option><option value="Co-ord Sets">Co-ord Sets</option><option value="Dresses">Dresses</option><option value="Jackets">Jackets</option><option value="Shoes">Shoes</option><option value="Accessories">Accessories</option><option value="Other">Other</option></select></div>
                 <div style="display:flex;gap:1rem;"><div class="form-group" style="flex:1;"><label>Cost Price *</label><input type="number" id="variant-cost-price" step="0.01" min="0" required></div><div class="form-group" style="flex:1;"><label>Sell Price *</label><input type="number" id="variant-price" step="0.01" min="0" required></div></div>
                 <div class="form-group"><label>Description</label><textarea id="variant-description" placeholder="Shared description"></textarea></div>
                 <hr style="margin:1rem 0;border:none;border-top:2px dashed #ddd;">
@@ -482,12 +482,31 @@
             }
         }
 
+        function canonicalCategory(v) {
+            return (v || '')
+                .toString()
+                .trim()
+                .toLowerCase()
+                .replace(/[\u2010-\u2015\u2212_-]+/g, ' ')
+                .replace(/[^a-z0-9\s]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function normalizeCategoryLabel(v) {
+            const c = canonicalCategory(v);
+            if (c === 'co ord set' || c === 'co ord sets' || c === 'co cord set' || c === 'co cord sets') {
+                return 'Co-ord Sets';
+            }
+            return (v || '').toString().trim();
+        }
+
         function groupProducts() {
             groupedProducts = {};
             products.forEach(p => {
                 const key = p.name;
                 if (!groupedProducts[key]) {
-                    groupedProducts[key] = { name: p.name, category: p.category, variants: [], totalStock: 0, price: p.price, cost_price: p.cost_price || 0 };
+                    groupedProducts[key] = { name: p.name, category: normalizeCategoryLabel(p.category), variants: [], totalStock: 0, price: p.price, cost_price: p.cost_price || 0 };
                 }
                 groupedProducts[key].variants.push(p);
                 groupedProducts[key].totalStock += p.stock_quantity;
@@ -529,7 +548,7 @@
         }
 
         function getCategoryIcon(cat) {
-            const icons = { Shirts:'👕', Pants:'👖', Dresses:'👗', Jackets:'🧥', Shoes:'👟', Accessories:'👜' };
+            const icons = { Shirts:'👕', Pants:'👖', 'Co-ord Sets':'🧵', Dresses:'👗', Jackets:'🧥', Shoes:'👟', Accessories:'👜' };
             return icons[cat] || '📦';
         }
 
@@ -742,8 +761,8 @@
             document.getElementById('edit-product-price').value = group.price;
             document.getElementById('edit-product-description').value = group.variants[0].description || '';
             var catSel = document.getElementById('edit-category-select');
-            var cats = [...new Set(products.map(function(x){return x.category;}))].sort();
-            catSel.innerHTML = cats.map(function(c){ return '<option value="'+c+'" '+(c===group.category?'selected':'')+'>'+c+'</option>'; }).join('');
+            var cats = [...new Set(products.map(function(x){return normalizeCategoryLabel(x.category);}).filter(Boolean))].sort();
+            catSel.innerHTML = cats.map(function(c){ return '<option value="'+c+'" '+(canonicalCategory(c)===canonicalCategory(group.category)?'selected':'')+'>'+c+'</option>'; }).join('');
             document.getElementById('edit-product-modal').classList.add('active');
         }
         function adjustStockSelected() { if (selectedVariantId) openStockModal(selectedVariantId); else showToast('Select a variant first','warning'); }
@@ -876,8 +895,8 @@
 
         function updateCategoryDropdown() {
             const sel = document.getElementById('category-select');
-            const existing = new Set(); products.forEach(p => { if(p.category) existing.add(p.category); });
-            const defaults = ['','Shirts','Pants','Dresses','Jackets','Shoes','Accessories','Other','__custom__'];
+            const existing = new Set(); products.forEach(p => { if(p.category) existing.add(normalizeCategoryLabel(p.category)); });
+            const defaults = ['','Shirts','Pants','Co-ord Sets','Dresses','Jackets','Shoes','Accessories','Other','__custom__'];
             Array.from(sel.options).forEach(o => { if(!defaults.includes(o.value)) o.remove(); });
             Array.from(existing).sort().forEach(c => { if(!defaults.includes(c)){ const o=document.createElement('option'); o.value=c; o.textContent=c; sel.insertBefore(o, sel.options[sel.options.length-1]); }});
         }
@@ -893,8 +912,9 @@
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const fd = new FormData(e.target); const data = Object.fromEntries(fd);
             const catSel = document.getElementById('category-select'), custom = document.getElementById('custom-category-input').value.trim();
-            if (catSel.value==='__custom__' && custom) data.category = custom;
+            if (catSel.value==='__custom__' && custom) data.category = normalizeCategoryLabel(custom);
             else if (catSel.value==='__custom__' && !custom) { showToast('Enter category name','warning'); return; }
+            else data.category = normalizeCategoryLabel(data.category);
             data.cost_price = parseFloat(data.cost_price); data.price = parseFloat(data.price); data.stock_quantity = parseInt(data.stock_quantity)||0;
             const szSel = document.getElementById('add-size-select'), csz = document.getElementById('add-custom-size').value.trim();
             if (szSel.value==='__custom__' || szSel.style.display==='none') data.size = csz;
@@ -921,7 +941,7 @@
             const data = {
                 old_name: oldName,
                 name: document.getElementById('edit-product-name').value.trim(),
-                category: document.getElementById('edit-category-select').value,
+                category: normalizeCategoryLabel(document.getElementById('edit-category-select').value),
                 cost_price: parseFloat(document.getElementById('edit-product-cost-price').value) || 0,
                 price: parseFloat(document.getElementById('edit-product-price').value),
                 description: document.getElementById('edit-product-description').value.trim()
@@ -1017,8 +1037,8 @@
         // Variant Modal
         function openVariantModal() {
             const sel = document.getElementById('variant-category');
-            const cats = [...new Set(products.map(p=>p.category))].sort();
-            const defs = ['','Shirts','Pants','Dresses','Jackets','Shoes','Accessories','Other'];
+            const cats = [...new Set(products.map(p=>normalizeCategoryLabel(p.category)).filter(Boolean))].sort();
+            const defs = ['','Shirts','Pants','Co-ord Sets','Dresses','Jackets','Shoes','Accessories','Other'];
             const all = [...new Set([...defs, ...cats])];
             sel.innerHTML = all.map(c => c==='' ? '<option value="">Select</option>' : `<option value="${c}">${c}</option>`).join('');
             document.getElementById('variant-modal').classList.add('active');
@@ -1068,6 +1088,7 @@
             const data = { name:document.getElementById('variant-name').value.trim(), category:document.getElementById('variant-category').value,
                 cost_price:parseFloat(document.getElementById('variant-cost-price').value)||0, price:parseFloat(document.getElementById('variant-price').value)||0,
                 description:document.getElementById('variant-description').value.trim(), sizes, colors, stock_map };
+            data.category = normalizeCategoryLabel(data.category);
             if (!data.name||!data.category) { showToast('Name and Category required','warning'); return; }
             try {
                 e.target.dataset.submitting = '1';
