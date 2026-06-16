@@ -447,7 +447,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: default;
         }
+        /* Hide mobile-only cart bar elements on desktop */
+        .pos-cart-bar-chevron { display: none; }
+        .pos-cart-bar-summary { display: contents; }
+        .pos-cart-bar-total { display: none !important; }
+        .pos-cart-bar-hint { display: none !important; }
         .pos-cart-title {
             font-size: 1rem;
             font-weight: 700;
@@ -470,12 +476,16 @@
             background: none;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
-            padding: 0.35rem 0.6rem;
+            padding: 0 0.65rem;
+            height: 32px;
             font-size: 0.78rem;
             color: #64748b;
             cursor: pointer;
             transition: all 0.15s;
             font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
         }
         .pos-cart-action-btn:hover { border-color: #3b82f6; color: #3b82f6; }
         .pos-cart-action-btn.has-badge { position: relative; }
@@ -674,12 +684,17 @@
             background: none;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
-            padding: 0.35rem 0.5rem;
+            padding: 0 0.65rem;
+            height: 32px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 0.78rem;
             color: #64748b;
             line-height: 1;
             transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
         }
         .pos-more-btn:hover { border-color: #3b82f6; color: #3b82f6; }
         .pos-more-dropdown {
@@ -986,6 +1001,131 @@
             }
             .pos-picker { padding-bottom: min(55vh, 460px); }
         }
+
+        /* ── Mobile: collapsed bar + slide-up cart ─────────────────────── */
+        .pos-cart-bar {
+            display: none; /* shown only on mobile via media query */
+        }
+        .pos-cart-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.45);
+            z-index: 149;
+        }
+        .pos-cart-overlay.open { display: block; }
+
+        @media (max-width: 640px) {
+            /* Product area: full-screen, reserve only bar height at bottom */
+            .pos-picker { padding: 0.6rem 0.6rem 0; padding-bottom: 68px !important; }
+            .pos-filter-rail { padding: 0.55rem 0.55rem 0.45rem; border-radius: 10px; }
+            .pos-search-bar input { padding: 0.72rem 0.7rem 0.72rem 2.4rem; font-size: 0.9rem; border-radius: 10px; }
+            .pos-search-bar .search-icon { font-size: 1rem; left: 0.7rem; }
+            .pos-search-bar .search-shortcut { display: none; }
+            .pos-categories { padding-bottom: 0.45rem; }
+            .pos-cat-pill, .pos-chip { padding: 0.26rem 0.55rem; font-size: 0.72rem; }
+            .pos-filters-row { gap: 0.35rem; }
+            .pos-filter-select { padding: 0.38rem 0.45rem; font-size: 0.78rem; }
+            .pos-instock-chip { font-size: 0.7rem; padding: 0.4rem 0.5rem; }
+            .pos-view-btn { font-size: 0.72rem; padding: 0.38rem 0.55rem; }
+            .pos-product-grid { gap: 0.55rem; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+            .pos-product-card { padding: 0.62rem; border-radius: 10px; }
+            .pos-product-name { font-size: 0.85rem; }
+            .pos-product-price { font-size: 0.9rem; }
+            .pos-product-meta { font-size: 0.7rem; }
+            .pos-add-variant-btn { font-size: 0.76rem; padding: 0.5rem; }
+            .pos-matrix th, .pos-matrix td { padding: 0.26rem; font-size: 0.7rem; }
+
+            /* Hide the old full cart panel — replaced by bar + drawer */
+            .pos-cart-panel {
+                position: fixed !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                top: auto !important;
+                height: auto !important;
+                max-height: 82vh !important;
+                transform: translateY(calc(100% - 64px));
+                transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+                border-radius: 16px 16px 0 0;
+                border-top: 1px solid #e2e8f0 !important;
+                box-shadow: 0 -6px 24px rgba(15,23,42,0.15) !important;
+                border-left: none !important;
+                z-index: 150;
+                overflow: hidden;
+            }
+            .pos-cart-panel.mobile-open {
+                transform: translateY(0);
+            }
+
+            /* Collapsed bar — the visible strip when cart is closed */
+            .pos-cart-header {
+                cursor: pointer;
+                padding: 0 1rem;
+                height: 64px;
+                display: flex;
+                align-items: center;
+                background: #1e293b;
+                color: #fff;
+                flex-shrink: 0;
+            }
+            .pos-cart-header .pos-cart-title { color: #fff; font-size: 0.9rem; }
+            .pos-cart-header .pos-cart-count { background: rgba(255,255,255,0.15); color: #fff; }
+
+            /* Bar summary — items + total shown in collapsed state */
+            .pos-cart-bar-summary {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+                min-width: 0;
+            }
+            .pos-cart-bar-total {
+                font-weight: 700;
+                font-size: 1rem;
+                color: #fff;
+                white-space: nowrap;
+            }
+            .pos-cart-bar-chevron {
+                display: inline-block; /* show only on mobile */
+                color: rgba(255,255,255,0.55);
+                font-size: 1.1rem;
+                margin-left: 0.4rem;
+                transition: transform 0.3s;
+                flex-shrink: 0;
+            }
+            .pos-cart-panel.mobile-open .pos-cart-bar-chevron { transform: rotate(180deg); }
+
+            /* Inner content padding */
+            .pos-cart-items { padding: 0.5rem 1rem; }
+            .pos-cart-footer { padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom, 0px)); }
+            .pos-cart-item { gap: 0.5rem; padding: 0.45rem 0; }
+            .pos-cart-item-name { font-size: 0.78rem; }
+            .pos-cart-item-variant { font-size: 0.68rem; }
+            .pos-cart-item-price { font-size: 0.78rem; }
+            .pos-qty-stepper button { width: 24px; height: 24px; font-size: 0.8rem; }
+            .pos-qty-stepper input { width: 30px; font-size: 0.76rem; }
+            .pos-summary-row { font-size: 0.78rem; }
+            .pos-summary-total { font-size: 1rem; }
+            .pos-checkout-btn { padding: 0.7rem; font-size: 0.9rem; border-radius: 8px; }
+            .pos-hold-btn { padding: 0.48rem; font-size: 0.78rem; }
+        }
+
+        @media (max-width: 480px) {
+            .pos-picker { padding: 0.45rem 0.45rem 0; padding-bottom: 64px !important; }
+            .pos-filter-rail { padding: 0.42rem 0.42rem 0.35rem; border-radius: 9px; }
+            .pos-search-bar input { padding: 0.62rem 0.6rem 0.62rem 2.1rem; font-size: 0.84rem; }
+            .pos-search-bar .search-icon { font-size: 0.9rem; left: 0.6rem; }
+            .pos-cat-pill, .pos-chip { padding: 0.22rem 0.46rem; font-size: 0.68rem; }
+            .pos-product-grid { gap: 0.42rem; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+            .pos-product-card { padding: 0.5rem; }
+            .pos-product-name { font-size: 0.8rem; }
+            .pos-product-price { font-size: 0.84rem; }
+            .pos-add-variant-btn { font-size: 0.7rem; padding: 0.44rem; }
+            .pos-checkout-btn { padding: 0.62rem; font-size: 0.84rem; }
+            .pos-summary-row { font-size: 0.72rem; }
+            .pos-summary-total { font-size: 0.92rem; }
+        }
     </style>
 </head>
 <body class="has-sidebar">
@@ -1084,14 +1224,18 @@
                 </div>
             </div>
 
+            <!-- Mobile cart overlay backdrop -->
+            <div class="pos-cart-overlay" id="pos-cart-overlay" onclick="closeMobileCart()"></div>
+
             <!-- RIGHT: Cart Panel -->
-            <div class="pos-cart-panel">
-                <div class="pos-cart-header">
-                    <div>
+            <div class="pos-cart-panel" id="pos-cart-panel">
+                <div class="pos-cart-header" onclick="toggleMobileCart()">
+                    <div class="pos-cart-bar-summary">
                         <span class="pos-cart-title">Cart</span>
                         <span class="pos-cart-count" id="cart-count-badge" style="display:none;">0</span>
+                        <span class="pos-cart-bar-total" id="cart-bar-total" style="display:none;"></span>
                     </div>
-                    <div class="pos-cart-actions">
+                    <div class="pos-cart-actions" onclick="event.stopPropagation()">
                         <button class="pos-cart-action-btn has-badge" onclick="openHeldCartsModal()" title="Held carts">
                             📌 Held
                             <span class="pos-held-badge" id="held-count-badge" style="display:none;">0</span>
@@ -1105,6 +1249,7 @@
                             </div>
                         </div>
                     </div>
+                    <span class="pos-cart-bar-chevron" id="cart-bar-chevron">&#9650;</span>
                 </div>
 
                 <div class="pos-cart-items" id="cart-items">
@@ -1764,10 +1909,7 @@
                 '<div class="pos-variant-options">' + colorButtons + '</div>' +
                 '<div class="pos-variant-title">Select Size</div>' +
                 '<div class="pos-variant-options">' + sizeButtons + '</div>' +
-                '<div class="pos-variant-effective-price">Effective Price: ' + currencySymbol + effectivePrice.toFixed(2) + '</div>' +
-                '<div class="pos-variant-stock">Available Stock: ' + availableStock + '</div>' +
-                '<button class="pos-add-btn" onclick="event.stopPropagation(); addSelectedVariant(\'' + group.key.replace(/'/g, "\\'") + '\')" ' +
-                    ((!selectedVariant || availableStock <= 0) ? 'disabled' : '') + '>Add to Cart</button>' +
+                '<div class="pos-variant-effective-price">Price: ' + currencySymbol + effectivePrice.toFixed(2) + (availableStock > 0 ? ' &nbsp;<span style="font-size:0.7rem;color:#64748b;">· ' + availableStock + ' in stock</span>' : ' &nbsp;<span style="font-size:0.7rem;color:#ef4444;">Out of stock</span>') + '</div>' +
             '</div>';
         }
 
@@ -1968,6 +2110,47 @@
             renderCart();
         }
 
+        /* ── Mobile cart drawer helpers ─────────────────────────────── */
+        function isMobileCart() { return window.innerWidth <= 640; }
+
+        function openMobileCart() {
+            var panel = document.getElementById('pos-cart-panel');
+            var overlay = document.getElementById('pos-cart-overlay');
+            if (panel) panel.classList.add('mobile-open');
+            if (overlay) overlay.classList.add('open');
+        }
+
+        function closeMobileCart() {
+            var panel = document.getElementById('pos-cart-panel');
+            var overlay = document.getElementById('pos-cart-overlay');
+            if (panel) panel.classList.remove('mobile-open');
+            if (overlay) overlay.classList.remove('open');
+        }
+
+        function toggleMobileCart() {
+            if (!isMobileCart()) return;
+            var panel = document.getElementById('pos-cart-panel');
+            if (panel && panel.classList.contains('mobile-open')) {
+                closeMobileCart();
+            } else {
+                openMobileCart();
+            }
+        }
+
+        function syncCartBar(totalItems, grandTotal) {
+            if (!isMobileCart()) return;
+            var barTotal = document.getElementById('cart-bar-total');
+            var barHint = document.getElementById('cart-bar-hint');
+            if (barTotal) {
+                if (totalItems > 0) {
+                    barTotal.textContent = currencySymbol + grandTotal.toFixed(2);
+                    barTotal.style.display = '';
+                } else {
+                    barTotal.style.display = 'none';
+                }
+            }
+        }
+
         function renderCart() {
             var container = document.getElementById('cart-items');
             var totalItems = cart.reduce(function(sum, item) { return sum + item.quantity; }, 0);
@@ -2061,6 +2244,9 @@
             totalsHtml += '<div class="pos-summary-total"><span>Total</span><span id="cart-total">' + currencySymbol + total.toFixed(2) + '</span></div>';
 
             document.getElementById('totals-display').innerHTML = totalsHtml;
+
+            // Sync mobile cart bar
+            syncCartBar(totalItems, total);
         }
 
         function clearCart() {

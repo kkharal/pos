@@ -4,7 +4,7 @@ import os
 import re
 from collections.abc import Mapping
 from decimal import Decimal
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 
 from dotenv import load_dotenv
 import mysql.connector
@@ -783,11 +783,37 @@ def init_db():
     print("Database initialized successfully (MySQL – multi-shop)!")
 
 
+def _tz_name_to_offset(tz_name):
+    """Convert a timezone name like 'Asia/Bangkok' to a MySQL-compatible offset like '+07:00'.
+    Falls back to '+00:00' if conversion fails."""
+    try:
+        import zoneinfo
+        tz = zoneinfo.ZoneInfo(tz_name)
+        now = datetime.now(tz)
+        total_seconds = int(now.utcoffset().total_seconds())
+        sign = '+' if total_seconds >= 0 else '-'
+        total_seconds = abs(total_seconds)
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes = remainder // 60
+        return f"{sign}{hours:02d}:{minutes:02d}"
+    except Exception:
+        return '+00:00'
+
+
 def get_db_connection():
     """Get a MySQL connection wrapped with SQLite-compatible helpers."""
     conn = mysql.connector.connect(**DB_CONFIG)
-    # Force UTC so all datetime values are timezone-consistent regardless of server location
-    conn.cursor().execute("SET time_zone = '+00:00'")
+    # Apply the configured shop timezone so CURDATE()/NOW() align with local time.
+    try:
+        _cur = conn.cursor(dictionary=True)
+        _cur.execute("SELECT value FROM settings WHERE `key` = 'scheduler_timezone' AND shop_id IS NULL LIMIT 1")
+        _row = _cur.fetchone()
+        _cur.close()
+        tz_name = (_row['value'] if _row and _row.get('value') else None) or 'UTC'
+        offset = _tz_name_to_offset(tz_name)
+        conn.cursor().execute(f"SET time_zone = '{offset}'")
+    except Exception:
+        conn.cursor().execute("SET time_zone = '+00:00'")
     return ConnectionCompat(conn)
 
 if __name__ == '__main__':
