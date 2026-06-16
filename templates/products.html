@@ -46,14 +46,26 @@
         .status-badge.red { background: #fee2e2; color: #991b1b; }
         .product-drawer { position: fixed; top: 0; right: 0; width: min(1200px, calc(100vw - 84px)); height: 100vh; background: #f8fafc; border-left: 1px solid #e2e8f0; box-shadow: -8px 0 32px rgba(15,23,42,0.18); z-index: 1200; transform: translateX(104%); transition: transform 0.3s ease; display: flex; flex-direction: column; overflow: hidden; }
         .product-drawer.open { transform: translateX(0); }
-        .drawer-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; }
-        .drawer-header > div { min-width: 0; flex: 1; }
+        .drawer-header { padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 0.8rem; }
+        .drawer-header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; }
+        .drawer-header-top > div { min-width: 0; flex: 1; }
         .drawer-header h2 { margin: 0; font-size: 1.15rem; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .drawer-header .drawer-subtitle { font-size: 0.82rem; color: #64748b; margin-top: 0.2rem; }
+        .drawer-header .drawer-subtitle { font-size: 0.78rem; color: #64748b; margin-top: 0.15rem; }
+        .drawer-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; }
+        .drawer-summary-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.35rem 0.5rem; font-size: 0.75rem; }
+        .drawer-summary-card .label { color: #64748b; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.02em; }
+        .drawer-summary-card .value { font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-top: 0.1rem; }
+        .drawer-tabs { display: flex; gap: 0; border-bottom: 1px solid #e2e8f0; margin: 0 -1.25rem 1rem; padding: 0 1.25rem; }
+        .drawer-tab { padding: 0.65rem 1rem; border: none; background: none; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+        .drawer-tab.active { color: #2563eb; border-bottom-color: #2563eb; }
+        .drawer-tab-content { display: none; }
+        .drawer-tab-content.active { display: block; }
+        .drawer-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .drawer-actions .btn { font-size: 0.75rem; padding: 0.35rem 0.6rem; }
         .drawer-close { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #94a3b8; padding: 0.2rem; line-height: 1; }
         .drawer-close:hover { color: #1e293b; }
-        .drawer-body { flex: 1; overflow-y: auto; padding: 1rem 1.25rem 1.25rem; }
-        .workspace-shell { display: flex; flex-direction: column; gap: 1rem; }
+        .drawer-body { flex: 1; overflow-y: auto; padding: 0 1.25rem 1.25rem; }
+        .workspace-shell { display: flex; flex-direction: column; gap: 0; }
         .workspace-header { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem 1rem 0.9rem; }
         .workspace-title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
         .workspace-title h3 { margin: 0; font-size: 1.05rem; color: #0f172a; }
@@ -90,12 +102,14 @@
         .matrix-cell-btn.low { background: #fef3c7; color: #92400e; }
         .matrix-cell-btn.healthy { background: #dcfce7; color: #166534; }
         .matrix-cell-btn.selected { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
-        .variant-panel { position: sticky; top: 0; padding: 0.9rem; display: flex; flex-direction: column; gap: 0.75rem; }
-        .panel-title { margin: 0; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.04em; color: #475569; }
-        .variant-identity { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.7rem; }
-        .variant-name { font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0 0 0.35rem 0; }
-        .variant-status { font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem; }
-        .variant-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem 0.65rem; font-size: 0.8rem; color: #334155; }
+        .variant-panel { display: flex; flex-direction: column; gap: 0.5rem; }
+        .panel-title { margin: 0; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; font-weight: 600; }
+        .variant-identity { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.55rem; }
+        .variant-name { font-size: 0.9rem; font-weight: 700; color: #1e293b; margin: 0 0 0.25rem 0; }
+        .variant-status { font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem; }
+        .variant-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 0.4rem; font-size: 0.75rem; color: #475569; margin-top: 0.4rem; }
+        .variant-meta-grid .key { color: #64748b; font-size: 0.7rem; }
+        .variant-meta-grid .val { color: #1e293b; font-weight: 600; }
         .variant-block { border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.65rem; }
         .variant-block h4 { margin: 0 0 0.55rem 0; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; }
         .variant-form { display: grid; gap: 0.45rem; }
@@ -141,6 +155,10 @@
         .more-menu-item.danger:hover { background: #fef2f2; }
         .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 1100; }
         .drawer-overlay.show { display: block; }
+        /* Keep all modals above the product drawer workspace */
+        .modal { z-index: 2300 !important; }
+        .modal.active { z-index: 2300 !important; }
+        .modal .modal-content { position: relative; z-index: 2301; }
         .products-empty { text-align: center; padding: 4rem 2rem; color: #94a3b8; }
         .products-empty .empty-icon { font-size: 3rem; margin-bottom: 0.75rem; opacity: 0.5; }
         .products-empty p { margin: 0; font-size: 0.95rem; color: #64748b; }
@@ -290,8 +308,8 @@
         /* Product detail workspace redesign */
         .products-main.drawer-open { margin-right: 0 !important; }
         .product-drawer {
-            width: min(1220px, 94vw);
-            right: calc(-1 * min(1220px, 94vw) - 24px);
+            width: min(1060px, 88vw);
+            right: 0;
             border-left: none;
             border-radius: 14px 0 0 14px;
         }
@@ -327,8 +345,8 @@
 
         .inv-workspace {
             display: grid;
-            grid-template-columns: minmax(0, 7fr) minmax(280px, 3fr);
-            gap: 1rem;
+            grid-template-columns: minmax(0, 1fr) 300px;
+            gap: 0.75rem;
             align-items: start;
         }
         .inv-main, .inv-side {
@@ -346,7 +364,7 @@
         .inv-matrix-wrap {
             border: 1px solid #e2e8f0;
             border-radius: 10px;
-            max-height: 480px;
+            max-height: 420px;
             overflow: auto;
             background: #ffffff;
         }
@@ -402,59 +420,175 @@
             z-index: 1;
         }
 
-        .inv-side { position: sticky; top: 0.8rem; align-self: start; max-height: calc(100vh - 130px); overflow: auto; }
-        .inv-variant-head { margin-bottom: 0.6rem; }
-        .inv-variant-name { margin: 0; font-size: 0.98rem; color: #0f172a; }
-        .inv-status { font-size: 0.78rem; font-weight: 600; margin-top: 0.2rem; }
+        .inv-side { position: sticky; top: 0; align-self: start; max-height: calc(100vh - 250px); overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.65rem; }
+        .inv-variant-head { margin-bottom: 0.4rem; }
+        .inv-variant-name { margin: 0; font-size: 0.85rem; color: #1e293b; font-weight: 600; }
+        .inv-status { font-size: 0.7rem; font-weight: 600; margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.02em; }
         .inv-status.healthy { color: #166534; }
         .inv-status.low { color: #92400e; }
         .inv-status.out { color: #991b1b; }
-        .inv-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 0.65rem; font-size: 0.8rem; margin-bottom: 0.75rem; }
-        .inv-kv .key { color: #64748b; }
+        .inv-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem 0.35rem; font-size: 0.75rem; margin-bottom: 0.55rem; }
+        .inv-kv .key { color: #64748b; font-size: 0.7rem; }
         .inv-kv .val { color: #1e293b; font-weight: 600; }
-        .inv-panel-group { border-top: 1px solid #e2e8f0; padding-top: 0.65rem; margin-top: 0.65rem; }
-        .inv-panel-title { margin: 0 0 0.45rem 0; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; }
-        .inv-panel-actions { display: grid; gap: 0.45rem; }
-        .inv-panel-actions .btn { justify-content: flex-start; }
-        .inv-form-row { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem; margin-top: 0.45rem; }
+        .inv-panel-group { border-top: 1px solid #e2e8f0; padding-top: 0.5rem; margin-top: 0.5rem; }
+        .inv-panel-title { margin: 0 0 0.35rem 0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.03em; color: #64748b; font-weight: 600; }
+        .inv-panel-actions { display: grid; gap: 0.35rem; }
+        .inv-panel-actions .btn { font-size: 0.8rem; padding: 0.4rem 0.6rem; width: 100%; }
+        .inv-form-section { border-top: 1px solid #e2e8f0; padding-top: 0.5rem; margin-top: 0.5rem; }
+        .inv-form-row { display: grid; grid-template-columns: 1fr auto; gap: 0.3rem; margin-top: 0.35rem; }
         .inv-form-row input, .inv-textarea {
-            border: 1px solid #d1d5db;
-            border-radius: 7px;
-            padding: 0.4rem 0.5rem;
-            font-size: 0.8rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 0.3rem 0.4rem;
+            font-size: 0.75rem;
             width: 100%;
             box-sizing: border-box;
         }
-        .inv-textarea { min-height: 58px; resize: vertical; margin-top: 0.35rem; }
-        .inv-help { color: #64748b; font-size: 0.74rem; margin-top: 0.3rem; }
+        .inv-textarea { min-height: 50px; resize: vertical; margin-top: 0.25rem; }
+        .inv-help { color: #64748b; font-size: 0.7rem; margin-top: 0.2rem; }
 
-        .inv-lower { display: grid; gap: 0.75rem; }
+        .inv-lower { display: grid; gap: 0.75rem; margin-top: 1rem; }
         .inv-collapse {
-            background: #ffffff;
+            background: white;
             border: 1px solid #e2e8f0;
-            border-radius: 10px;
+            border-radius: 8px;
             overflow: hidden;
         }
         .inv-collapse > summary {
             cursor: pointer;
             list-style: none;
-            padding: 0.68rem 0.82rem;
+            padding: 0.55rem 0.7rem;
             font-weight: 600;
-            font-size: 0.86rem;
-            color: #0f172a;
+            font-size: 0.8rem;
+            color: #1e293b;
             background: #f8fafc;
             border-bottom: 1px solid #e2e8f0;
+            user-select: none;
         }
         .inv-collapse > summary::-webkit-details-marker { display: none; }
-        .inv-collapse-body { padding: 0.8rem; font-size: 0.83rem; color: #334155; }
-        .inv-analytics-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.55rem; }
-        .inv-analytics-item { border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.5rem; background: #ffffff; }
-        .inv-analytics-item .k { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.03em; }
-        .inv-analytics-item .v { font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-top: 0.2rem; }
-        .inv-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.55rem; }
-        .inv-tag { background: #f1f5f9; color: #334155; border-radius: 999px; padding: 0.22rem 0.5rem; font-size: 0.74rem; }
+        .inv-collapse-body { padding: 0.65rem; font-size: 0.8rem; color: #334155; }
+        .inv-analytics-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem; }
+        .inv-analytics-item { border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.4rem; background: #f8fafc; }
+        .inv-analytics-item .k { font-size: 0.65rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; }
+        .inv-analytics-item .v { font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-top: 0.15rem; }
+        .inv-tags { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.4rem; }
+        .inv-tag { background: #f1f5f9; color: #334155; border-radius: 6px; padding: 0.2rem 0.4rem; font-size: 0.7rem; }
+        .variants-toolbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 150px 170px;
+            gap: 0.5rem;
+            margin-bottom: 0.65rem;
+        }
+        .variants-toolbar input,
+        .variants-toolbar select {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 0.42rem 0.55rem;
+            font-size: 0.8rem;
+            background: #fff;
+        }
+        .variants-table-wrap {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: auto;
+            max-height: 52vh;
+            background: #fff;
+        }
+        .variants-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 860px;
+        }
+        .variants-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0.5rem 0.45rem;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .variants-table td {
+            padding: 0.5rem 0.45rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.8rem;
+            color: #334155;
+            white-space: nowrap;
+        }
+        .variants-table tr.active td { background: #eff6ff; }
+        .variants-actions { display: flex; gap: 0.35rem; }
+        .variants-actions .btn { font-size: 0.72rem; padding: 0.28rem 0.45rem; }
+        .variant-pill { font-size: 0.72rem; font-weight: 700; border-radius: 999px; padding: 0.16rem 0.46rem; display: inline-flex; }
+        .variant-pill.ok { background: #dcfce7; color: #166534; }
+        .variant-pill.critical { background: #fde68a; color: #92400e; }
+        .variant-pill.low { background: #fef3c7; color: #92400e; }
+        .variant-pill.out { background: #fee2e2; color: #991b1b; }
+        .variant-pill.unavailable { background: #e2e8f0; color: #475569; }
+        .variants-col-secondary { color: #64748b; }
+        .override-chip {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 0.28rem;
+            padding: 0.06rem 0.32rem;
+            border-radius: 999px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: #0f172a;
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            vertical-align: middle;
+        }
+        .override-hint {
+            margin-top: 0.4rem;
+            font-size: 0.68rem;
+            color: #64748b;
+        }
+        .override-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+        }
+        .override-form-grid .form-group { margin-bottom: 0; }
+        .variant-action-menu { position: relative; }
+        .variant-action-toggle { font-size: 0.72rem; padding: 0.28rem 0.45rem; }
+        .variant-action-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 0.2rem);
+            min-width: 150px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+            z-index: 20;
+            overflow: hidden;
+        }
+        .variant-action-dropdown.show { display: block; }
+        .variants-pagination {
+            margin-top: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.76rem;
+            color: #64748b;
+        }
+        .variants-pagination-actions { display: flex; gap: 0.35rem; }
+        .variants-pagination-actions .btn { font-size: 0.72rem; padding: 0.26rem 0.45rem; }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 1180px) {
+            .product-drawer { width: min(980px, 92vw); }
+            .inv-workspace { grid-template-columns: minmax(0, 1fr) 280px; }
+        }
+
+        @media (max-width: 900px) {
             .product-drawer { width: 100vw; right: -100vw; border-radius: 0; }
             .inv-product-header { grid-template-columns: 1fr; }
             .inv-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -464,9 +598,40 @@
         }
 
         @media (max-width: 640px) {
+            .product-drawer { width: 100vw; border-radius: 0; }
+            .drawer-header { padding: 0.65rem 0.75rem; gap: 0.55rem; }
+            .drawer-header h2 { font-size: 1rem; }
+            .drawer-header .drawer-subtitle { font-size: 0.72rem; }
+            .drawer-summary { grid-template-columns: 1fr 1fr; gap: 0.35rem; }
+            .drawer-summary-card { padding: 0.28rem 0.4rem; }
+            .drawer-summary-card .label { font-size: 0.64rem; }
+            .drawer-summary-card .value { font-size: 0.82rem; }
+            .drawer-tabs {
+                margin: 0 -0.75rem 0.6rem;
+                padding: 0 0.75rem;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .drawer-tab { padding: 0.5rem 0.65rem; font-size: 0.76rem; }
+            .drawer-body { padding: 0 0.75rem 0.75rem; }
+            .inv-main, .inv-side { padding: 0.6rem; border-radius: 9px; }
+            .inv-legend { gap: 0.35rem; margin-bottom: 0.5rem; }
+            .inv-legend-item { font-size: 0.68rem; }
+            .inv-matrix-wrap { max-height: 320px; }
+            .inv-matrix { min-width: 460px; }
+            .inv-matrix thead th { font-size: 0.66rem; padding: 0.4rem; }
+            .inv-matrix tbody th { font-size: 0.72rem; padding: 0.35rem 0.45rem; }
+            .inv-cell { min-width: 48px; font-size: 0.74rem; padding: 0.32rem 0.2rem; }
+            .inv-kv { font-size: 0.7rem; }
+            .inv-panel-actions .btn { font-size: 0.74rem; padding: 0.34rem 0.5rem; }
+            .variants-table-wrap { max-height: 45vh; }
+            .variants-table th, .variants-table td { font-size: 0.72rem; padding: 0.36rem; }
+            .variant-action-toggle { font-size: 0.68rem; padding: 0.22rem 0.35rem; }
+            .override-form-grid { grid-template-columns: 1fr; }
             .inv-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .inv-analytics-grid { grid-template-columns: 1fr; }
             .inv-form-row { grid-template-columns: 1fr; }
+            .variants-toolbar { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -558,12 +723,12 @@
     <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
     <div class="product-drawer" id="product-drawer">
         <div class="drawer-header">
-            <div><h2 id="drawer-title">Product Name</h2><div class="drawer-subtitle" id="drawer-subtitle">Category</div></div>
-            <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+            <div class="drawer-header-top">
+                <div><h2 id="drawer-title">Product Name</h2><div class="drawer-subtitle" id="drawer-subtitle">Category</div></div>
+                <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+            </div>
         </div>
         <div class="drawer-body" id="drawer-body"></div>
-        <div class="drawer-variant-detail" id="variant-detail-section"></div>
-        <div class="drawer-actions" id="drawer-actions"></div>
     </div>
 
     <!-- Add Product Modal -->
@@ -672,6 +837,41 @@
         </div>
     </div>
 
+    <!-- Variant Price/Cost Override Modal -->
+    <div id="variant-override-modal" class="modal">
+        <div class="modal-content" style="max-width:560px;">
+            <div class="modal-header"><h2>Variant Price / Cost</h2><button class="close-btn" onclick="closeVariantOverrideModal()">&times;</button></div>
+            <form id="variant-override-form">
+                <input type="hidden" id="variant-override-id">
+                <div style="font-size:0.82rem;color:#64748b;margin-bottom:0.65rem;" id="variant-override-label">Variant</div>
+                <div class="override-form-grid">
+                    <div class="form-group">
+                        <label>Default Cost</label>
+                        <input type="text" id="variant-default-cost" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Default Price</label>
+                        <input type="text" id="variant-default-price" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Variant Cost</label>
+                        <input type="number" step="0.01" min="0" id="variant-override-cost" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Variant Price</label>
+                        <input type="number" step="0.01" min="0" id="variant-override-price" required>
+                    </div>
+                </div>
+                <div class="override-hint">If variant values differ from defaults, they are treated as overrides.</div>
+                <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.9rem;flex-wrap:wrap;">
+                    <button type="button" class="btn btn-secondary" id="variant-reset-default-btn" onclick="resetPriceOverride()">Reset to Default</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeVariantOverrideModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Stock History Modal -->
     <div id="stock-history-modal" class="modal">
         <div class="modal-content" style="max-width:800px;">
@@ -709,6 +909,8 @@
         var globalThreshold = 5;
         var selectedGroup = null;
         var selectedVariantId = null;
+        var variantTabState = { query: '', status: 'all', sort: 'color_asc', page: 1, pageSize: 25 };
+        var overrideVariantId = null;
 
         async function loadProducts() {
             showLoading();
@@ -850,11 +1052,29 @@
             return 'healthy';
         }
 
+        function computeVariantAdminStatus(variant) {
+            if (!variant) return 'unavailable';
+            var stock = variant.stock_quantity || 0;
+            if (stock <= 0) return 'out';
+            if (stock === 1) return 'critical';
+            if (stock <= 3) return 'low';
+            return 'healthy';
+        }
+
         function getStatusLabel(status) {
             if (status === 'out') return 'Out of Stock';
+            if (status === 'critical') return 'Critical Stock';
             if (status === 'low') return 'Low Stock';
             if (status === 'healthy') return 'Healthy Stock';
             return 'Unavailable';
+        }
+
+        function getStatusRank(status) {
+            if (status === 'out') return 0;
+            if (status === 'critical') return 1;
+            if (status === 'low') return 2;
+            if (status === 'healthy') return 3;
+            return 4;
         }
 
         function groupSizeOrder(size) {
@@ -890,7 +1110,11 @@
         }
 
         function openDrawer(groupName) {
+            const previousGroup = selectedGroup;
             selectedGroup = groupName;
+            if (previousGroup !== groupName) {
+                variantTabState = { query: '', status: 'all', sort: 'color_asc', page: 1, pageSize: 25 };
+            }
             const group = groupedProducts[groupName];
             if (!group) return;
             const isAdmin = isAdminRole(currentUserRole);
@@ -899,11 +1123,23 @@
             const outVariants = group.variants.filter(v => (v.stock_quantity || 0) <= 0).length;
             const coverage = group.variants.length ? Math.round((activeVariants / group.variants.length) * 100) : 0;
             const distribution = buildStockDistribution(group);
-
-            document.getElementById('drawer-title').textContent = groupName;
-            document.getElementById('drawer-subtitle').textContent = group.category + ' \u00B7 ' + group.variants.length + ' variant' + (group.variants.length > 1 ? 's' : '');
-
             const profit = group.price - group.cost_price;
+            const healthyVariants = group.variants.length - lowVariants - outVariants;
+            const reorderCandidates = group.variants
+                .map(v => {
+                    const threshold = getThreshold(v);
+                    const stock = v.stock_quantity || 0;
+                    const recommended = stock < threshold ? (threshold - stock) : 0;
+                    return { v, threshold, stock, recommended };
+                })
+                .filter(item => item.recommended > 0)
+                .sort((a, b) => b.recommended - a.recommended || a.stock - b.stock);
+            const totalRecommendedReorder = reorderCandidates.reduce((sum, item) => sum + item.recommended, 0);
+
+            // Update header only with product name + category
+            document.getElementById('drawer-title').textContent = groupName;
+            document.getElementById('drawer-subtitle').textContent = group.category;
+
             const dims = getMatrixDimensions(group);
             const current = group.variants.find(v => v.id === selectedVariantId) || group.variants[0];
             selectedVariantId = current ? current.id : null;
@@ -934,92 +1170,130 @@
                 .join('');
 
             const esc = groupName.replace(/'/g,"\\'");
-            let body = `<div class="inv-detail-shell">
-                <section class="inv-product-header">
-                    <div>
-                        <h2 class="inv-title">${escapeHtml(groupName)}</h2>
-                        <div class="inv-subtitle">${escapeHtml(group.category)} \u00B7 ${group.variants.length} Variants</div>
-                    </div>
-                    <div>
-                        <div class="inv-metrics">
-                            <div class="inv-metric"><span class="label">Total Stock</span><span class="value">${group.totalStock}</span></div>
-                            <div class="inv-metric"><span class="label">Total Variants</span><span class="value">${group.variants.length}</span></div>
-                            <div class="inv-metric"><span class="label">Active Variants</span><span class="value">${activeVariants}</span></div>
-                            <div class="inv-metric"><span class="label">Selling Price</span><span class="value">${currencySymbol}${group.price.toFixed(0)}</span></div>
-                            <div class="inv-metric"><span class="label">Profit / Unit</span><span class="value" style="color:${profit>=0?'#86efac':'#fecaca'};">${currencySymbol}${profit.toFixed(0)}</span></div>
-                        </div>
-                    </div>
-                </section>
+            const summaryHTML = `
+                <div class="drawer-summary">
+                    <div class="drawer-summary-card"><div class="label">Stock</div><div class="value">${group.totalStock}</div></div>
+                    <div class="drawer-summary-card"><div class="label">Variants</div><div class="value">${group.variants.length}</div></div>
+                    <div class="drawer-summary-card"><div class="label">Low Stock</div><div class="value" style="color:#f59e0b;">${lowVariants}</div></div>
+                    <div class="drawer-summary-card"><div class="label">Out of Stock</div><div class="value" style="color:#ef4444;">${outVariants}</div></div>
+                </div>
+            `;
 
-                <section class="inv-product-toolbar">
-                    <button class="btn btn-primary" onclick="editProductGroup()">Edit</button>
-                    <button class="btn btn-secondary" onclick="openVariantModal()">Variants</button>
-                    <button class="btn btn-secondary" onclick="expandSuppliers()">Suppliers</button>
-                    <button class="btn btn-secondary" onclick="window.location.href='/purchase-orders'">Purchase Orders</button>
-                    <div class="more-menu"><button class="btn btn-secondary" onclick="toggleMoreMenu(event)">More</button>
-                        <div class="more-menu-content" id="drawer-more-menu">
-                            <button class="more-menu-item" onclick="auditLogSelected('${esc}')">View Audit Log</button>
-                            <button class="more-menu-item" onclick="duplicateSelected()">Duplicate Selected Variant</button>
-                            <button class="more-menu-item" onclick="reorderSelected()">Set Reorder Level</button>
-                            <button class="more-menu-item danger" onclick="deleteSelected()">Archive Selected Variant</button>
-                        </div>
-                    </div>
-                </section>
+            const tabsHTML = `
+                <div class="drawer-tabs">
+                    <button class="drawer-tab active" onclick="switchDrawerTab('inventory')">Inventory</button>
+                    <button class="drawer-tab" onclick="switchDrawerTab('variants')">Variants</button>
+                    <button class="drawer-tab" onclick="switchDrawerTab('suppliers')">Suppliers</button>
+                    <button class="drawer-tab" onclick="switchDrawerTab('analytics')">Analytics</button>
+                </div>
+            `;
 
-                <section class="inv-workspace">
-                    <div class="inv-main">
-                        <h3>Inventory Matrix</h3>
-                        <p class="inv-note">Rows are colors. Columns are sizes. Click any stock cell to manage that variant.</p>
-                        <div class="inv-legend">
-                            <span class="inv-legend-item"><span class="inv-legend-dot" style="background:#f1f5f9;"></span>Unavailable</span>
-                            <span class="inv-legend-item"><span class="inv-legend-dot" style="background:#fee2e2;"></span>Out</span>
-                            <span class="inv-legend-item"><span class="inv-legend-dot" style="background:#fef3c7;"></span>Low</span>
-                            <span class="inv-legend-item"><span class="inv-legend-dot" style="background:#dcfce7;"></span>Healthy</span>
-                        </div>
-                        <div class="inv-matrix-wrap">
-                            <table class="inv-matrix">
-                                <thead>
-                                    <tr><th>Color</th>${dims.sizes.map(s => `<th>${escapeHtml(s)}</th>`).join('')}</tr>
-                                </thead>
-                                <tbody>${matrixRows}</tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <aside class="inv-side" id="variant-detail-section"></aside>
-                </section>
-
-                <section class="inv-lower">
-                    <details class="inv-collapse" id="analytics-collapse">
-                        <summary>Analytics</summary>
-                        <div class="inv-collapse-body">
-                            <div class="inv-analytics-grid">
-                                <div class="inv-analytics-item"><div class="k">Variant Coverage</div><div class="v">${coverage}%</div></div>
-                                <div class="inv-analytics-item"><div class="k">Low Stock Variants</div><div class="v">${lowVariants}</div></div>
-                                <div class="inv-analytics-item"><div class="k">Out of Stock Variants</div><div class="v">${outVariants}</div></div>
+            let body = `${summaryHTML}${tabsHTML}
+                <div class="drawer-tab-content active" id="tab-inventory">
+                    <div class="inv-workspace">
+                        <div class="inv-main">
+                            <div class="inv-legend" style="margin-bottom:0.65rem;">
+                                <span class="inv-legend-item"><span class="inv-legend-dot" style="background:#f1f5f9;"></span>Unavailable</span>
+                                <span class="inv-legend-item"><span class="inv-legend-dot" style="background:#fee2e2;"></span>Out</span>
+                                <span class="inv-legend-item"><span class="inv-legend-dot" style="background:#fef3c7;"></span>Low</span>
+                                <span class="inv-legend-item"><span class="inv-legend-dot" style="background:#dcfce7;"></span>Healthy</span>
                             </div>
-                            <div style="margin-top:0.65rem;">
-                                <div class="k" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:0.03em;">Stock by Color</div>
+                            <div class="inv-matrix-wrap">
+                                <table class="inv-matrix">
+                                    <thead>
+                                        <tr><th>Color</th>${dims.sizes.map(s => `<th>${escapeHtml(s)}</th>`).join('')}</tr>
+                                    </thead>
+                                    <tbody>${matrixRows}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <aside class="inv-side" id="variant-detail-section"></aside>
+                    </div>
+                </div>
+
+                <div class="drawer-tab-content" id="tab-variants">
+                    <div class="drawer-actions" style="margin-bottom:0.75rem;">
+                        <button class="btn btn-primary" onclick="openVariantModal()" style="font-size:0.8rem;padding:0.4rem 0.75rem;">+ Add Variant</button>
+                        <button class="btn btn-secondary" onclick="editProductPricingFromDrawer()" style="font-size:0.8rem;padding:0.4rem 0.75rem;">Edit Product Price/Cost</button>
+                        <button class="btn btn-secondary" onclick="editProductGroup()" style="font-size:0.8rem;padding:0.4rem 0.75rem;">Edit Product Details</button>
+                    </div>
+                    <div class="variants-toolbar">
+                        <input id="variants-search" type="text" placeholder="Search size, color, SKU..." oninput="onVariantsFilterChange()">
+                        <select id="variants-status-filter" onchange="onVariantsFilterChange()">
+                            <option value="all">All Statuses</option>
+                            <option value="healthy">Healthy</option>
+                            <option value="critical">Critical</option>
+                            <option value="low">Low</option>
+                            <option value="out">Out</option>
+                        </select>
+                        <select id="variants-sort" onchange="onVariantsFilterChange()">
+                            <option value="color_asc">Sort: Color</option>
+                            <option value="size_asc">Sort: Size</option>
+                            <option value="sku_asc">Sort: SKU</option>
+                            <option value="status_asc">Sort: Status</option>
+                            <option value="stock_asc">Sort: Stock Low-High</option>
+                            <option value="stock_desc">Sort: Stock High-Low</option>
+                            <option value="cost_asc">Sort: Cost Low-High</option>
+                            <option value="price_asc">Sort: Price Low-High</option>
+                            <option value="price_desc">Sort: Price High-Low</option>
+                        </select>
+                    </div>
+                    <div id="variants-list">Loading variants...</div>
+                </div>
+
+                <div class="drawer-tab-content" id="tab-suppliers">
+                    <div id="product-suppliers-list" style="font-size:0.85rem;color:#64748b;">Loading suppliers...</div>
+                </div>
+
+                <div class="drawer-tab-content" id="tab-analytics">
+                    <details class="inv-collapse" open>
+                        <summary>Inventory Distribution</summary>
+                        <div class="inv-collapse-body">
+                            <div style="margin-bottom:0.65rem;">
+                                <div class="k" style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.4rem;font-weight:600;">Stock by Color</div>
                                 <div class="inv-tags">${colorTags || '<span class="inv-tag">No data</span>'}</div>
                             </div>
-                            <div style="margin-top:0.65rem;">
-                                <div class="k" style="font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:0.03em;">Stock by Size</div>
+                            <div>
+                                <div class="k" style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.4rem;font-weight:600;">Stock by Size</div>
                                 <div class="inv-tags">${sizeTags || '<span class="inv-tag">No data</span>'}</div>
                             </div>
                         </div>
                     </details>
 
-                    <details class="inv-collapse" id="suppliers-collapse">
-                        <summary>Suppliers</summary>
+                    <details class="inv-collapse" open style="margin-top:0.65rem;">
+                        <summary>Reorder Insights</summary>
                         <div class="inv-collapse-body">
-                            <div style="font-size:0.76rem;color:#64748b;margin-bottom:0.45rem;">Linked suppliers for this product group.</div>
-                            <div id="product-suppliers-list" style="font-size:0.85rem;color:#64748b;">Loading...</div>
+                            <div class="inv-analytics-grid" style="margin-bottom:0.65rem;">
+                                <div class="inv-analytics-item"><div class="k">Variants Needing Reorder</div><div class="v">${reorderCandidates.length}</div></div>
+                                <div class="inv-analytics-item"><div class="k">Suggested Reorder Qty</div><div class="v">${totalRecommendedReorder}</div></div>
+                                <div class="inv-analytics-item"><div class="k">Coverage</div><div class="v">${coverage}%</div></div>
+                            </div>
+                            <div style="font-size:0.74rem;color:#64748b;margin-bottom:0.35rem;">Top reorder priorities</div>
+                            <div class="inv-tags">
+                                ${reorderCandidates.slice(0, 8).map(item => {
+                                    const label = [item.v.size, item.v.color].filter(Boolean).join(' / ') || 'Default';
+                                    return `<span class="inv-tag">${escapeHtml(label)}: +${item.recommended}</span>`;
+                                }).join('') || '<span class="inv-tag">No reorder needed</span>'}
+                            </div>
                         </div>
                     </details>
-                </section>
-            </div>`;
+
+                    <details class="inv-collapse" style="margin-top:0.65rem;">
+                        <summary>Inventory Health</summary>
+                        <div class="inv-collapse-body">
+                            <div class="inv-analytics-grid">
+                                <div class="inv-analytics-item"><div class="k">Healthy Variants</div><div class="v">${healthyVariants}</div></div>
+                                <div class="inv-analytics-item"><div class="k">Attention Needed</div><div class="v">${reorderCandidates.length}</div></div>
+                                <div class="inv-analytics-item"><div class="k">Stock Coverage</div><div class="v">${coverage}%</div></div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+            `;
 
             document.getElementById('drawer-body').innerHTML = body;
             renderVariantDetail();
+            renderVariantsTab();
             if (isAdmin) loadProductSuppliers(group.variants[0].id);
 
             document.getElementById('product-drawer').classList.add('open');
@@ -1034,6 +1308,249 @@
             document.getElementById('drawer-overlay').classList.remove('show');
             document.getElementById('products-main').classList.remove('drawer-open');
             renderProductList();
+        }
+
+        function switchDrawerTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.drawer-tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.drawer-tab').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            const tabEl = document.getElementById('tab-' + tabName);
+            if (tabEl) tabEl.classList.add('active');
+
+            // Mark selected tab button as active (without relying on global event)
+            document.querySelectorAll('.drawer-tab').forEach(btn => {
+                if (btn.textContent && btn.textContent.trim().toLowerCase() === tabName.toLowerCase()) {
+                    btn.classList.add('active');
+                }
+            });
+
+            if (tabName === 'variants') {
+                renderVariantsTab();
+            }
+        }
+
+        function renderVariantsTab() {
+            var container = document.getElementById('variants-list');
+            var group = groupedProducts[selectedGroup];
+            if (!container || !group) return;
+
+            function normalizeVariantSearchText(value) {
+                return String(value || '')
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+            }
+
+            var query = normalizeVariantSearchText(variantTabState.query || '');
+            var statusFilter = variantTabState.status || 'all';
+            var sort = variantTabState.sort || 'color_asc';
+            var pageSize = variantTabState.pageSize || 25;
+            var currentPage = variantTabState.page || 1;
+
+            var rowsData = group.variants
+                .map(function(v) {
+                    var status = computeVariantAdminStatus(v);
+                    var label = [v.size, v.color].filter(Boolean).join(' / ') || 'Default';
+                    var sizeText = String(v.size || '').trim();
+                    var colorText = String(v.color || '').trim();
+                    var skuText = String(v.sku || '').trim();
+                    var forward = [sizeText, colorText, skuText].join(' ');
+                    var reverse = [colorText, sizeText, skuText].join(' ');
+                    return {
+                        v: v,
+                        status: status,
+                        label: label,
+                        searchable: normalizeVariantSearchText(forward + ' ' + reverse + ' ' + label)
+                    };
+                })
+                .filter(function(item) {
+                    var passQuery = !query || item.searchable.indexOf(query) >= 0;
+                    var passStatus = statusFilter === 'all' || item.status === statusFilter;
+                    return passQuery && passStatus;
+                });
+
+            rowsData.sort(function(a, b) {
+                if (sort === 'color_asc') return String(a.v.color || '').localeCompare(String(b.v.color || '')) || groupSizeOrder(a.v.size || '-') - groupSizeOrder(b.v.size || '-');
+                if (sort === 'stock_asc') return (a.v.stock_quantity || 0) - (b.v.stock_quantity || 0);
+                if (sort === 'stock_desc') return (b.v.stock_quantity || 0) - (a.v.stock_quantity || 0);
+                if (sort === 'cost_asc') return (a.v.cost_price || 0) - (b.v.cost_price || 0);
+                if (sort === 'price_asc') return (a.v.price || 0) - (b.v.price || 0);
+                if (sort === 'price_desc') return (b.v.price || 0) - (a.v.price || 0);
+                if (sort === 'sku_asc') return String(a.v.sku || '').localeCompare(String(b.v.sku || ''));
+                if (sort === 'status_asc') return getStatusRank(a.status) - getStatusRank(b.status) || (a.v.stock_quantity || 0) - (b.v.stock_quantity || 0);
+                return groupSizeOrder(a.v.size || '-') - groupSizeOrder(b.v.size || '-') || String(a.v.color || '').localeCompare(String(b.v.color || ''));
+            });
+
+            var totalRows = rowsData.length;
+            var totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+            if (currentPage > totalPages) {
+                currentPage = totalPages;
+                variantTabState.page = currentPage;
+            }
+            var pageStart = (currentPage - 1) * pageSize;
+            var pageRows = rowsData.slice(pageStart, pageStart + pageSize);
+
+            var rows = pageRows.map(function(item) {
+                var v = item.v;
+                var status = item.status;
+                var toneClass = status === 'healthy' ? 'ok' : status;
+                var isActive = v.id === selectedVariantId ? 'active' : '';
+                var isCostOverride = Math.abs((v.cost_price || 0) - (group.cost_price || 0)) > 0.001;
+                var isPriceOverride = Math.abs((v.price || 0) - (group.price || 0)) > 0.001;
+                return '<tr class="' + isActive + '">'
+                    + '<td>' + escapeHtml(v.size || '-') + '</td>'
+                    + '<td>' + escapeHtml(v.color || '-') + '</td>'
+                    + '<td>' + escapeHtml(v.sku || '-') + '</td>'
+                    + '<td>' + (v.stock_quantity || 0) + '</td>'
+                    + '<td><span class="variant-pill ' + toneClass + '">' + getStatusLabel(status) + '</span></td>'
+                    + '<td class="variants-col-secondary">' + currencySymbol + ((v.cost_price || 0).toFixed(2)) + (isCostOverride ? '<span class="override-chip">Ovr</span>' : '') + '</td>'
+                    + '<td class="variants-col-secondary">' + currencySymbol + ((v.price || 0).toFixed(2)) + (isPriceOverride ? '<span class="override-chip">Ovr</span>' : '') + '</td>'
+                    + '<td>'
+                    + '<div class="variant-action-menu">'
+                    + '<button class="btn btn-secondary variant-action-toggle" onclick="toggleVariantActionMenu(event,' + v.id + ')">Actions ▼</button>'
+                    + '<div class="variant-action-dropdown" id="variant-action-menu-' + v.id + '">'
+                    + '<button class="more-menu-item" onclick="focusVariantFromTable(' + v.id + ')">View Details</button>'
+                    + '<button class="more-menu-item" onclick="editVariantPriceFromTable(' + v.id + ')">Edit Price/Cost</button>'
+                    + '<button class="more-menu-item" onclick="editVariantSkuFromTable(' + v.id + ')">Edit SKU</button>'
+                    + '<button class="more-menu-item danger" onclick="archiveVariantFromTable(' + v.id + ')">Archive Variant</button>'
+                    + '</div>'
+                    + '</div>'
+                    + '</td>'
+                    + '</tr>';
+            }).join('');
+
+            container.innerHTML = '<div class="variants-table-wrap">'
+                + '<table class="variants-table">'
+                + '<thead><tr>'
+                + '<th onclick="setVariantsSort(\'size_asc\')">Size</th>'
+                + '<th onclick="setVariantsSort(\'color_asc\')">Color</th>'
+                + '<th onclick="setVariantsSort(\'sku_asc\')">SKU</th>'
+                + '<th onclick="setVariantsSort(\'stock_asc\')">Stock</th>'
+                + '<th onclick="setVariantsSort(\'status_asc\')">Status</th>'
+                + '<th class="variants-col-secondary" onclick="setVariantsSort(\'cost_asc\')">Cost</th>'
+                + '<th class="variants-col-secondary" onclick="setVariantsSort(\'price_asc\')">Price</th>'
+                + '<th>Actions</th>'
+                + '</tr></thead>'
+                + '<tbody>' + (rows || '<tr><td colspan="8" style="text-align:center;color:#64748b;padding:0.8rem;">No variants match your filter.</td></tr>') + '</tbody>'
+                + '</table>'
+                + '</div>'
+                + '<div class="variants-pagination">'
+                + '<span>Showing ' + (totalRows ? (pageStart + 1) : 0) + '-' + Math.min(pageStart + pageSize, totalRows) + ' of ' + totalRows + '</span>'
+                + '<div class="variants-pagination-actions">'
+                + '<button class="btn btn-secondary" ' + (currentPage <= 1 ? 'disabled' : '') + ' onclick="changeVariantsPage(-1)">Prev</button>'
+                + '<button class="btn btn-secondary" ' + (currentPage >= totalPages ? 'disabled' : '') + ' onclick="changeVariantsPage(1)">Next</button>'
+                + '</div></div>';
+        }
+
+        function onVariantsFilterChange() {
+            var q = document.getElementById('variants-search');
+            var st = document.getElementById('variants-status-filter');
+            var sr = document.getElementById('variants-sort');
+            variantTabState.query = q ? q.value : '';
+            variantTabState.status = st ? st.value : 'all';
+            variantTabState.sort = sr ? sr.value : 'color_asc';
+            variantTabState.page = 1;
+            renderVariantsTab();
+        }
+
+        function setVariantsSort(sortKey) {
+            variantTabState.sort = sortKey;
+            var sr = document.getElementById('variants-sort');
+            if (sr) sr.value = sortKey;
+            variantTabState.page = 1;
+            renderVariantsTab();
+        }
+
+        function changeVariantsPage(delta) {
+            variantTabState.page = Math.max(1, (variantTabState.page || 1) + delta);
+            renderVariantsTab();
+        }
+
+        function toggleVariantActionMenu(e, variantId) {
+            e.stopPropagation();
+            document.querySelectorAll('.variant-action-dropdown.show').forEach(function(el) {
+                if (el.id !== 'variant-action-menu-' + variantId) el.classList.remove('show');
+            });
+            var menu = document.getElementById('variant-action-menu-' + variantId);
+            if (menu) {
+                menu.classList.toggle('show');
+                if (menu.classList.contains('show')) {
+                    setTimeout(function() {
+                        document.addEventListener('click', function closeMenuHandler() {
+                            menu.classList.remove('show');
+                            document.removeEventListener('click', closeMenuHandler);
+                        });
+                    }, 10);
+                }
+            }
+        }
+
+        function focusVariantFromTable(variantId) {
+            selectedVariantId = variantId;
+            switchDrawerTab('inventory');
+            selectVariant(variantId);
+        }
+
+        function editVariantPriceFromTable(variantId) {
+            selectedVariantId = variantId;
+            setVariantOverride(variantId);
+        }
+
+        async function editVariantSkuFromTable(variantId) {
+            var variant = products.find(function(p){ return p.id === variantId; });
+            if (!variant) return;
+            var nextSku = prompt('Enter SKU for variant', variant.sku || '');
+            if (nextSku === null) return;
+            try {
+                const r = await fetch('/api/products/' + variantId + '/variant-update', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sku: nextSku.trim() || null })
+                });
+                const res = await r.json().catch(function(){ return {}; });
+                if (!r.ok) {
+                    showToast('Error: ' + (res.error || 'Unable to update SKU'), 'error');
+                    return;
+                }
+                showToast('SKU updated', 'success');
+                var keepGroup = selectedGroup;
+                await loadProducts();
+                if (keepGroup && groupedProducts[keepGroup]) {
+                    openDrawer(keepGroup);
+                    switchDrawerTab('variants');
+                }
+            } catch (e) {
+                showToast('Error updating SKU', 'error');
+            }
+        }
+
+        async function archiveVariantFromTable(variantId) {
+            var variant = products.find(function(p){ return p.id === variantId; });
+            if (!variant) return;
+            var label = [variant.name, variant.size, variant.color].filter(Boolean).join(' / ');
+            if (!confirm('Archive variant "' + label + '"?')) return;
+            try {
+                const r = await fetch('/api/products/' + variantId, { method: 'DELETE' });
+                const res = await r.json().catch(function(){ return {}; });
+                if (!r.ok) {
+                    showToast('Error: ' + (res.error || 'Unable to archive variant'), 'error');
+                    return;
+                }
+                showToast('Variant archived', 'success');
+                var keepGroup = selectedGroup;
+                await loadProducts();
+                if (keepGroup && groupedProducts[keepGroup]) {
+                    openDrawer(keepGroup);
+                    switchDrawerTab('variants');
+                } else {
+                    closeDrawer();
+                }
+            } catch (e) {
+                showToast('Error archiving variant', 'error');
+            }
         }
 
         function selectVariant(variantId, el) {
@@ -1057,60 +1574,104 @@
             var status = computeVariantStatus(v);
             var statusIcon = status === 'healthy' ? '\u2713' : (status === 'low' ? '\u26A0' : '\u2715');
             var html = '';
+            
+            // Header: Variant name and status
             html += '<div class="inv-variant-head">';
-            html += '<h3>Variant Details</h3>';
             html += '<p class="inv-variant-name">' + label + '</p>';
             html += '<div class="inv-status ' + status + '">' + statusIcon + ' ' + getStatusLabel(status) + '</div>';
             html += '</div>';
 
+            // Essential info only
             html += '<div class="inv-kv">';
             html += '<div class="key">SKU</div><div class="val">' + (v.sku||'\u2014') + '</div>';
-            html += '<div class="key">Current Stock</div><div class="val">' + v.stock_quantity + '</div>';
-            html += '<div class="key">Cost Price</div><div class="val">' + currencySymbol + (v.cost_price||0).toFixed(2) + (isOverrideCost ? ' (Override)' : '') + '</div>';
-            html += '<div class="key">Selling Price</div><div class="val">' + currencySymbol + v.price.toFixed(2) + (isOverridePrice ? ' (Override)' : '') + '</div>';
+            html += '<div class="key">Stock</div><div class="val">' + v.stock_quantity + '</div>';
+            html += '<div class="key">Cost</div><div class="val">' + currencySymbol + (v.cost_price||0).toFixed(2) + (isOverrideCost ? '<span class="override-chip">Ovr</span>' : '') + '</div>';
+            html += '<div class="key">Sell</div><div class="val">' + currencySymbol + v.price.toFixed(2) + (isOverridePrice ? '<span class="override-chip">Ovr</span>' : '') + '</div>';
             html += '</div>';
 
+            // Primary inventory actions
             html += '<div class="inv-panel-group">';
-            html += '<h4 class="inv-panel-title">Inventory Actions</h4>';
             html += '<div class="inv-panel-actions">';
-            html += '<button class="btn btn-success" onclick="receiveStockInline()">Receive Stock</button>';
-            html += '<button class="btn btn-secondary" onclick="adjustStockInline()">Adjust Stock</button>';
-            html += '<button class="btn btn-secondary" onclick="showToast(\'Transfer stock workflow can be added when transfer endpoint is available\', \'warning\')">Transfer Stock</button>';
+            html += '<button class="btn btn-success" style="width:100%" onclick="receiveStockInline()">+ Receive Stock</button>';
+            html += '<button class="btn btn-secondary" style="width:100%" onclick="adjustStockInline()">⚙ Adjust Stock</button>';
             html += '</div>';
-            html += '<textarea id="inv-action-note" class="inv-textarea" placeholder="Reason / note for audit trail"></textarea>';
-            html += '<div class="inv-form-row"><input type="number" id="inv-receive-qty" min="1" placeholder="Receive Qty"><button class="btn btn-success" onclick="applyInlineStock(\'import\')">Receive</button></div>';
-            html += '<div class="inv-help">Use Receive for incoming stock.</div>';
-            html += '<div class="inv-form-row"><input type="number" id="inv-new-stock" min="0" placeholder="Set New Stock"><button class="btn btn-secondary" onclick="applyInlineStock(\'adjust\')">Apply Adjustment</button></div>';
-            html += '<div class="inv-help">Current: ' + v.stock_quantity + '. Adjustment is computed and logged.</div>';
             html += '</div>';
 
-            html += '<div class="inv-panel-group">';
-            html += '<h4 class="inv-panel-title">Pricing</h4>';
-            html += '<div class="inv-panel-actions">';
+            // Receive form (initially hidden, shown on button click)
+            html += '<div class="inv-form-section" id="receive-form" style="display:none;">';
+            html += '<h4 class="inv-panel-title">Receive Stock</h4>';
+            html += '<textarea id="inv-action-note" class="inv-textarea" placeholder="Reason (optional)"></textarea>';
+            html += '<div class="inv-form-row"><input type="number" id="inv-receive-qty" min="1" placeholder="Qty"><button class="btn btn-success" onclick="applyInlineStock(\'import\')">Receive</button></div>';
+            html += '</div>';
+
+            // Adjust form (initially hidden, shown on button click)
+            html += '<div class="inv-form-section" id="adjust-form" style="display:none;">';
+            html += '<h4 class="inv-panel-title">Adjust Stock</h4>';
+            html += '<textarea id="inv-action-note" class="inv-textarea" placeholder="Reason (optional)"></textarea>';
+            html += '<div class="inv-form-row"><input type="number" id="inv-new-stock" min="0" placeholder="New Stock" value="' + v.stock_quantity + '"><button class="btn btn-secondary" onclick="applyInlineStock(\'adjust\')">Apply</button></div>';
+            html += '</div>';
+
+            // Secondary actions menu
+            html += '<div class="inv-panel-group" style="border-top:none;padding-top:0.4rem;margin-top:0.4rem;">';
+            html += '<div class="more-menu" style="width:100%;">';
+            html += '<button class="btn btn-secondary" style="width:100%;font-size:0.75rem;" onclick="toggleVariantMoreMenu(event)">More Actions ▾</button>';
+            html += '<div class="more-menu-content" id="variant-more-menu" style="width:100%;left:0;right:0;top:auto;bottom:calc(100% + 0.25rem);border-radius:8px 8px 0 0;max-height:220px;overflow:auto;z-index:50;">';
             if (isAdmin) {
-                if (isOverridePrice) html += '<button class="btn btn-secondary" onclick="resetPriceOverride()">Reset to Product Price</button>';
-                html += '<button class="btn btn-primary" onclick="setVariantOverride()">' + (isOverridePrice ? 'Change Price' : 'Change Price') + '</button>';
-            } else {
-                html += '<button class="btn btn-secondary" disabled>Insufficient Permission</button>';
+                html += '<button class="more-menu-item" onclick="setVariantOverride()">Edit Price/Cost</button>';
+                if (isOverridePrice || isOverrideCost) html += '<button class="more-menu-item" onclick="resetPriceOverride()">Reset to Default</button>';
+                html += '<button class="more-menu-item" onclick="editProductPricingFromDrawer()" style="border-top:1px solid #e2e8f0;">Edit Product Price/Cost</button>';
             }
-            html += '</div></div>';
-
-            html += '<div class="inv-panel-group">';
-            html += '<h4 class="inv-panel-title">Purchasing</h4>';
-            html += '<div class="inv-panel-actions">';
-            html += '<button class="btn btn-secondary" onclick="window.location.href=\'/purchase-orders\'">Create Purchase Order</button>';
-            html += '</div></div>';
-
-            html += '<div class="inv-panel-group">';
-            html += '<h4 class="inv-panel-title">History</h4>';
-            html += '<div class="inv-panel-actions">';
-            html += '<button class="btn btn-secondary" onclick="historySelected(\'' + (selectedGroup || '').replace(/'/g, "\\'") + '\')">View History</button>';
-            html += '</div></div>';
+            html += '<button class="more-menu-item" onclick="window.location.href=\'/purchase-orders\'" style="border-top:1px solid #e2e8f0;">Create PO</button>';
+            html += '<button class="more-menu-item" onclick="historySelected(\'' + (selectedGroup || '').replace(/'/g, "\\'") + '\')">View History</button>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
 
             section.innerHTML = html;
+        }
 
-            var input = document.getElementById('inv-new-stock');
-            if (input) input.value = v.stock_quantity;
+        function toggleVariantMoreMenu(e) {
+            e.stopPropagation();
+            var menu = document.getElementById('variant-more-menu');
+            menu.classList.toggle('show');
+            if (menu.classList.contains('show')) {
+                setTimeout(function() {
+                    document.addEventListener('click', function closeVariantMenu() {
+                        menu.classList.remove('show');
+                        document.removeEventListener('click', closeVariantMenu);
+                    });
+                }, 10);
+            }
+        }
+
+        function receiveStockInline() {
+            var receive = document.getElementById('receive-form');
+            var adjust = document.getElementById('adjust-form');
+            if (!receive || !adjust) return;
+
+            var isOpen = receive.style.display === 'block';
+            receive.style.display = isOpen ? 'none' : 'block';
+            adjust.style.display = 'none';
+
+            if (!isOpen) {
+                var input = document.getElementById('inv-receive-qty');
+                if (input) input.focus();
+            }
+        }
+
+        function adjustStockInline() {
+            var receive = document.getElementById('receive-form');
+            var adjust = document.getElementById('adjust-form');
+            if (!receive || !adjust) return;
+
+            var isOpen = adjust.style.display === 'block';
+            adjust.style.display = isOpen ? 'none' : 'block';
+            receive.style.display = 'none';
+
+            if (!isOpen) {
+                var input = document.getElementById('inv-new-stock');
+                if (input) input.focus();
+            }
         }
 
         async function applyInlineStock(mode) {
@@ -1174,16 +1735,6 @@
             }
         }
 
-        function receiveStockInline() {
-            var input = document.getElementById('inv-receive-qty');
-            if (input) input.focus();
-        }
-
-        function adjustStockInline() {
-            var input = document.getElementById('inv-new-stock');
-            if (input) input.focus();
-        }
-
         function expandSuppliers() {
             var section = document.getElementById('suppliers-collapse');
             if (section) {
@@ -1192,43 +1743,115 @@
             }
         }
 
-        function setVariantOverride() {
-            var v = products.find(function(p){ return p.id === selectedVariantId; });
-            if (!v) return;
+        function setVariantOverride(variantId) {
+            var targetId = variantId || selectedVariantId;
+            var v = products.find(function(p){ return p.id === targetId; });
             var group = groupedProducts[selectedGroup];
-            var label = [v.size, v.color].filter(Boolean).join(' / ') || 'this variant';
-            var currentPrice = v.price;
-            var currentCost = v.cost_price || (group ? group.cost_price : 0);
-            var input = prompt('Set price override for "' + label + '"\n\nProduct default: ' + currencySymbol + (group?group.price.toFixed(2):'0') + '\nCurrent variant price: ' + currencySymbol + currentPrice.toFixed(2) + '\n\nEnter new sell price:', currentPrice);
-            if (input === null) return;
-            var newPrice = parseFloat(input);
-            if (isNaN(newPrice) || newPrice < 0) { showToast('Invalid price', 'warning'); return; }
-            // Also ask about cost
-            var costInput = prompt('Set cost override for "' + label + '"?\n\nProduct default cost: ' + currencySymbol + (group?group.cost_price.toFixed(2):'0') + '\nCurrent variant cost: ' + currencySymbol + currentCost.toFixed(2) + '\n\nEnter new cost (or leave blank to keep current):', currentCost);
-            var data = { price_override: newPrice };
-            if (costInput !== null && costInput.trim() !== '') {
-                var newCost = parseFloat(costInput);
-                if (!isNaN(newCost) && newCost >= 0) data.cost_override = newCost;
-            }
-            fetch('/api/products/' + selectedVariantId + '/variant-update', {
-                method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)
-            }).then(function(r) {
-                if (r.ok) { showToast('Price override set!', 'success'); loadProducts().then(function(){ if(selectedGroup) setTimeout(function(){ openDrawer(groupedProducts[selectedGroup] ? selectedGroup : Object.keys(groupedProducts)[0]); }, 200); }); }
-                else { r.json().then(function(res){ showToast('Error: '+(res.error||'Unknown'),'error'); }); }
-            });
+            if (!v || !group) return;
+
+            overrideVariantId = targetId;
+            selectedVariantId = targetId;
+
+            var label = [v.name, v.size, v.color].filter(Boolean).join(' / ');
+            var isPriceOverride = Math.abs((v.price || 0) - (group.price || 0)) > 0.001;
+            var isCostOverride = Math.abs((v.cost_price || 0) - (group.cost_price || 0)) > 0.001;
+
+            document.getElementById('variant-override-id').value = String(targetId);
+            document.getElementById('variant-override-label').textContent = label || 'Variant';
+            document.getElementById('variant-default-cost').value = currencySymbol + (group.cost_price || 0).toFixed(2);
+            document.getElementById('variant-default-price').value = currencySymbol + (group.price || 0).toFixed(2);
+            document.getElementById('variant-override-cost').value = (v.cost_price || 0).toFixed(2);
+            document.getElementById('variant-override-price').value = (v.price || 0).toFixed(2);
+
+            var resetBtn = document.getElementById('variant-reset-default-btn');
+            if (resetBtn) resetBtn.style.display = (isPriceOverride || isCostOverride) ? '' : 'none';
+
+            document.getElementById('variant-override-modal').classList.add('active');
         }
 
-        function resetPriceOverride() {
+        function closeVariantOverrideModal() {
+            document.getElementById('variant-override-modal').classList.remove('active');
+            var form = document.getElementById('variant-override-form');
+            if (form) form.reset();
+            overrideVariantId = null;
+        }
+
+        async function saveVariantOverride(e) {
+            if (e) e.preventDefault();
+            var variantId = overrideVariantId || selectedVariantId;
             var group = groupedProducts[selectedGroup];
-            if (!group) return;
-            // Reset to product-level price
+            if (!variantId || !group) return;
+
+            var costEl = document.getElementById('variant-override-cost');
+            var priceEl = document.getElementById('variant-override-price');
+            var newCost = parseFloat(costEl ? costEl.value : '');
+            var newPrice = parseFloat(priceEl ? priceEl.value : '');
+
+            if (isNaN(newCost) || newCost < 0 || isNaN(newPrice) || newPrice < 0) {
+                showToast('Enter valid cost and price values', 'warning');
+                return;
+            }
+            if (newCost > newPrice) {
+                showToast('Warning: Cost is greater than Price', 'warning');
+            }
+
+            var data = {
+                cost_override: newCost,
+                price_override: newPrice
+            };
+
+            try {
+                const r = await fetch('/api/products/' + variantId + '/variant-update', {
+                    method: 'PUT',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const res = await r.json().catch(function(){ return {}; });
+                if (!r.ok) {
+                    showToast('Error: ' + (res.error || 'Unable to save override'), 'error');
+                    return;
+                }
+                showToast('Variant price/cost saved', 'success');
+                closeVariantOverrideModal();
+                await loadProducts();
+                if (selectedGroup && groupedProducts[selectedGroup]) {
+                    selectedVariantId = variantId;
+                    openDrawer(selectedGroup);
+                    switchDrawerTab('variants');
+                }
+            } catch (err) {
+                showToast('Error saving override', 'error');
+            }
+        }
+
+        async function resetPriceOverride() {
+            var variantId = overrideVariantId || selectedVariantId;
+            var group = groupedProducts[selectedGroup];
+            if (!variantId || !group) return;
+
             var data = { price_override: group.price, cost_override: group.cost_price };
-            fetch('/api/products/' + selectedVariantId + '/variant-update', {
-                method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)
-            }).then(function(r) {
-                if (r.ok) { showToast('Price reset to product default', 'success'); loadProducts().then(function(){ if(selectedGroup) setTimeout(function(){ openDrawer(selectedGroup); }, 200); }); }
-                else { showToast('Error resetting price','error'); }
-            });
+            try {
+                const r = await fetch('/api/products/' + variantId + '/variant-update', {
+                    method: 'PUT',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const res = await r.json().catch(function(){ return {}; });
+                if (!r.ok) {
+                    showToast('Error: ' + (res.error || 'Unable to reset defaults'), 'error');
+                    return;
+                }
+                showToast('Variant reset to product defaults', 'success');
+                closeVariantOverrideModal();
+                await loadProducts();
+                if (selectedGroup && groupedProducts[selectedGroup]) {
+                    selectedVariantId = variantId;
+                    openDrawer(selectedGroup);
+                    switchDrawerTab('variants');
+                }
+            } catch (err) {
+                showToast('Error resetting defaults', 'error');
+            }
         }
 
         // Action wrapper functions
@@ -1245,6 +1868,17 @@
             var cats = [...new Set(products.map(function(x){return normalizeCategoryLabel(x.category);}).filter(Boolean))].sort();
             catSel.innerHTML = cats.map(function(c){ return '<option value="'+c+'" '+(canonicalCategory(c)===canonicalCategory(group.category)?'selected':'')+'>'+c+'</option>'; }).join('');
             document.getElementById('edit-product-modal').classList.add('active');
+        }
+
+        function editProductPricingFromDrawer() {
+            editProductGroup();
+            // Guide user directly to pricing fields in the existing group edit modal.
+            setTimeout(function() {
+                var cost = document.getElementById('edit-product-cost-price');
+                var price = document.getElementById('edit-product-price');
+                if (cost) cost.focus();
+                if (price) price.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 20);
         }
         function adjustStockSelected() { if (selectedVariantId) openStockModal(selectedVariantId); else showToast('Select a variant first','warning'); }
         function historySelected(name) { if (selectedVariantId) viewStockHistory(selectedVariantId, name); }
@@ -1457,6 +2091,10 @@
                 if (r.ok) { showToast('Stock updated!','success'); closeStockModal(); await loadProducts(); if (selectedGroup) openDrawer(selectedGroup); }
                 else { const err = await r.json(); showToast('Error: '+err.error,'error'); }
             } catch(e){ showToast('Error updating stock','error'); }
+        });
+
+        document.getElementById('variant-override-form').addEventListener('submit', async (e) => {
+            await saveVariantOverride(e);
         });
 
         // Delete & Duplicate & Reorder
