@@ -1001,131 +1001,6 @@
             }
             .pos-picker { padding-bottom: min(55vh, 460px); }
         }
-
-        /* ── Mobile: collapsed bar + slide-up cart ─────────────────────── */
-        .pos-cart-bar {
-            display: none; /* shown only on mobile via media query */
-        }
-        .pos-cart-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(15,23,42,0.45);
-            z-index: 149;
-        }
-        .pos-cart-overlay.open { display: block; }
-
-        @media (max-width: 640px) {
-            /* Product area: full-screen, reserve only bar height at bottom */
-            .pos-picker { padding: 0.6rem 0.6rem 0; padding-bottom: 68px !important; }
-            .pos-filter-rail { padding: 0.55rem 0.55rem 0.45rem; border-radius: 10px; }
-            .pos-search-bar input { padding: 0.72rem 0.7rem 0.72rem 2.4rem; font-size: 0.9rem; border-radius: 10px; }
-            .pos-search-bar .search-icon { font-size: 1rem; left: 0.7rem; }
-            .pos-search-bar .search-shortcut { display: none; }
-            .pos-categories { padding-bottom: 0.45rem; }
-            .pos-cat-pill, .pos-chip { padding: 0.26rem 0.55rem; font-size: 0.72rem; }
-            .pos-filters-row { gap: 0.35rem; }
-            .pos-filter-select { padding: 0.38rem 0.45rem; font-size: 0.78rem; }
-            .pos-instock-chip { font-size: 0.7rem; padding: 0.4rem 0.5rem; }
-            .pos-view-btn { font-size: 0.72rem; padding: 0.38rem 0.55rem; }
-            .pos-product-grid { gap: 0.55rem; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
-            .pos-product-card { padding: 0.62rem; border-radius: 10px; }
-            .pos-product-name { font-size: 0.85rem; }
-            .pos-product-price { font-size: 0.9rem; }
-            .pos-product-meta { font-size: 0.7rem; }
-            .pos-add-variant-btn { font-size: 0.76rem; padding: 0.5rem; }
-            .pos-matrix th, .pos-matrix td { padding: 0.26rem; font-size: 0.7rem; }
-
-            /* Hide the old full cart panel — replaced by bar + drawer */
-            .pos-cart-panel {
-                position: fixed !important;
-                left: 0 !important;
-                right: 0 !important;
-                bottom: 0 !important;
-                top: auto !important;
-                height: auto !important;
-                max-height: 82vh !important;
-                transform: translateY(calc(100% - 64px));
-                transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-                border-radius: 16px 16px 0 0;
-                border-top: 1px solid #e2e8f0 !important;
-                box-shadow: 0 -6px 24px rgba(15,23,42,0.15) !important;
-                border-left: none !important;
-                z-index: 150;
-                overflow: hidden;
-            }
-            .pos-cart-panel.mobile-open {
-                transform: translateY(0);
-            }
-
-            /* Collapsed bar — the visible strip when cart is closed */
-            .pos-cart-header {
-                cursor: pointer;
-                padding: 0 1rem;
-                height: 64px;
-                display: flex;
-                align-items: center;
-                background: #1e293b;
-                color: #fff;
-                flex-shrink: 0;
-            }
-            .pos-cart-header .pos-cart-title { color: #fff; font-size: 0.9rem; }
-            .pos-cart-header .pos-cart-count { background: rgba(255,255,255,0.15); color: #fff; }
-
-            /* Bar summary — items + total shown in collapsed state */
-            .pos-cart-bar-summary {
-                flex: 1;
-                display: flex;
-                align-items: center;
-                gap: 0.6rem;
-                min-width: 0;
-            }
-            .pos-cart-bar-total {
-                font-weight: 700;
-                font-size: 1rem;
-                color: #fff;
-                white-space: nowrap;
-            }
-            .pos-cart-bar-chevron {
-                display: inline-block; /* show only on mobile */
-                color: rgba(255,255,255,0.55);
-                font-size: 1.1rem;
-                margin-left: 0.4rem;
-                transition: transform 0.3s;
-                flex-shrink: 0;
-            }
-            .pos-cart-panel.mobile-open .pos-cart-bar-chevron { transform: rotate(180deg); }
-
-            /* Inner content padding */
-            .pos-cart-items { padding: 0.5rem 1rem; }
-            .pos-cart-footer { padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom, 0px)); }
-            .pos-cart-item { gap: 0.5rem; padding: 0.45rem 0; }
-            .pos-cart-item-name { font-size: 0.78rem; }
-            .pos-cart-item-variant { font-size: 0.68rem; }
-            .pos-cart-item-price { font-size: 0.78rem; }
-            .pos-qty-stepper button { width: 24px; height: 24px; font-size: 0.8rem; }
-            .pos-qty-stepper input { width: 30px; font-size: 0.76rem; }
-            .pos-summary-row { font-size: 0.78rem; }
-            .pos-summary-total { font-size: 1rem; }
-            .pos-checkout-btn { padding: 0.7rem; font-size: 0.9rem; border-radius: 8px; }
-            .pos-hold-btn { padding: 0.48rem; font-size: 0.78rem; }
-        }
-
-        @media (max-width: 480px) {
-            .pos-picker { padding: 0.45rem 0.45rem 0; padding-bottom: 64px !important; }
-            .pos-filter-rail { padding: 0.42rem 0.42rem 0.35rem; border-radius: 9px; }
-            .pos-search-bar input { padding: 0.62rem 0.6rem 0.62rem 2.1rem; font-size: 0.84rem; }
-            .pos-search-bar .search-icon { font-size: 0.9rem; left: 0.6rem; }
-            .pos-cat-pill, .pos-chip { padding: 0.22rem 0.46rem; font-size: 0.68rem; }
-            .pos-product-grid { gap: 0.42rem; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-            .pos-product-card { padding: 0.5rem; }
-            .pos-product-name { font-size: 0.8rem; }
-            .pos-product-price { font-size: 0.84rem; }
-            .pos-add-variant-btn { font-size: 0.7rem; padding: 0.44rem; }
-            .pos-checkout-btn { padding: 0.62rem; font-size: 0.84rem; }
-            .pos-summary-row { font-size: 0.72rem; }
-            .pos-summary-total { font-size: 0.92rem; }
-        }
     </style>
 </head>
 <body class="has-sidebar">
@@ -1909,7 +1784,10 @@
                 '<div class="pos-variant-options">' + colorButtons + '</div>' +
                 '<div class="pos-variant-title">Select Size</div>' +
                 '<div class="pos-variant-options">' + sizeButtons + '</div>' +
-                '<div class="pos-variant-effective-price">Price: ' + currencySymbol + effectivePrice.toFixed(2) + (availableStock > 0 ? ' &nbsp;<span style="font-size:0.7rem;color:#64748b;">· ' + availableStock + ' in stock</span>' : ' &nbsp;<span style="font-size:0.7rem;color:#ef4444;">Out of stock</span>') + '</div>' +
+                '<div class="pos-variant-effective-price">Effective Price: ' + currencySymbol + effectivePrice.toFixed(2) + '</div>' +
+                '<div class="pos-variant-stock">Available Stock: ' + availableStock + '</div>' +
+                '<button class="pos-add-btn" onclick="event.stopPropagation(); addSelectedVariant(\'' + group.key.replace(/'/g, "\\'") + '\')" ' +
+                    ((!selectedVariant || availableStock <= 0) ? 'disabled' : '') + '>Add to Cart</button>' +
             '</div>';
         }
 
