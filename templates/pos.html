@@ -447,7 +447,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: default;
         }
+        /* Hide mobile-only cart bar elements on desktop */
+        .pos-cart-bar-chevron { display: none; }
+        .pos-cart-bar-summary { display: contents; }
+        .pos-cart-bar-total { display: none !important; }
+        .pos-cart-bar-hint { display: none !important; }
         .pos-cart-title {
             font-size: 1rem;
             font-weight: 700;
@@ -470,12 +476,16 @@
             background: none;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
-            padding: 0.35rem 0.6rem;
+            padding: 0 0.65rem;
+            height: 32px;
             font-size: 0.78rem;
             color: #64748b;
             cursor: pointer;
             transition: all 0.15s;
             font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
         }
         .pos-cart-action-btn:hover { border-color: #3b82f6; color: #3b82f6; }
         .pos-cart-action-btn.has-badge { position: relative; }
@@ -674,12 +684,17 @@
             background: none;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
-            padding: 0.35rem 0.5rem;
+            padding: 0 0.65rem;
+            height: 32px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 0.78rem;
             color: #64748b;
             line-height: 1;
             transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
         }
         .pos-more-btn:hover { border-color: #3b82f6; color: #3b82f6; }
         .pos-more-dropdown {
@@ -1084,14 +1099,18 @@
                 </div>
             </div>
 
+            <!-- Mobile cart overlay backdrop -->
+            <div class="pos-cart-overlay" id="pos-cart-overlay" onclick="closeMobileCart()"></div>
+
             <!-- RIGHT: Cart Panel -->
-            <div class="pos-cart-panel">
-                <div class="pos-cart-header">
-                    <div>
+            <div class="pos-cart-panel" id="pos-cart-panel">
+                <div class="pos-cart-header" onclick="toggleMobileCart()">
+                    <div class="pos-cart-bar-summary">
                         <span class="pos-cart-title">Cart</span>
                         <span class="pos-cart-count" id="cart-count-badge" style="display:none;">0</span>
+                        <span class="pos-cart-bar-total" id="cart-bar-total" style="display:none;"></span>
                     </div>
-                    <div class="pos-cart-actions">
+                    <div class="pos-cart-actions" onclick="event.stopPropagation()">
                         <button class="pos-cart-action-btn has-badge" onclick="openHeldCartsModal()" title="Held carts">
                             📌 Held
                             <span class="pos-held-badge" id="held-count-badge" style="display:none;">0</span>
@@ -1105,6 +1124,7 @@
                             </div>
                         </div>
                     </div>
+                    <span class="pos-cart-bar-chevron" id="cart-bar-chevron">&#9650;</span>
                 </div>
 
                 <div class="pos-cart-items" id="cart-items">
@@ -1968,6 +1988,47 @@
             renderCart();
         }
 
+        /* ── Mobile cart drawer helpers ─────────────────────────────── */
+        function isMobileCart() { return window.innerWidth <= 640; }
+
+        function openMobileCart() {
+            var panel = document.getElementById('pos-cart-panel');
+            var overlay = document.getElementById('pos-cart-overlay');
+            if (panel) panel.classList.add('mobile-open');
+            if (overlay) overlay.classList.add('open');
+        }
+
+        function closeMobileCart() {
+            var panel = document.getElementById('pos-cart-panel');
+            var overlay = document.getElementById('pos-cart-overlay');
+            if (panel) panel.classList.remove('mobile-open');
+            if (overlay) overlay.classList.remove('open');
+        }
+
+        function toggleMobileCart() {
+            if (!isMobileCart()) return;
+            var panel = document.getElementById('pos-cart-panel');
+            if (panel && panel.classList.contains('mobile-open')) {
+                closeMobileCart();
+            } else {
+                openMobileCart();
+            }
+        }
+
+        function syncCartBar(totalItems, grandTotal) {
+            if (!isMobileCart()) return;
+            var barTotal = document.getElementById('cart-bar-total');
+            var barHint = document.getElementById('cart-bar-hint');
+            if (barTotal) {
+                if (totalItems > 0) {
+                    barTotal.textContent = currencySymbol + grandTotal.toFixed(2);
+                    barTotal.style.display = '';
+                } else {
+                    barTotal.style.display = 'none';
+                }
+            }
+        }
+
         function renderCart() {
             var container = document.getElementById('cart-items');
             var totalItems = cart.reduce(function(sum, item) { return sum + item.quantity; }, 0);
@@ -2061,6 +2122,9 @@
             totalsHtml += '<div class="pos-summary-total"><span>Total</span><span id="cart-total">' + currencySymbol + total.toFixed(2) + '</span></div>';
 
             document.getElementById('totals-display').innerHTML = totalsHtml;
+
+            // Sync mobile cart bar
+            syncCartBar(totalItems, total);
         }
 
         function clearCart() {
