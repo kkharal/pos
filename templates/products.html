@@ -8,10 +8,7 @@
     <script src="/static/js/loading.js?v=1" defer></script>
     <script src="/static/js/ui.js"></script>
     <style>
-        .products-main { padding: 1.5rem; overflow-y: auto; flex: 1; min-height: 0; transition: margin-right 0.3s ease; }
-        /* Lock viewport so no outer scroll — products-main scrolls internally */
-        html, body { height: 100%; overflow: hidden; }
-        .main-wrapper { height: 100vh; overflow: hidden; }
+        .products-main { padding: 1.5rem; overflow-y: auto; height: calc(100vh - 70px); transition: margin-right 0.3s ease; }
         .products-main.drawer-open { margin-right: 0; }
         .products-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
         .products-header h1 { font-size: 1.5rem; font-weight: 700; color: #1a202c; margin: 0; }
@@ -312,9 +309,11 @@
         .products-main.drawer-open { margin-right: 0 !important; }
         .product-drawer {
             width: min(1060px, 88vw);
+            right: 0;
             border-left: none;
             border-radius: 14px 0 0 14px;
         }
+        .product-drawer.open { right: 0; }
         .drawer-body { padding: 1rem 1.15rem 1.25rem; background: #f7fafc; }
         .drawer-variant-detail,
         .drawer-actions { display: none !important; }
@@ -600,31 +599,30 @@
 
         @media (max-width: 640px) {
             .product-drawer { width: 100vw; border-radius: 0; }
-            .drawer-header { padding: 0.4rem 0.55rem; gap: 0.35rem; }
-            .drawer-header h2 { font-size: 0.88rem; }
-            .drawer-header .drawer-subtitle { font-size: 0.68rem; margin-top: 0; }
-            .drawer-close { font-size: 1.15rem; }
-            .drawer-summary { grid-template-columns: repeat(4, 1fr); gap: 0.25rem; }
-            .drawer-summary-card { padding: 0.2rem 0.28rem; }
-            .drawer-summary-card .label { font-size: 0.58rem; }
-            .drawer-summary-card .value { font-size: 0.76rem; margin-top: 0.05rem; }
+            .drawer-header { padding: 0.65rem 0.75rem; gap: 0.55rem; }
+            .drawer-header h2 { font-size: 1rem; }
+            .drawer-header .drawer-subtitle { font-size: 0.72rem; }
+            .drawer-summary { grid-template-columns: 1fr 1fr; gap: 0.35rem; }
+            .drawer-summary-card { padding: 0.28rem 0.4rem; }
+            .drawer-summary-card .label { font-size: 0.64rem; }
+            .drawer-summary-card .value { font-size: 0.82rem; }
             .drawer-tabs {
-                margin: 0 -0.55rem 0.4rem;
-                padding: 0 0.55rem;
+                margin: 0 -0.75rem 0.6rem;
+                padding: 0 0.75rem;
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
             }
-            .drawer-tab { padding: 0.35rem 0.5rem; font-size: 0.7rem; }
-            .drawer-body { padding: 0 0.55rem 0.55rem; }
-            .inv-main, .inv-side { padding: 0.42rem; border-radius: 7px; }
-            .inv-legend { gap: 0.28rem; margin-bottom: 0.38rem; }
-            .inv-legend-item { font-size: 0.64rem; }
-            .inv-matrix-wrap { max-height: 260px; }
-            .inv-matrix { min-width: 420px; }
-            .inv-matrix thead th { font-size: 0.62rem; padding: 0.3rem 0.28rem; }
-            .inv-matrix tbody th { font-size: 0.66rem; padding: 0.28rem 0.35rem; }
-            .inv-cell { min-width: 42px; font-size: 0.68rem; padding: 0.26rem 0.15rem; }
-            .inv-kv { font-size: 0.66rem; }
+            .drawer-tab { padding: 0.5rem 0.65rem; font-size: 0.76rem; }
+            .drawer-body { padding: 0 0.75rem 0.75rem; }
+            .inv-main, .inv-side { padding: 0.6rem; border-radius: 9px; }
+            .inv-legend { gap: 0.35rem; margin-bottom: 0.5rem; }
+            .inv-legend-item { font-size: 0.68rem; }
+            .inv-matrix-wrap { max-height: 320px; }
+            .inv-matrix { min-width: 460px; }
+            .inv-matrix thead th { font-size: 0.66rem; padding: 0.4rem; }
+            .inv-matrix tbody th { font-size: 0.72rem; padding: 0.35rem 0.45rem; }
+            .inv-cell { min-width: 48px; font-size: 0.74rem; padding: 0.32rem 0.2rem; }
+            .inv-kv { font-size: 0.7rem; }
             .inv-panel-actions .btn { font-size: 0.74rem; padding: 0.34rem 0.5rem; }
             .variants-table-wrap { max-height: 45vh; }
             .variants-table th, .variants-table td { font-size: 0.72rem; padding: 0.36rem; }
@@ -637,28 +635,87 @@
         }
 
         @media (max-width: 480px) {
-            .drawer-header { padding: 0.32rem 0.45rem; gap: 0.28rem; }
-            .drawer-header h2 { font-size: 0.82rem; }
-            .drawer-header .drawer-subtitle { font-size: 0.62rem; }
-            .drawer-summary-card { padding: 0.16rem 0.22rem; }
-            .drawer-summary-card .label { font-size: 0.55rem; }
-            .drawer-summary-card .value { font-size: 0.7rem; }
+            .product-drawer { width: 100vw; }
+            .drawer-header { padding: 0.45rem 0.55rem; gap: 0.4rem; }
+            .drawer-header h2 { font-size: 0.9rem; }
+            .drawer-header .drawer-subtitle { font-size: 0.66rem; margin-top: 0.05rem; }
+            .drawer-close { font-size: 1.2rem; padding: 0.1rem; }
+            .drawer-summary { gap: 0.22rem; }
+            .drawer-summary-card { padding: 0.2rem 0.28rem; }
+            .drawer-summary-card .label { font-size: 0.56rem; }
+            .drawer-summary-card .value { font-size: 0.74rem; margin-top: 0.05rem; }
             .drawer-tabs {
-                margin: 0 -0.45rem 0.35rem;
-                padding: 0 0.45rem;
+                margin: 0 -0.55rem 0.45rem;
+                padding: 0 0.55rem;
             }
-            .drawer-tab { padding: 0.3rem 0.42rem; font-size: 0.66rem; }
-            .drawer-body { padding: 0 0.45rem 0.45rem; }
-            .inv-main, .inv-side { padding: 0.36rem; }
-            .inv-matrix-wrap { max-height: 230px; }
-            .inv-matrix { min-width: 380px; }
+            .drawer-tab { padding: 0.34rem 0.45rem; font-size: 0.67rem; }
+            .drawer-body { padding: 0 0.55rem 0.55rem; }
+
+            .inv-detail-shell { gap: 0.7rem; }
+            .inv-product-header { padding: 0.65rem; gap: 0.55rem; border-radius: 9px; }
+            .inv-title { font-size: 0.92rem; }
+            .inv-subtitle { font-size: 0.74rem; }
+            .inv-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.35rem; }
+            .inv-metric { padding: 0.32rem 0.36rem; }
+            .inv-metric .label { font-size: 0.56rem; }
+            .inv-metric .value { font-size: 0.78rem; }
+            .inv-product-toolbar { gap: 0.28rem; }
+            .inv-product-toolbar .btn { font-size: 0.68rem; padding: 0.28rem 0.42rem; }
+
+            .inv-main, .inv-side { padding: 0.48rem; border-radius: 8px; }
+            .inv-main h3, .inv-side h3 { font-size: 0.82rem; margin: 0 0 0.42rem 0; }
+            .inv-note { font-size: 0.68rem; margin: 0 0 0.48rem 0; }
+            .inv-legend { gap: 0.24rem; margin-bottom: 0.4rem; }
+            .inv-legend-item { font-size: 0.62rem; }
+            .inv-legend-dot { width: 8px; height: 8px; }
+            .inv-matrix-wrap { max-height: 250px; border-radius: 8px; }
+            .inv-matrix { min-width: 370px; }
             .inv-matrix thead th { font-size: 0.58rem; padding: 0.24rem; }
             .inv-matrix tbody th { font-size: 0.62rem; padding: 0.22rem 0.3rem; }
-            .inv-cell { min-width: 38px; font-size: 0.62rem; padding: 0.2rem 0.12rem; }
-            .variants-table th, .variants-table td { font-size: 0.64rem; padding: 0.26rem; }
-            .variant-action-toggle { font-size: 0.6rem; padding: 0.15rem 0.24rem; }
-            .inv-kv { font-size: 0.62rem; gap: 0.18rem 0.28rem; }
-            .inv-panel-actions .btn { font-size: 0.7rem; padding: 0.3rem 0.45rem; }
+            .inv-cell { min-width: 38px; font-size: 0.64rem; padding: 0.2rem 0.12rem; }
+
+            .inv-variant-name { font-size: 0.76rem; }
+            .inv-status { font-size: 0.62rem; }
+            .inv-kv { font-size: 0.64rem; gap: 0.18rem 0.28rem; margin-bottom: 0.42rem; }
+            .inv-kv .key { font-size: 0.6rem; }
+            .inv-panel-title { font-size: 0.62rem; }
+            .inv-panel-actions .btn { font-size: 0.67rem; padding: 0.3rem 0.42rem; }
+            .inv-form-row { gap: 0.24rem; margin-top: 0.26rem; }
+            .inv-form-row input, .inv-textarea { font-size: 0.68rem; padding: 0.26rem 0.32rem; }
+            .inv-textarea { min-height: 44px; }
+            .inv-help { font-size: 0.62rem; }
+
+            .inv-collapse > summary { padding: 0.42rem 0.52rem; font-size: 0.7rem; }
+            .inv-collapse-body { padding: 0.5rem; font-size: 0.7rem; }
+            .inv-analytics-item { padding: 0.28rem; }
+            .inv-analytics-item .k { font-size: 0.56rem; }
+            .inv-analytics-item .v { font-size: 0.74rem; }
+            .inv-tag { font-size: 0.62rem; padding: 0.15rem 0.3rem; }
+
+            .variants-toolbar { gap: 0.36rem; margin-bottom: 0.45rem; }
+            .variants-toolbar input,
+            .variants-toolbar select { font-size: 0.68rem; padding: 0.3rem 0.38rem; }
+            .variants-table-wrap { max-height: 40vh; border-radius: 8px; }
+            .variants-table { min-width: 650px; }
+            .variants-table thead th { font-size: 0.6rem; padding: 0.3rem 0.26rem; }
+            .variants-table td { font-size: 0.66rem; padding: 0.28rem 0.26rem; }
+            .variant-action-toggle { font-size: 0.62rem; padding: 0.16rem 0.24rem; }
+            .variant-action-dropdown { min-width: 126px; }
+            .variants-pagination { font-size: 0.66rem; margin-top: 0.35rem; }
+            .variants-pagination-actions .btn { font-size: 0.62rem; padding: 0.2rem 0.3rem; }
+        }
+
+        @media (max-width: 380px) {
+            .drawer-header { padding: 0.38rem 0.45rem; }
+            .drawer-header h2 { font-size: 0.84rem; }
+            .drawer-tab { padding: 0.28rem 0.38rem; font-size: 0.63rem; }
+            .drawer-body { padding: 0 0.45rem 0.45rem; }
+            .inv-product-header { padding: 0.55rem; }
+            .inv-main, .inv-side { padding: 0.42rem; }
+            .inv-matrix-wrap { max-height: 220px; }
+            .inv-matrix { min-width: 340px; }
+            .inv-cell { min-width: 34px; }
+            .variants-table { min-width: 600px; }
         }
     </style>
 </head>
@@ -744,6 +801,18 @@
         <div class="search-bar"><input type="text" id="product-search" placeholder="Search products by name, SKU, size, color..."></div>
         <div class="product-list-header"><span>Product</span><span>Variants</span><span>Stock</span><span>Price</span><span>Status</span></div>
         <div class="product-list" id="product-list"><div style="padding:0.5rem 1rem;display:flex;flex-direction:column;gap:0.5rem;"><div class="skeleton skeleton-product"></div><div class="skeleton skeleton-product"></div><div class="skeleton skeleton-product"></div><div class="skeleton skeleton-product"></div><div class="skeleton skeleton-product"></div></div></div>
+    </div>
+
+    <!-- Side Drawer -->
+    <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+    <div class="product-drawer" id="product-drawer">
+        <div class="drawer-header">
+            <div class="drawer-header-top">
+                <div><h2 id="drawer-title">Product Name</h2><div class="drawer-subtitle" id="drawer-subtitle">Category</div></div>
+                <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+            </div>
+        </div>
+        <div class="drawer-body" id="drawer-body"></div>
     </div>
 
     <!-- Add Product Modal -->
@@ -2304,17 +2373,5 @@
         }
     </script>
     </div><!-- /main-wrapper -->
-
-    <!-- Side Drawer (outside main-wrapper to avoid flex height issues) -->
-    <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
-    <div class="product-drawer" id="product-drawer">
-        <div class="drawer-header">
-            <div class="drawer-header-top">
-                <div><h2 id="drawer-title">Product Name</h2><div class="drawer-subtitle" id="drawer-subtitle">Category</div></div>
-                <button class="drawer-close" onclick="closeDrawer()">&times;</button>
-            </div>
-        </div>
-        <div class="drawer-body" id="drawer-body"></div>
-    </div>
 </body>
 </html>
