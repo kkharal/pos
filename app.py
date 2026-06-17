@@ -1105,6 +1105,26 @@ def add_product():
             import uuid
             variant_group = f"{name[:20].lower().replace(' ', '-')}-{uuid.uuid4().hex[:8]}"
 
+        # Block adding a duplicate active variant (same name+category+size+color+shop)
+        if size or color:
+            existing_variant = cursor.execute(
+                '''
+                SELECT id FROM products
+                WHERE shop_id = ? AND name = ? AND category = ?
+                  AND is_active = 1
+                  AND (size = ? OR (size IS NULL AND ? IS NULL))
+                  AND (color = ? OR (color IS NULL AND ? IS NULL))
+                LIMIT 1
+                ''',
+                (shop_id, name, category, size, size, color, color)
+            ).fetchone()
+            if existing_variant:
+                conn.close()
+                return jsonify({
+                    'success': False,
+                    'error': f'A variant with color "{color or "-"}" and size "{size or "-"}" already exists for "{name}". Update its stock instead.'
+                }), 409
+
         cursor.execute('''
             INSERT INTO products (shop_id, name, category, cost_price, price, stock_quantity, sku, description, size, color, variant_group)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
