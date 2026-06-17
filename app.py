@@ -5625,15 +5625,32 @@ def create_purchase_order():
         expected_date = data.get('expected_date') or None
         reference = (data.get('reference') or '').strip() or None
 
-        cursor.execute('''
-            INSERT INTO purchase_orders (shop_id, supplier_id, status, total_amount, notes, expected_date, reference, created_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (shop_id, data['supplier_id'], status, total, data.get('notes', '').strip(), expected_date, reference, session.get('user_id')))
+        # Backward-compatible insert: some older DBs may not yet have expected_date/reference/shop_id/po_number.
+        po_cols = {row[0] for row in cursor.execute('SHOW COLUMNS FROM purchase_orders').fetchall()}
+        candidate_values = {
+            'shop_id': shop_id,
+            'supplier_id': data['supplier_id'],
+            'status': status,
+            'total_amount': total,
+            'notes': data.get('notes', '').strip(),
+            'expected_date': expected_date,
+            'reference': reference,
+            'created_by': session.get('user_id')
+        }
+        insert_cols = [c for c in candidate_values.keys() if c in po_cols]
+        if 'supplier_id' not in insert_cols or 'status' not in insert_cols or 'total_amount' not in insert_cols:
+            return jsonify({'success': False, 'error': 'purchase_orders schema is missing required columns'}), 500
+
+        placeholders = ', '.join(['?'] * len(insert_cols))
+        col_sql = ', '.join(insert_cols)
+        insert_values = [candidate_values[c] for c in insert_cols]
+        cursor.execute(f'INSERT INTO purchase_orders ({col_sql}) VALUES ({placeholders})', insert_values)
         po_id = cursor.lastrowid
 
         # Generate PO number
         po_number = f'PO-{po_id:05d}'
-        cursor.execute('UPDATE purchase_orders SET po_number=? WHERE id=?', (po_number, po_id))
+        if 'po_number' in po_cols:
+            cursor.execute('UPDATE purchase_orders SET po_number=? WHERE id=?', (po_number, po_id))
 
         for item in items:
             if not item.get('product_id') or not item.get('quantity') or item['quantity'] <= 0:
