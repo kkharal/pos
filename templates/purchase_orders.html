@@ -909,23 +909,13 @@
         }
 
         function getProductGroupKey(product) {
-            if (product && product.variant_group) return String(product.variant_group);
-
-            // If a variant is missing variant_group, inherit from sibling variants with same name/category/shop.
-            if (product) {
-                var sibling = products.find(function(p) {
-                    return p &&
-                        p.id !== product.id &&
-                        p.variant_group &&
-                        normalizeFamilyText(p.name) === normalizeFamilyText(product.name) &&
-                        normalizeFamilyText(p.category) === normalizeFamilyText(product.category) &&
-                        String(p.shop_id || '') === String(product.shop_id || '');
-                });
-                if (sibling && sibling.variant_group) return String(sibling.variant_group);
-            }
-
-            // Final fallback for legacy rows without any grouped sibling.
-            return String(normalizeFamilyText(product && product.name) + '||' + normalizeFamilyText(product && product.category));
+            // Group by name+category+shop so products added in multiple batches
+            // (which can end up with different variant_group IDs) always appear together.
+            return String(
+                normalizeFamilyText(product && product.name) + '||' +
+                normalizeFamilyText(product && product.category) + '||' +
+                String((product && product.shop_id) || '')
+            );
         }
 
         function getSelectorSearchPool() {
