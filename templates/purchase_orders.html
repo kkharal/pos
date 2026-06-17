@@ -825,22 +825,47 @@
             </div>`;
             if (po.notes) html += `<div style="background:#f8fafc; padding:0.6rem 0.8rem; border-radius:6px; margin-bottom:1rem; font-size:0.85rem; color:#475569;"><strong>Notes:</strong> ${escapeHtml(po.notes)}</div>`;
 
-            html += `<div style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; max-height:350px; overflow-y:auto;"><table class="po-table"><thead><tr>
-                <th>Product</th><th>Ordered</th><th>Received</th><th>Cost</th><th>Line Total</th>
-            </tr></thead><tbody>`;
-            items.forEach(item => {
-                const pct = item.quantity_ordered > 0 ? Math.round(item.quantity_received / item.quantity_ordered * 100) : 0;
-                const variant = [item.size, item.color].filter(Boolean).join(' / ');
-                html += `<tr>
-                    <td><div style="font-weight:500;">${item.product_name || 'Unknown'}</div>${variant ? `<div style="font-size:0.8rem;color:#64748b;">${variant}</div>` : ''}<div style="font-size:0.75rem;color:#94a3b8;">${item.sku || ''}</div></td>
-                    <td>${item.quantity_ordered}</td>
-                    <td>${item.quantity_received} <span style="color:#94a3b8;font-size:0.78rem;">(${pct}%)</span></td>
-                    <td>${currencySymbol}${item.unit_cost.toFixed(2)}</td>
-                    <td><strong>${currencySymbol}${(item.quantity_ordered * item.unit_cost).toFixed(2)}</strong></td>
-                </tr>`;
-            });
-            html += `</tbody></table></div>`;
-            html += `<div style="text-align:right; margin-top:0.75rem; font-weight:700; font-size:1.1rem; color:#1e293b;">Total: ${currencySymbol}${po.total_amount.toFixed(2)}</div>`;
+            const isMobile = window.innerWidth <= 640;
+            if (isMobile) {
+                html += `<div style="display:flex; flex-direction:column; gap:0.5rem; max-height:55vh; overflow-y:auto;">`;
+                items.forEach(item => {
+                    const pct = item.quantity_ordered > 0 ? Math.round(item.quantity_received / item.quantity_ordered * 100) : 0;
+                    const variant = [item.size, item.color].filter(Boolean).join(' / ');
+                    const lineTotal = (item.quantity_ordered * item.unit_cost).toFixed(2);
+                    html += `<div style="border:1px solid #e2e8f0; border-radius:8px; padding:0.65rem 0.8rem;">
+                        <div style="font-weight:600; color:#1e293b; font-size:0.9rem; margin-bottom:0.2rem;">${escapeHtml(item.product_name || 'Unknown')}</div>
+                        ${variant ? `<div style="font-size:0.78rem; color:#64748b; margin-bottom:0.35rem;">${escapeHtml(variant)}</div>` : ''}
+                        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.3rem; margin-top:0.3rem;">
+                            <div style="font-size:0.72rem; color:#94a3b8; text-align:center;">Ordered</div>
+                            <div style="font-size:0.72rem; color:#94a3b8; text-align:center;">Received</div>
+                            <div style="font-size:0.72rem; color:#94a3b8; text-align:center;">Cost</div>
+                            <div style="font-size:0.72rem; color:#94a3b8; text-align:center;">Total</div>
+                            <div style="font-weight:600; text-align:center; font-size:0.88rem;">${item.quantity_ordered}</div>
+                            <div style="text-align:center; font-size:0.88rem;">${item.quantity_received} <span style="color:#94a3b8;font-size:0.72rem;">(${pct}%)</span></div>
+                            <div style="text-align:center; font-size:0.88rem;">${currencySymbol}${item.unit_cost.toFixed(2)}</div>
+                            <div style="font-weight:700; text-align:center; font-size:0.88rem; color:#1e293b;">${currencySymbol}${lineTotal}</div>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } else {
+                html += `<div style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; max-height:350px; overflow-y:auto;"><table class="po-table"><thead><tr>
+                    <th>Product</th><th>Ordered</th><th>Received</th><th>Cost</th><th>Line Total</th>
+                </tr></thead><tbody>`;
+                items.forEach(item => {
+                    const pct = item.quantity_ordered > 0 ? Math.round(item.quantity_received / item.quantity_ordered * 100) : 0;
+                    const variant = [item.size, item.color].filter(Boolean).join(' / ');
+                    html += `<tr>
+                        <td><div style="font-weight:500;">${escapeHtml(item.product_name || 'Unknown')}</div>${variant ? `<div style="font-size:0.8rem;color:#64748b;">${escapeHtml(variant)}</div>` : ''}<div style="font-size:0.75rem;color:#94a3b8;">${item.sku || ''}</div></td>
+                        <td>${item.quantity_ordered}</td>
+                        <td>${item.quantity_received} <span style="color:#94a3b8;font-size:0.78rem;">(${pct}%)</span></td>
+                        <td>${currencySymbol}${item.unit_cost.toFixed(2)}</td>
+                        <td><strong>${currencySymbol}${(item.quantity_ordered * item.unit_cost).toFixed(2)}</strong></td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div>`;
+            }
+            html += `<div style="text-align:right; margin-top:0.75rem; font-weight:700; font-size:1.05rem; color:#1e293b;">Total: ${currencySymbol}${po.total_amount.toFixed(2)}</div>`;
 
             document.getElementById('view-po-content').innerHTML = html;
             document.getElementById('view-po-modal').classList.add('active');
