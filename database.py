@@ -569,6 +569,48 @@ def init_db():
     if not _column_exists(cursor, "products", "is_active"):
         cursor.execute("ALTER TABLE products ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1")
 
+    # Backfill missing variant_group values so manually added variants join the correct family.
+    import uuid
+    null_variant_rows = cursor.execute(
+        '''
+        SELECT id, shop_id, name, category, size, color
+        FROM products
+        WHERE variant_group IS NULL
+        ORDER BY shop_id, name, category, id
+        '''
+    ).fetchall()
+
+    variant_group_updates = []
+    grouped_null_rows = {}
+    for row in null_variant_rows:
+        group_key = (row['shop_id'], row['name'], row['category'])
+        grouped_null_rows.setdefault(group_key, []).append(row)
+
+    for (shop_id, name, category), rows in grouped_null_rows.items():
+        sibling = cursor.execute(
+            '''
+            SELECT variant_group
+            FROM products
+            WHERE shop_id = ? AND name = ? AND variant_group IS NOT NULL
+            ORDER BY id
+            LIMIT 1
+            ''',
+            (shop_id, name)
+        ).fetchone()
+
+        inherited_group = sibling['variant_group'] if sibling else None
+        if not inherited_group:
+            has_variant_traits = any(r['size'] or r['color'] for r in rows)
+            if len(rows) > 1 or has_variant_traits:
+                inherited_group = f"{name[:20].lower().replace(' ', '-')}-{uuid.uuid4().hex[:8]}"
+
+        if inherited_group:
+            for row in rows:
+                variant_group_updates.append((inherited_group, row['id']))
+
+    for variant_group, product_id in variant_group_updates:
+        cursor.execute("UPDATE products SET variant_group = ? WHERE id = ? AND variant_group IS NULL", (variant_group, product_id))
+
     # Users extras
     if not _column_exists(cursor, "users", "last_login"):
         cursor.execute("ALTER TABLE users ADD COLUMN last_login DATETIME NULL")

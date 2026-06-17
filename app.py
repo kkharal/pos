@@ -1081,12 +1081,36 @@ def add_product():
             sku = f'{prefix}-{existing + 1:03d}'
 
     try:
+        name = data['name'].strip()
+        category = data['category'].strip()
+        size = data.get('size', '').strip() or None
+        color = data.get('color', '').strip() or None
+
+        sibling_group = cursor.execute(
+            '''
+            SELECT variant_group, category
+            FROM products
+            WHERE shop_id = ? AND name = ? AND variant_group IS NOT NULL
+            ORDER BY id
+            LIMIT 1
+            ''',
+            (shop_id, name)
+        ).fetchone()
+
+        variant_group = sibling_group['variant_group'] if sibling_group else None
+        if sibling_group and sibling_group.get('category'):
+            category = sibling_group['category']
+
+        if not variant_group and (size or color):
+            import uuid
+            variant_group = f"{name[:20].lower().replace(' ', '-')}-{uuid.uuid4().hex[:8]}"
+
         cursor.execute('''
-            INSERT INTO products (shop_id, name, category, cost_price, price, stock_quantity, sku, description, size, color)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (shop_id, data['name'], data['category'], data.get('cost_price', 0), data['price'],
+            INSERT INTO products (shop_id, name, category, cost_price, price, stock_quantity, sku, description, size, color, variant_group)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (shop_id, name, category, data.get('cost_price', 0), data['price'],
               data.get('stock_quantity', 0), sku, data.get('description', ''),
-              data.get('size', '').strip() or None, data.get('color', '').strip() or None))
+              size, color, variant_group))
 
         product_id = cursor.lastrowid
 

@@ -904,17 +904,39 @@
         var selectorState = { step: 1, product: null, color: null, colors: [], size: null, sizes: [] };
         var selectorProductGroups = [];
 
+        function normalizeFamilyText(value) {
+            return String(value || '').trim().toLowerCase();
+        }
+
         function getProductGroupKey(product) {
             if (product && product.variant_group) return String(product.variant_group);
-            // Fallback for legacy rows without variant_group
-            return String((product.name || '').trim().toLowerCase() + '||' + (product.category || '').trim().toLowerCase());
+
+            // If a variant is missing variant_group, inherit from sibling variants with same name/category/shop.
+            if (product) {
+                var sibling = products.find(function(p) {
+                    return p &&
+                        p.id !== product.id &&
+                        p.variant_group &&
+                        normalizeFamilyText(p.name) === normalizeFamilyText(product.name) &&
+                        normalizeFamilyText(p.category) === normalizeFamilyText(product.category) &&
+                        String(p.shop_id || '') === String(product.shop_id || '');
+                });
+                if (sibling && sibling.variant_group) return String(sibling.variant_group);
+            }
+
+            // Final fallback for legacy rows without any grouped sibling.
+            return String(normalizeFamilyText(product && product.name) + '||' + normalizeFamilyText(product && product.category));
         }
 
         function getSelectorSearchPool() {
             var searchPool = products;
             if (showSupplierOnly && supplierProducts.length > 0) {
-                var spIds = new Set(supplierProducts.map(function(sp) { return sp.id; }));
-                searchPool = products.filter(function(p) { return spIds.has(p.id); });
+                var supplierGroupKeys = new Set(supplierProducts.map(function(sp) {
+                    return getProductGroupKey(sp);
+                }));
+                searchPool = products.filter(function(p) {
+                    return supplierGroupKeys.has(getProductGroupKey(p));
+                });
             }
             return searchPool;
         }
