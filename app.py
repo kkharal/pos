@@ -1105,18 +1105,18 @@ def add_product():
             import uuid
             variant_group = f"{name[:20].lower().replace(' ', '-')}-{uuid.uuid4().hex[:8]}"
 
-        # Block adding a duplicate active variant (same name+category+size+color+shop)
+        # Block adding a duplicate active variant (same shop+name+size+color)
         if size or color:
             existing_variant = cursor.execute(
                 '''
                 SELECT id FROM products
-                WHERE shop_id = ? AND name = ? AND category = ?
+                WHERE shop_id = ? AND name = ?
                   AND is_active = 1
                   AND (size = ? OR (size IS NULL AND ? IS NULL))
                   AND (color = ? OR (color IS NULL AND ? IS NULL))
                 LIMIT 1
                 ''',
-                (shop_id, name, category, size, size, color, color)
+                (shop_id, name, size, size, color, color)
             ).fetchone()
             if existing_variant:
                 conn.close()
@@ -5200,6 +5200,30 @@ def create_product_variants():
     if len(combos) > 100:
         return jsonify({'success': False, 'error': 'Too many variants (max 100)'}), 400
 
+    # Normalize and de-duplicate incoming combinations from this request.
+    # Reject if the same size/color pair is repeated in payload.
+    normalized_combos = []
+    seen_payload = set()
+    duplicate_payload = []
+    for size, color in combos:
+        size_clean = (size or '').strip() or None
+        color_clean = (color or '').strip() or None
+        pair_key = (size_clean, color_clean)
+        if pair_key in seen_payload:
+            duplicate_payload.append(pair_key)
+            continue
+        seen_payload.add(pair_key)
+        normalized_combos.append((size_clean, color_clean))
+
+    if duplicate_payload:
+        sample = ', '.join([f"size={d[0] or '-'}, color={d[1] or '-'}" for d in duplicate_payload[:5]])
+        return jsonify({
+            'success': False,
+            'error': f'Duplicate size/color rows in request: {sample}'
+        }), 400
+
+    combos = normalized_combos
+
     # Build stock lookup from stock_map (matches by index)
     stock_values = []
     if stock_map and len(stock_map) == len(combos):
@@ -5217,6 +5241,31 @@ def create_product_variants():
     flt_sql, flt_params = shop_filter()
 
     try:
+        # Block creation when a variant with same shop+name+size+color already exists.
+        existing_conflicts = []
+        for size, color in combos:
+            existing = cursor.execute(
+                '''
+                SELECT id FROM products
+                WHERE shop_id = ?
+                  AND name = ?
+                  AND is_active = 1
+                  AND (size = ? OR (size IS NULL AND ? IS NULL))
+                  AND (color = ? OR (color IS NULL AND ? IS NULL))
+                LIMIT 1
+                ''',
+                (shop_id, name, size, size, color, color)
+            ).fetchone()
+            if existing:
+                existing_conflicts.append((size, color))
+
+        if existing_conflicts:
+            sample = ', '.join([f"size={c[0] or '-'}, color={c[1] or '-'}" for c in existing_conflicts[:8]])
+            return jsonify({
+                'success': False,
+                'error': f'Cannot create duplicate variants for "{name}". Already exists: {sample}'
+            }), 400
+
         created_ids = []
         for idx, (size, color) in enumerate(combos):
             variant_stock = stock_values[idx]
