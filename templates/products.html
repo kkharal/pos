@@ -1040,6 +1040,55 @@
             return (v || '').toString().trim();
         }
 
+        function toTitleCaseWords(v) {
+            return (v || '').replace(/\b([a-z])/g, function(_, ch) { return ch.toUpperCase(); });
+        }
+
+        function normalizeProductName(name) {
+            // Collapse multiple spaces to single space (matches backend normalization)
+            return (name || '').toString().trim().replace(/\s+/g, ' ');
+        }
+
+        function normalizeColorInput(v) {
+            var s = (v || '').toString().trim();
+            if (!s) return '';
+
+            // Normalize separators to single spaces for consistent UI values.
+            s = s
+                .replace(/[\-_\/&]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            var phraseMap = {
+                'b w': 'black white',
+                'b and w': 'black white'
+            };
+            var lower = s.toLowerCase();
+            if (phraseMap[lower]) {
+                s = phraseMap[lower];
+            }
+
+            var wordMap = {
+                'oragne': 'orange'
+            };
+
+            s = s
+                .toLowerCase()
+                .split(' ')
+                .map(function(w) { return wordMap[w] || w; })
+                .join(' ');
+
+            // Canonicalize token order so equivalent permutations map together.
+            // Example: "golden brown" and "brown golden".
+            var parts = s.split(' ').filter(Boolean);
+            if (parts.length > 1) {
+                parts.sort();
+                s = parts.join(' ');
+            }
+
+            return toTitleCaseWords(s);
+        }
+
         function groupProducts() {
             groupedProducts = {};
             products.forEach(p => {
@@ -1103,13 +1152,14 @@
 
         function renderProductList() {
             renderSummary();
-            const search = (document.getElementById('product-search').value || '').toLowerCase();
+            const search = normalizeProductName(document.getElementById('product-search').value || '').toLowerCase();
             const container = document.getElementById('product-list');
             let groupNames = Object.keys(groupedProducts).sort();
             if (search) {
                 groupNames = groupNames.filter(name => {
                     const g = groupedProducts[name];
-                    return name.toLowerCase().includes(search) || g.category.toLowerCase().includes(search) ||
+                    const normalizedName = normalizeProductName(name).toLowerCase();
+                    return normalizedName.includes(search) || g.category.toLowerCase().includes(search) ||
                         g.variants.some(v => (v.sku||'').toLowerCase().includes(search) || (v.size||'').toLowerCase().includes(search) || (v.color||'').toLowerCase().includes(search));
                 });
             }
@@ -2118,6 +2168,14 @@
             const szSel = document.getElementById('add-size-select'), csz = document.getElementById('add-custom-size').value.trim();
             if (szSel.value==='__custom__' || szSel.style.display==='none') data.size = csz;
             delete data.custom_size;
+
+            var originalColor = (data.color || '').trim();
+            var normalizedColor = normalizeColorInput(originalColor);
+            data.color = normalizedColor;
+            if (originalColor && normalizedColor && originalColor !== normalizedColor) {
+                showToast('Normalized color: ' + originalColor + ' -> ' + normalizedColor, 'warning');
+            }
+
             try {
                 e.target.dataset.submitting = '1';
                 if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Adding...'; }
@@ -2252,11 +2310,35 @@
             const checked = [...document.querySelectorAll('#variant-sizes input[name="sizes"]:checked')].map(c=>c.value);
             const custom = document.getElementById('variant-custom-sizes').value.split(',').map(s=>s.trim()).filter(Boolean);
             const sizes = [...new Set([...checked, ...custom])];
-            const colors = document.getElementById('variant-colors').value.split(',').map(c=>c.trim()).filter(Boolean);
-            return { sizes, colors };
+            const rawColors = document.getElementById('variant-colors').value.split(',').map(c=>c.trim()).filter(Boolean);
+
+            const colors = [];
+            const seen = new Set();
+            const normalizedChanges = [];
+            const mergedDuplicates = [];
+
+            rawColors.forEach(function(raw) {
+                const normalized = normalizeColorInput(raw);
+                if (!normalized) return;
+
+                const key = normalized.toLowerCase();
+                if (raw !== normalized) {
+                    normalizedChanges.push({ from: raw, to: normalized });
+                }
+
+                if (seen.has(key)) {
+                    mergedDuplicates.push({ from: raw, to: normalized });
+                    return;
+                }
+
+                seen.add(key);
+                colors.push(normalized);
+            });
+
+            return { sizes, colors, normalizedChanges, mergedDuplicates };
         }
         function updateVariantPreview() {
-            const { sizes, colors } = getVariantCombos();
+            const { sizes, colors, normalizedChanges, mergedDuplicates } = getVariantCombos();
             const preview = document.getElementById('variant-preview'), table = document.getElementById('variant-stock-table');
             let combos = [];
             if (sizes.length && colors.length) { for(const s of sizes) for(const c of colors) combos.push(s+' / '+c); }
@@ -2267,6 +2349,25 @@
                 combos.forEach((c,i) => { h += `<tr style="background:${i%2===0?'#fff':'#f8f9fa'};"><td style="padding:0.35rem 0.6rem;">${c}</td><td style="padding:0.35rem 0.6rem;text-align:center;"><input type="number" class="variant-stock-input" min="0" value="0" style="width:70px;text-align:center;padding:0.2rem;font-size:0.85rem;border:1px solid #ccc;border-radius:3px;" oninput="updateVariantTotalStock()"></td></tr>`; });
                 h += '</tbody></table>';
                 table.innerHTML = h; updateVariantTotalStock(); preview.style.display = 'block';
+
+                const notes = [];
+                if (normalizedChanges.length) {
+                    notes.push('Normalized colors to title case and spaces.');
+                }
+                if (mergedDuplicates.length) {
+                    notes.push('Merged duplicate colors after normalization.');
+                }
+
+                const existingNote = document.getElementById('variant-color-normalize-note');
+                if (existingNote) existingNote.remove();
+                if (notes.length) {
+                    preview.insertAdjacentHTML(
+                        'beforeend',
+                        '<div id="variant-color-normalize-note" style="margin-top:0.5rem;font-size:0.78rem;color:#92400e;background:#fff7ed;border:1px solid #fed7aa;padding:0.45rem 0.55rem;border-radius:6px;">' +
+                        notes.join(' ') +
+                        '</div>'
+                    );
+                }
             } else { table.innerHTML = ''; preview.style.display = 'none'; }
         }
         function applyStockToAll() { const v = parseInt(document.getElementById('variant-stock-all').value)||0; document.querySelectorAll('.variant-stock-input').forEach(i=>{i.value=v;}); updateVariantTotalStock(); }
@@ -2280,7 +2381,7 @@
             e.preventDefault();
             if (e.target.dataset.submitting === '1') return;
             const submitBtn = e.target.querySelector('button[type="submit"]');
-            const { sizes, colors } = getVariantCombos();
+            const { sizes, colors, normalizedChanges, mergedDuplicates } = getVariantCombos();
             if (!sizes.length && !colors.length) { showToast('Select sizes or enter colors','warning'); return; }
             const stockInputs = document.querySelectorAll('.variant-stock-input');
             let combos = [];
@@ -2293,12 +2394,28 @@
                 description:document.getElementById('variant-description').value.trim(), sizes, colors, stock_map };
             data.category = normalizeCategoryLabel(data.category);
             if (!data.name||!data.category) { showToast('Name and Category required','warning'); return; }
+
+            if (normalizedChanges.length) {
+                showToast('Normalized variant colors to consistent format', 'warning');
+            }
+            if (mergedDuplicates.length) {
+                showToast('Merged duplicate colors after normalization', 'warning');
+            }
+
             try {
                 e.target.dataset.submitting = '1';
                 if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Creating...'; }
                 const r = await fetch('/api/products/create-variants', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
                 const res = await r.json();
-                if (r.ok && res.success) { showToast('Created '+res.created+' variants!','success'); closeVariantModal(); loadProducts(); }
+                if (r.ok && res.success) {
+                    if ((res.created || 0) > 0) {
+                        showToast('Created '+res.created+' variants!','success');
+                        closeVariantModal();
+                        loadProducts();
+                    } else {
+                        showToast('No variants created. Please set stock > 0 and avoid duplicates.','warning');
+                    }
+                }
                 else { showToast('Error: '+(res.error||'Unknown'),'error'); }
             } catch(e){ showToast('Error creating variants','error'); }
             finally {

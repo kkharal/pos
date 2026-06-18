@@ -669,6 +669,88 @@ def shop_filter(alias=''):
     col = f'{alias}.shop_id' if alias else 'shop_id'
     return f' AND {col} = ?', [shop_id]
 
+
+def normalize_color_value(value):
+    """Normalize color text to a consistent display format."""
+    if value is None:
+        return None
+
+    color = str(value).strip()
+    if not color:
+        return None
+
+    # Normalize common separators so values are stored consistently.
+    color = re.sub(r'[\-_/&]+', ' ', color)
+    color = re.sub(r'\s+', ' ', color).strip().lower()
+
+    phrase_map = {
+        'b w': 'black white',
+        'b and w': 'black white',
+    }
+    color = phrase_map.get(color, color)
+
+    word_map = {
+        'oragne': 'orange',
+    }
+    color = ' '.join(word_map.get(part, part) for part in color.split(' '))
+
+    # Canonicalize token order so equivalent permutations map together
+    # (e.g. "golden brown" and "brown golden").
+    tokens = [t for t in color.split(' ') if t]
+    if len(tokens) > 1:
+        color = ' '.join(sorted(tokens))
+
+    return ' '.join(part.capitalize() for part in color.split(' '))
+
+
+def color_normalized_key(value):
+    """Return case-insensitive key used for duplicate detection."""
+    normalized = normalize_color_value(value)
+    return normalized.lower() if normalized else None
+
+
+def size_normalized_key(value):
+    """Return case-insensitive, whitespace-normalized size key."""
+    if value is None:
+        return None
+    size = str(value).strip()
+    return size.lower() if size else None
+
+
+def normalize_product_name(name):
+    """Normalize product name by collapsing multiple spaces and trimming."""
+    if not name:
+        return name
+    return ' '.join(str(name).split())
+
+
+def find_existing_variant_by_normalized_color(cursor, shop_id, name, size, color):
+    """Find an existing active variant matching shop+name+size+normalized-color.
+    Normalizes both incoming and DB product names to handle whitespace variance."""
+    name_normalized = normalize_product_name(name)
+    target_size_key = size_normalized_key(size)
+
+    # Query active candidates in shop and compare normalized fields in Python.
+    # This avoids misses from case/whitespace differences in DB values.
+    candidates = cursor.execute(
+        '''
+        SELECT id, color, name, size
+        FROM products
+        WHERE shop_id = ?
+          AND is_active = 1
+        ''',
+        (shop_id,)
+    ).fetchall()
+
+    target_key = color_normalized_key(color)
+    for candidate in candidates:
+        # Compare normalized product names
+        if normalize_product_name(candidate['name']) == name_normalized:
+            if size_normalized_key(candidate['size']) == target_size_key and color_normalized_key(candidate['color']) == target_key:
+                return candidate
+
+    return None
+
 def get_settings_shop_id():
     """Return shop_id for settings operations.
     super_admin with no active shop → None (global settings).
@@ -1081,43 +1163,63 @@ def add_product():
             sku = f'{prefix}-{existing + 1:03d}'
 
     try:
-        name = data['name'].strip()
+        name = normalize_product_name(data['name'].strip())
         category = data['category'].strip()
         size = data.get('size', '').strip() or None
-        color = data.get('color', '').strip() or None
+        color = normalize_color_value(data.get('color', ''))
 
         sibling_group = cursor.execute(
             '''
-            SELECT variant_group, category
+            SELECT name, variant_group, category
             FROM products
-            WHERE shop_id = ? AND name = ? AND variant_group IS NOT NULL
+            WHERE shop_id = ? AND is_active = 1 AND variant_group IS NOT NULL
             ORDER BY id
-            LIMIT 1
+            LIMIT 100
             ''',
-            (shop_id, name)
-        ).fetchone()
+            (shop_id,)
+        ).fetchall()
 
-        variant_group = sibling_group['variant_group'] if sibling_group else None
-        if sibling_group and sibling_group.get('category'):
-            category = sibling_group['category']
+        # Find sibling by normalized name comparison
+        variant_group = None
+        for row in sibling_group:
+            if normalize_product_name(row['name']) == name:
+                variant_group = row['variant_group']
+                if row['category']:
+                    category = row['category']
+                break
 
         if not variant_group and (size or color):
             import uuid
             variant_group = f"{name[:20].lower().replace(' ', '-')}-{uuid.uuid4().hex[:8]}"
 
+        # Block adding a product with the same name in this shop (regardless of size/color)
+        # Fetch all products in shop and normalize names to compare
+        all_products = cursor.execute(
+            '''
+            SELECT id, name
+            FROM products
+            WHERE shop_id = ? AND is_active = 1
+            ''',
+            (shop_id,)
+        ).fetchall()
+
+        for product in all_products:
+            if normalize_product_name(product['name']) == name:
+                conn.close()
+                return jsonify({
+                    'success': False,
+                    'error': f'A product named "{name}" already exists in this shop. Add a variant instead or update the existing product.'
+                }), 409
+
         # Block adding a duplicate active variant (same shop+name+size+color)
         if size or color:
-            existing_variant = cursor.execute(
-                '''
-                SELECT id FROM products
-                WHERE shop_id = ? AND name = ?
-                  AND is_active = 1
-                  AND (size = ? OR (size IS NULL AND ? IS NULL))
-                  AND (color = ? OR (color IS NULL AND ? IS NULL))
-                LIMIT 1
-                ''',
-                (shop_id, name, size, size, color, color)
-            ).fetchone()
+            existing_variant = find_existing_variant_by_normalized_color(
+                cursor,
+                shop_id,
+                name,
+                size,
+                color,
+            )
             if existing_variant:
                 conn.close()
                 return jsonify({
@@ -5169,7 +5271,7 @@ def duplicate_product(product_id):
 def create_product_variants():
     """Bulk-create product variants for all size/color combinations."""
     data = request.json
-    name = data.get('name', '').strip()
+    name = normalize_product_name(data.get('name', '').strip())
     category = data.get('category', '').strip()
     cost_price = float(data.get('cost_price', 0))
     price = float(data.get('price', 0))
@@ -5189,13 +5291,13 @@ def create_product_variants():
     if sizes and colors:
         for size in sizes:
             for color in colors:
-                combos.append((size.strip(), color.strip()))
+                combos.append(((size or '').strip() or None, normalize_color_value(color)))
     elif sizes:
         for size in sizes:
-            combos.append((size.strip(), None))
+            combos.append(((size or '').strip() or None, None))
     else:
         for color in colors:
-            combos.append((None, color.strip()))
+            combos.append((None, normalize_color_value(color)))
 
     if len(combos) > 100:
         return jsonify({'success': False, 'error': 'Too many variants (max 100)'}), 400
@@ -5207,7 +5309,7 @@ def create_product_variants():
     duplicate_payload = []
     for size, color in combos:
         size_clean = (size or '').strip() or None
-        color_clean = (color or '').strip() or None
+        color_clean = normalize_color_value(color)
         pair_key = (size_clean, color_clean)
         if pair_key in seen_payload:
             duplicate_payload.append(pair_key)
@@ -5231,9 +5333,11 @@ def create_product_variants():
     else:
         stock_values = [stock_per_variant] * len(combos)
 
-    # Generate variant group identifier
-    import uuid
-    variant_group = f"{name[:20].lower().replace(' ', '-')}-{uuid.uuid4().hex[:8]}"
+    if not any(v > 0 for v in stock_values):
+        return jsonify({
+            'success': False,
+            'error': 'All variant stock values are 0. Set stock for at least one variant.'
+        }), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -5241,21 +5345,47 @@ def create_product_variants():
     flt_sql, flt_params = shop_filter()
 
     try:
+        # Reuse canonical existing name/group when normalized names match.
+        canonical_name = name
+        canonical_category = category
+        existing_variant_group = None
+        siblings = cursor.execute(
+            '''
+            SELECT id, name, category, variant_group
+            FROM products
+            WHERE shop_id = ? AND is_active = 1
+            ORDER BY id
+            ''',
+            (shop_id,)
+        ).fetchall()
+        for sibling in siblings:
+            if normalize_product_name(sibling['name']) == name:
+                canonical_name = sibling['name']
+                if sibling['category']:
+                    canonical_category = sibling['category']
+                if sibling['variant_group']:
+                    existing_variant_group = sibling['variant_group']
+                break
+
+        name = canonical_name
+        category = canonical_category
+
+        if existing_variant_group:
+            variant_group = existing_variant_group
+        else:
+            import uuid
+            variant_group = f"{name[:20].lower().replace(' ', '-')}-{uuid.uuid4().hex[:8]}"
+
         # Block creation when a variant with same shop+name+size+color already exists.
         existing_conflicts = []
         for size, color in combos:
-            existing = cursor.execute(
-                '''
-                SELECT id FROM products
-                WHERE shop_id = ?
-                  AND name = ?
-                  AND is_active = 1
-                  AND (size = ? OR (size IS NULL AND ? IS NULL))
-                  AND (color = ? OR (color IS NULL AND ? IS NULL))
-                LIMIT 1
-                ''',
-                (shop_id, name, size, size, color, color)
-            ).fetchone()
+            existing = find_existing_variant_by_normalized_color(
+                cursor,
+                shop_id,
+                name,
+                size,
+                color,
+            )
             if existing:
                 existing_conflicts.append((size, color))
 
@@ -5300,6 +5430,11 @@ def create_product_variants():
                 ''', (shop_id, product_id, variant_stock, 'initial', f'Initial stock | Variant: {size or ""} {color or ""}'))
 
         conn.commit()
+        if not created_ids:
+            return jsonify({
+                'success': False,
+                'error': 'No variants were created. Check stock values and duplicate combinations.'
+            }), 400
         return jsonify({
             'success': True,
             'created': len(created_ids),
