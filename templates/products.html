@@ -717,6 +717,34 @@
             .inv-cell { min-width: 34px; }
             .variants-table { min-width: 600px; }
         }
+
+        /* ── Variant sizes ultra-compact for small screens ────── */
+        @media (max-width: 480px) {
+            #variant-sizes {
+                gap: 0.15rem !important;
+            }
+            #variant-sizes label {
+                padding: 0.08rem 0.2rem !important;
+                font-size: 0.65rem !important;
+                gap: 0.1rem !important;
+                min-width: auto;
+            }
+            #variant-sizes input[type="checkbox"] {
+                width: 13px;
+                height: 13px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #variant-sizes {
+                gap: 0.2rem !important;
+            }
+            #variant-sizes label {
+                padding: 0.12rem 0.28rem !important;
+                font-size: 0.75rem !important;
+                gap: 0.12rem !important;
+            }
+        }
     </style>
 </head>
 <body class="has-sidebar">
@@ -878,15 +906,15 @@
                 <hr style="margin:1rem 0;border:none;border-top:2px dashed #ddd;">
                 <h3 style="margin-bottom:0.75rem;font-size:1rem;color:#2c3e50;">Sizes & Colors</h3>
                 <div class="form-group"><label>Sizes</label>
-                    <div id="variant-sizes" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.3rem;">
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;"><input type="checkbox" name="sizes" value="XS"> XS</label>
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;"><input type="checkbox" name="sizes" value="S"> S</label>
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;"><input type="checkbox" name="sizes" value="M"> M</label>
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;"><input type="checkbox" name="sizes" value="L"> L</label>
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;"><input type="checkbox" name="sizes" value="XL"> XL</label>
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;"><input type="checkbox" name="sizes" value="XXL"> XXL</label>
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;"><input type="checkbox" name="sizes" value="XXXL"> XXXL</label>
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:4px;"><input type="checkbox" name="sizes" value="Free Size"> Free</label>
+                    <div id="variant-sizes" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.3rem;margin-bottom:0.5rem;">
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="sizes" value="XS"> XS</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="sizes" value="S"> S</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="sizes" value="M"> M</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="sizes" value="L"> L</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="sizes" value="XL"> XL</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="sizes" value="XXL"> XXL</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="sizes" value="XXXL"> XXXL</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="sizes" value="Free Size"> Free</label>
                     </div>
                     <input type="text" id="variant-custom-sizes" placeholder="Custom sizes (comma-separated)" style="margin-top:0.4rem;font-size:0.85rem;">
                 </div>

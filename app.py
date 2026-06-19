@@ -1180,38 +1180,70 @@ def add_product():
         ).fetchall()
 
         # Find sibling by normalized name comparison
+        existing_product = None
         variant_group = None
         for row in sibling_group:
             if normalize_product_name(row['name']) == name:
                 variant_group = row['variant_group']
                 if row['category']:
                     category = row['category']
+                # Fetch existing product ID
+                existing_product = cursor.execute(
+                    'SELECT id FROM products WHERE shop_id = ? AND is_active = 1 AND name = ?',
+                    (shop_id, row['name'])
+                ).fetchone()
                 break
 
         if not variant_group and (size or color):
             import uuid
             variant_group = f"{name[:20].lower().replace(' ', '-')}-{uuid.uuid4().hex[:8]}"
 
-        # Block adding a product with the same name in this shop (regardless of size/color)
-        # Fetch all products in shop and normalize names to compare
-        all_products = cursor.execute(
-            '''
-            SELECT id, name
-            FROM products
-            WHERE shop_id = ? AND is_active = 1
-            ''',
-            (shop_id,)
-        ).fetchall()
-
-        for product in all_products:
-            if normalize_product_name(product['name']) == name:
+        # If product exists AND size/color provided, auto-add as variant
+        if existing_product and (size or color):
+            existing_variant = find_existing_variant_by_normalized_color(
+                cursor,
+                shop_id,
+                name,
+                size,
+                color,
+            )
+            if existing_variant:
                 conn.close()
                 return jsonify({
                     'success': False,
-                    'error': f'A product named "{name}" already exists in this shop. Add a variant instead or update the existing product.'
+                    'error': f'This size/color combination already exists. Update its stock instead.'
                 }), 409
+            
+            # Add variant to existing product group
+            cursor.execute('''
+                INSERT INTO products (shop_id, name, category, cost_price, price, stock_quantity, sku, description, size, color, variant_group)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (shop_id, existing_product['name'], category, data.get('cost_price', 0), data['price'],
+                  data.get('stock_quantity', 0), sku, data.get('description', ''),
+                  size, color, variant_group))
 
-        # Block adding a duplicate active variant (same shop+name+size+color)
+            product_id = cursor.lastrowid
+
+            if data.get('stock_quantity', 0) > 0:
+                cost_price = data.get('cost_price', 0)
+                note = f'Initial stock | Cost: {cost_price:.2f}'
+                cursor.execute('''
+                    INSERT INTO stock_history (shop_id, product_id, quantity_change, action_type, note)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (shop_id, product_id, data['stock_quantity'], 'initial', note))
+
+            conn.commit()
+            return jsonify({'success': True, 'id': product_id, 'variant': True}), 201
+
+        # Reject only if product exists but no size/color provided
+        if existing_product and not size and not color:
+            conn.close()
+            return jsonify({
+                'success': False,
+                'error': f'A product named "{name}" already exists. Add a variant (with size/color) instead or update the existing product.'
+            }), 409
+
+        # Block duplicate variants
         if size or color:
             existing_variant = find_existing_variant_by_normalized_color(
                 cursor,
@@ -5075,7 +5107,7 @@ def export_products_csv():
     conn = get_db_connection()
     flt_sql, flt_params = shop_filter()
     products = conn.execute(
-        f'SELECT * FROM products WHERE 1=1 {flt_sql} ORDER BY name', flt_params
+        f'SELECT * FROM products WHERE is_active = 1 {flt_sql} ORDER BY name', flt_params
     ).fetchall()
     conn.close()
 
@@ -5376,9 +5408,12 @@ def create_product_variants():
             import uuid
             variant_group = f"{name[:20].lower().replace(' ', '-')}-{uuid.uuid4().hex[:8]}"
 
-        # Block creation when a variant with same shop+name+size+color already exists.
+        # Block creation only for variants that will actually be created (stock > 0).
+        # Zero-stock rows are treated as skipped inputs.
         existing_conflicts = []
-        for size, color in combos:
+        for idx, (size, color) in enumerate(combos):
+            if stock_values[idx] <= 0:
+                continue
             existing = find_existing_variant_by_normalized_color(
                 cursor,
                 shop_id,
