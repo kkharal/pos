@@ -8,7 +8,7 @@ This file documents how key report metrics are calculated in the current impleme
     `SUM(sales.total_amount)`
 - Total Refunds:
     `SUM(sale_returns.refund_amount)`
-- **Net Revenue (primary):**
+- **Net Sales (primary):**
     `Gross Revenue - Total Refunds`
 - COGS:
     `SUM(sales.total_cost)`
@@ -17,15 +17,15 @@ This file documents how key report metrics are calculated in the current impleme
 - Net COGS:
     `COGS - Refunded COGS`
 - Gross Profit:
-    `Net Revenue - Net COGS`
+    `Net Sales - Net COGS`
 - Expenses:
     `SUM(expenses.amount)`
 - Net Profit:
     `Gross Profit - Expenses`
 - Gross Margin (%):
-    `(Gross Profit / Net Revenue) * 100` (0 if Net Revenue is 0)
+    `(Gross Profit / Net Sales) * 100` (0 if Net Sales is 0)
 - Net Margin (%):
-    `(Net Profit / Net Revenue) * 100` (0 if Net Revenue is 0)
+    `(Net Profit / Net Sales) * 100` (0 if Net Sales is 0)
 
 ## Sales Report
 
@@ -150,16 +150,21 @@ Validation rules used in POS:
     Sum of `sales.total_amount` for sales not linked to invoices.
 - Payments Collected:
     `SUM(payments.amount)` in date range.
-- Total Collected:
-    `walkin_cash + payments_collected`
+- Refunds:
+    `SUM(sale_returns.refund_amount)` for `return_date` in selected range.
+- Net Cash In:
+    `walkin_cash + payments_collected - refunds`
 - Credit Given:
     `SUM(invoices.total_amount - invoices.paid_amount)` in date range.
 - Net Cash Flow:
-    `total_collected - credit_given`
+    `net_cash_in - credit_given`
 - Total Outstanding:
     `SUM(customers.balance)` where balance > 0.
 - Overdue Amount:
     Sum of `(invoice.total_amount - invoice.paid_amount)` for unpaid invoices with past due date.
+
+Refund date rule for cash flow:
+- Refunds are deducted on the date the return is **processed**, not the original sale date.
 
 ## Aging Bucket Logic (Cashflow)
 

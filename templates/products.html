@@ -159,6 +159,17 @@
         .modal { z-index: 2300 !important; }
         .modal.active { z-index: 2300 !important; }
         .modal .modal-content { position: relative; z-index: 2301; }
+        .modal-content.product-entry-modal { width: min(560px, calc(100vw - 2rem)); max-width: 560px; max-height: 92vh; overflow-y: auto; }
+        .modal-content.variant-entry-modal { width: min(700px, calc(100vw - 2rem)); max-width: 700px; max-height: 92vh; overflow-y: auto; }
+        .modal-content.stock-entry-modal { width: min(520px, calc(100vw - 2rem)); max-width: 520px; max-height: 92vh; overflow-y: auto; }
+        .modal-content.variant-override-entry-modal { width: min(560px, calc(100vw - 2rem)); max-width: 560px; max-height: 92vh; overflow-y: auto; }
+        .modal-two-col { display: flex; gap: 1rem; }
+        .modal-two-col .form-group { flex: 1; min-width: 0; }
+        .modal-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .modal-actions .btn { flex: 1 1 180px; }
+        .override-modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.9rem; flex-wrap: wrap; }
+        .variant-preview-toolbar { display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0; flex-wrap: wrap; }
+        .variant-preview-toolbar #variant-total-stock { margin-left: auto; }
         .products-empty { text-align: center; padding: 4rem 2rem; color: #94a3b8; }
         .products-empty .empty-icon { font-size: 3rem; margin-bottom: 0.75rem; opacity: 0.5; }
         .products-empty p { margin: 0; font-size: 0.95rem; color: #64748b; }
@@ -744,6 +755,160 @@
                 font-size: 0.75rem !important;
                 gap: 0.12rem !important;
             }
+            .modal-content.product-entry-modal,
+            .modal-content.variant-entry-modal,
+            .modal-content.stock-entry-modal,
+            .modal-content.variant-override-entry-modal {
+                padding: 0.75rem;
+            }
+            .product-entry-modal .modal-header,
+            .variant-entry-modal .modal-header,
+            .stock-entry-modal .modal-header,
+            .variant-override-entry-modal .modal-header {
+                margin-bottom: 0.7rem;
+            }
+            .product-entry-modal .modal-header h2,
+            .variant-entry-modal .modal-header h2,
+            .stock-entry-modal .modal-header h2,
+            .variant-override-entry-modal .modal-header h2 {
+                font-size: 0.95rem;
+            }
+            .product-entry-modal .form-group,
+            .variant-entry-modal .form-group,
+            .stock-entry-modal .form-group,
+            .variant-override-entry-modal .form-group {
+                margin-bottom: 0.62rem;
+            }
+            .product-entry-modal .form-group label,
+            .variant-entry-modal .form-group label,
+            .stock-entry-modal .form-group label,
+            .variant-override-entry-modal .form-group label {
+                margin-bottom: 0.24rem;
+                font-size: 0.72rem;
+            }
+            .product-entry-modal .form-group input,
+            .product-entry-modal .form-group select,
+            .product-entry-modal .form-group textarea,
+            .variant-entry-modal .form-group input,
+            .variant-entry-modal .form-group select,
+            .variant-entry-modal .form-group textarea,
+            .stock-entry-modal .form-group input,
+            .stock-entry-modal .form-group select,
+            .stock-entry-modal .form-group textarea,
+            .variant-override-entry-modal .form-group input,
+            .variant-override-entry-modal .form-group select,
+            .variant-override-entry-modal .form-group textarea {
+                padding: 0.38rem 0.46rem;
+                font-size: 0.79rem;
+            }
+            .product-entry-modal .form-group textarea,
+            .variant-entry-modal .form-group textarea {
+                min-height: 56px;
+            }
+            .modal-two-col {
+                flex-direction: column;
+                gap: 0;
+            }
+            .modal-actions {
+                flex-direction: column;
+            }
+            .modal-actions .btn {
+                width: 100%;
+                flex-basis: auto;
+            }
+            .override-modal-actions {
+                flex-direction: column;
+            }
+            .override-modal-actions .btn {
+                width: 100%;
+            }
+            .variant-preview-toolbar #variant-total-stock {
+                margin-left: 0;
+                width: 100%;
+                text-align: right;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .modal-content.product-entry-modal,
+            .modal-content.variant-entry-modal,
+            .modal-content.stock-entry-modal,
+            .modal-content.variant-override-entry-modal {
+                padding: 0.55rem;
+            }
+            .product-entry-modal .modal-header h2,
+            .variant-entry-modal .modal-header h2,
+            .stock-entry-modal .modal-header h2,
+            .variant-override-entry-modal .modal-header h2 {
+                font-size: 0.88rem;
+            }
+            .product-entry-modal .modal-header,
+            .variant-entry-modal .modal-header,
+            .stock-entry-modal .modal-header,
+            .variant-override-entry-modal .modal-header {
+                margin-bottom: 0.52rem;
+            }
+            .product-entry-modal .form-group,
+            .variant-entry-modal .form-group,
+            .stock-entry-modal .form-group,
+            .variant-override-entry-modal .form-group {
+                margin-bottom: 0.5rem;
+            }
+            .product-entry-modal .form-group label,
+            .variant-entry-modal .form-group label,
+            .stock-entry-modal .form-group label,
+            .variant-override-entry-modal .form-group label {
+                font-size: 0.66rem;
+                margin-bottom: 0.18rem;
+            }
+            .product-entry-modal .form-group input,
+            .product-entry-modal .form-group select,
+            .product-entry-modal .form-group textarea,
+            .variant-entry-modal .form-group input,
+            .variant-entry-modal .form-group select,
+            .variant-entry-modal .form-group textarea,
+            .stock-entry-modal .form-group input,
+            .stock-entry-modal .form-group select,
+            .stock-entry-modal .form-group textarea,
+            .variant-override-entry-modal .form-group input,
+            .variant-override-entry-modal .form-group select,
+            .variant-override-entry-modal .form-group textarea {
+                padding: 0.3rem 0.38rem;
+                font-size: 0.74rem;
+            }
+            .product-entry-modal .form-group textarea,
+            .variant-entry-modal .form-group textarea {
+                min-height: 48px;
+            }
+            .variant-entry-modal h3 {
+                font-size: 0.78rem !important;
+                margin-bottom: 0.42rem !important;
+            }
+            .variant-preview-toolbar {
+                gap: 0.35rem;
+            }
+            .variant-preview-toolbar .btn,
+            .modal-actions .btn {
+                font-size: 0.7rem;
+                height: 30px;
+                padding: 0 0.55rem;
+            }
+            #variant-preview {
+                margin: 0.55rem 0 !important;
+                padding: 0.45rem !important;
+            }
+            #variant-preview strong,
+            #variant-total-stock {
+                font-size: 0.72rem !important;
+            }
+            .variant-preview-toolbar #variant-stock-all {
+                width: 72px !important;
+                font-size: 0.76rem !important;
+                padding: 0.24rem !important;
+            }
+            #variant-stock-table {
+                max-height: 180px !important;
+            }
         }
     </style>
 </head>
@@ -845,7 +1010,7 @@
 
     <!-- Add Product Modal -->
     <div id="add-product-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content product-entry-modal">
             <div class="modal-header"><h2>Add New Product</h2><button class="close-btn" onclick="closeAddProductModal()">&times;</button></div>
             <form id="add-product-form">
                 <div class="form-group"><label>Product Name *</label><input type="text" name="name" required></div>
@@ -862,7 +1027,7 @@
                 <div class="form-group"><label>Sell Price *</label><input type="number" name="price" step="0.01" min="0" required></div>
                 <div class="form-group"><label>Initial Stock</label><input type="number" name="stock_quantity" min="0" value="0"></div>
                 <div class="form-group"><label>SKU <span style="color:#999;font-weight:normal;">(blank = auto)</span></label><input type="text" name="sku" placeholder="e.g. SHR-001"></div>
-                <div style="display:flex;gap:1rem;">
+                <div class="modal-two-col">
                     <div class="form-group" style="flex:1;"><label>Size</label>
                         <select id="add-size-select" name="size" onchange="if(this.value==='__custom__'){document.getElementById('add-custom-size').style.display='block';this.style.display='none';}">
                             <option value="">Select</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="Free Size">Free Size</option><option value="__custom__">Custom...</option>
@@ -872,7 +1037,7 @@
                     <div class="form-group" style="flex:1;"><label>Color</label><input type="text" name="color" placeholder="e.g. Red"></div>
                 </div>
                 <div class="form-group"><label>Description</label><textarea name="description"></textarea></div>
-                <div style="display:flex;gap:1rem;"><button type="submit" class="btn btn-primary">Add Product</button><button type="button" class="btn btn-secondary" onclick="closeAddProductModal()">Cancel</button></div>
+                <div class="modal-actions"><button type="submit" class="btn btn-primary">Add Product</button><button type="button" class="btn btn-secondary" onclick="closeAddProductModal()">Cancel</button></div>
             </form>
         </div>
     </div>
@@ -896,12 +1061,12 @@
 
     <!-- Create Variants Modal -->
     <div id="variant-modal" class="modal">
-        <div class="modal-content" style="max-width:700px;">
+        <div class="modal-content variant-entry-modal" style="max-width:700px;">
             <div class="modal-header"><h2>Create Product Variants</h2><button class="close-btn" onclick="closeVariantModal()">&times;</button></div>
             <form id="variant-form">
                 <div class="form-group"><label>Product Name *</label><input type="text" id="variant-name" required placeholder="e.g. Basic T-Shirt"></div>
                 <div class="form-group"><label>Category *</label><select id="variant-category" required><option value="">Select</option><option value="Shirts">Shirts</option><option value="Pants">Pants</option><option value="Co-ord Sets">Co-ord Sets</option><option value="Dresses">Dresses</option><option value="Jackets">Jackets</option><option value="Shoes">Shoes</option><option value="Accessories">Accessories</option><option value="Other">Other</option></select></div>
-                <div style="display:flex;gap:1rem;"><div class="form-group" style="flex:1;"><label>Cost Price *</label><input type="number" id="variant-cost-price" step="0.01" min="0" required></div><div class="form-group" style="flex:1;"><label>Sell Price *</label><input type="number" id="variant-price" step="0.01" min="0" required></div></div>
+                <div class="modal-two-col"><div class="form-group" style="flex:1;"><label>Cost Price *</label><input type="number" id="variant-cost-price" step="0.01" min="0" required></div><div class="form-group" style="flex:1;"><label>Sell Price *</label><input type="number" id="variant-price" step="0.01" min="0" required></div></div>
                 <div class="form-group"><label>Description</label><textarea id="variant-description" placeholder="Shared description"></textarea></div>
                 <hr style="margin:1rem 0;border:none;border-top:2px dashed #ddd;">
                 <h3 style="margin-bottom:0.75rem;font-size:1rem;color:#2c3e50;">Sizes & Colors</h3>
@@ -921,21 +1086,21 @@
                 <div class="form-group"><label>Colors (comma-separated)</label><input type="text" id="variant-colors" placeholder="e.g. Red, Blue, Black"></div>
                 <div id="variant-preview" style="margin:1rem 0;padding:0.75rem;background:#f8f9fa;border-radius:6px;display:none;">
                     <strong style="font-size:0.85rem;">Stock per Variant:</strong>
-                    <div style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0;">
+                    <div class="variant-preview-toolbar">
                         <input type="number" id="variant-stock-all" min="0" value="0" style="width:80px;font-size:0.85rem;padding:0.3rem;">
                         <button type="button" class="btn btn-secondary" onclick="applyStockToAll()" style="font-size:0.75rem;padding:0.25rem 0.6rem;">Apply to All</button>
                         <span id="variant-total-stock" style="margin-left:auto;font-size:0.8rem;color:#666;font-weight:600;"></span>
                     </div>
                     <div id="variant-stock-table" style="max-height:200px;overflow-y:auto;border:1px solid #e9ecef;border-radius:4px;"></div>
                 </div>
-                <div style="display:flex;gap:1rem;"><button type="submit" class="btn btn-primary">Create All Variants</button><button type="button" class="btn btn-secondary" onclick="closeVariantModal()">Cancel</button></div>
+                <div class="modal-actions"><button type="submit" class="btn btn-primary">Create All Variants</button><button type="button" class="btn btn-secondary" onclick="closeVariantModal()">Cancel</button></div>
             </form>
         </div>
     </div>
 
     <!-- Stock Update Modal -->
     <div id="stock-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content stock-entry-modal">
             <div class="modal-header"><h2>Update Stock</h2><button class="close-btn" onclick="closeStockModal()">&times;</button></div>
             <form id="stock-form">
                 <input type="hidden" id="stock-product-id">
@@ -944,14 +1109,14 @@
                 <div class="form-group"><label>Action *</label><select id="stock-action" required><option value="import">Import (Add)</option><option value="export">Export (Remove)</option></select></div>
                 <div class="form-group"><label>Quantity *</label><input type="number" id="stock-quantity" min="1" required></div>
                 <div class="form-group"><label>Note</label><input type="text" id="stock-note"></div>
-                <div style="display:flex;gap:1rem;"><button type="submit" class="btn btn-success">Update Stock</button><button type="button" class="btn btn-secondary" onclick="closeStockModal()">Cancel</button></div>
+                <div class="modal-actions"><button type="submit" class="btn btn-success">Update Stock</button><button type="button" class="btn btn-secondary" onclick="closeStockModal()">Cancel</button></div>
             </form>
         </div>
     </div>
 
     <!-- Variant Price/Cost Override Modal -->
     <div id="variant-override-modal" class="modal">
-        <div class="modal-content" style="max-width:560px;">
+        <div class="modal-content variant-override-entry-modal" style="max-width:560px;">
             <div class="modal-header"><h2>Variant Price / Cost</h2><button class="close-btn" onclick="closeVariantOverrideModal()">&times;</button></div>
             <form id="variant-override-form">
                 <input type="hidden" id="variant-override-id">
@@ -975,7 +1140,7 @@
                     </div>
                 </div>
                 <div class="override-hint">If variant values differ from defaults, they are treated as overrides.</div>
-                <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.9rem;flex-wrap:wrap;">
+                <div class="override-modal-actions">
                     <button type="button" class="btn btn-secondary" id="variant-reset-default-btn" onclick="resetPriceOverride()">Reset to Default</button>
                     <button type="button" class="btn btn-secondary" onclick="closeVariantOverrideModal()">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save</button>
@@ -1023,6 +1188,209 @@
         var selectedVariantId = null;
         var variantTabState = { query: '', status: 'all', sort: 'color_asc', page: 1, pageSize: 25 };
         var overrideVariantId = null;
+        var productFilterStorageKey = 'products.searchFilter';
+        var productDrawerGroupKey = 'products.drawerGroup';
+        var addProductDraftKey = 'products.addProductDraft';
+        var addProductModalOpenKey = 'products.addProductModalOpen';
+        var variantDraftKey = 'products.variantDraft';
+        var variantModalOpenKey = 'products.variantModalOpen';
+
+        function restoreProductFilter() {
+            try {
+                var savedFilter = localStorage.getItem(productFilterStorageKey);
+                if (savedFilter !== null) {
+                    document.getElementById('product-search').value = savedFilter;
+                }
+            } catch (error) {
+                console.error('Error restoring product filter:', error);
+            }
+        }
+
+        function persistProductFilter() {
+            try {
+                localStorage.setItem(productFilterStorageKey, document.getElementById('product-search').value || '');
+            } catch (error) {
+                console.error('Error saving product filter:', error);
+            }
+        }
+
+        function persistDrawerGroup(groupName) {
+            try {
+                if (groupName) {
+                    localStorage.setItem(productDrawerGroupKey, groupName);
+                } else {
+                    localStorage.removeItem(productDrawerGroupKey);
+                }
+            } catch (error) {
+                console.error('Error saving drawer group:', error);
+            }
+        }
+
+        function restoreDrawerGroup() {
+            try {
+                var savedGroup = localStorage.getItem(productDrawerGroupKey);
+                if (!savedGroup) return;
+                if (groupedProducts[savedGroup]) {
+                    openDrawer(savedGroup);
+                } else {
+                    localStorage.removeItem(productDrawerGroupKey);
+                }
+            } catch (error) {
+                console.error('Error restoring drawer group:', error);
+            }
+        }
+
+        function setStoredFlag(key, value) {
+            try {
+                if (value) localStorage.setItem(key, '1');
+                else localStorage.removeItem(key);
+            } catch (error) {
+                console.error('Error updating stored flag:', error);
+            }
+        }
+
+        function getStoredFlag(key) {
+            try {
+                return localStorage.getItem(key) === '1';
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function persistAddProductDraft() {
+            try {
+                const draft = {
+                    name: document.querySelector('#add-product-form [name="name"]').value || '',
+                    category: document.getElementById('category-select').value || '',
+                    custom_category: document.getElementById('custom-category-input').value || '',
+                    cost_price: document.querySelector('#add-product-form [name="cost_price"]').value || '',
+                    price: document.querySelector('#add-product-form [name="price"]').value || '',
+                    stock_quantity: document.querySelector('#add-product-form [name="stock_quantity"]').value || '',
+                    sku: document.querySelector('#add-product-form [name="sku"]').value || '',
+                    size: document.getElementById('add-size-select').style.display === 'none' ? '__custom__' : (document.getElementById('add-size-select').value || ''),
+                    custom_size: document.getElementById('add-custom-size').value || '',
+                    color: document.querySelector('#add-product-form [name="color"]').value || '',
+                    description: document.querySelector('#add-product-form [name="description"]').value || ''
+                };
+                localStorage.setItem(addProductDraftKey, JSON.stringify(draft));
+            } catch (error) {
+                console.error('Error saving add product draft:', error);
+            }
+        }
+
+        function clearAddProductDraft() {
+            try {
+                localStorage.removeItem(addProductDraftKey);
+            } catch (error) {
+                console.error('Error clearing add product draft:', error);
+            }
+            setStoredFlag(addProductModalOpenKey, false);
+        }
+
+        function restoreAddProductDraft() {
+            try {
+                const raw = localStorage.getItem(addProductDraftKey);
+                if (!raw) return;
+                const draft = JSON.parse(raw);
+                document.querySelector('#add-product-form [name="name"]').value = draft.name || '';
+                document.getElementById('category-select').value = draft.category || '';
+                document.getElementById('custom-category-input').value = draft.custom_category || '';
+                document.querySelector('#add-product-form [name="cost_price"]').value = draft.cost_price || '';
+                document.querySelector('#add-product-form [name="price"]').value = draft.price || '';
+                document.querySelector('#add-product-form [name="stock_quantity"]').value = draft.stock_quantity || '0';
+                document.querySelector('#add-product-form [name="sku"]').value = draft.sku || '';
+                document.querySelector('#add-product-form [name="color"]').value = draft.color || '';
+                document.querySelector('#add-product-form [name="description"]').value = draft.description || '';
+
+                const customCategoryGroup = document.getElementById('custom-category-group');
+                const customCategoryInput = document.getElementById('custom-category-input');
+                if (draft.category === '__custom__') {
+                    customCategoryGroup.style.display = 'block';
+                    customCategoryInput.required = true;
+                } else {
+                    customCategoryGroup.style.display = 'none';
+                    customCategoryInput.required = false;
+                }
+
+                const sizeSelect = document.getElementById('add-size-select');
+                const customSizeInput = document.getElementById('add-custom-size');
+                if (draft.size === '__custom__') {
+                    sizeSelect.style.display = 'none';
+                    customSizeInput.style.display = 'block';
+                } else {
+                    sizeSelect.style.display = '';
+                    sizeSelect.value = draft.size || '';
+                    customSizeInput.style.display = 'none';
+                }
+                customSizeInput.value = draft.custom_size || '';
+            } catch (error) {
+                console.error('Error restoring add product draft:', error);
+            }
+        }
+
+        function persistVariantDraft() {
+            try {
+                const stockInputs = Array.from(document.querySelectorAll('.variant-stock-input')).map(function(input) {
+                    return input.value || '0';
+                });
+                const draft = {
+                    name: document.getElementById('variant-name').value || '',
+                    category: document.getElementById('variant-category').value || '',
+                    cost_price: document.getElementById('variant-cost-price').value || '',
+                    price: document.getElementById('variant-price').value || '',
+                    description: document.getElementById('variant-description').value || '',
+                    sizes: Array.from(document.querySelectorAll('#variant-sizes input[name="sizes"]:checked')).map(function(input) { return input.value; }),
+                    custom_sizes: document.getElementById('variant-custom-sizes').value || '',
+                    colors: document.getElementById('variant-colors').value || '',
+                    stock_all: document.getElementById('variant-stock-all').value || '0',
+                    stock_inputs: stockInputs
+                };
+                localStorage.setItem(variantDraftKey, JSON.stringify(draft));
+            } catch (error) {
+                console.error('Error saving variant draft:', error);
+            }
+        }
+
+        function clearVariantDraft() {
+            try {
+                localStorage.removeItem(variantDraftKey);
+            } catch (error) {
+                console.error('Error clearing variant draft:', error);
+            }
+            setStoredFlag(variantModalOpenKey, false);
+        }
+
+        function restoreVariantDraft() {
+            try {
+                const raw = localStorage.getItem(variantDraftKey);
+                if (!raw) return;
+                const draft = JSON.parse(raw);
+                document.getElementById('variant-name').value = draft.name || '';
+                document.getElementById('variant-category').value = draft.category || '';
+                document.getElementById('variant-cost-price').value = draft.cost_price || '';
+                document.getElementById('variant-price').value = draft.price || '';
+                document.getElementById('variant-description').value = draft.description || '';
+                document.querySelectorAll('#variant-sizes input[name="sizes"]').forEach(function(input) {
+                    input.checked = Array.isArray(draft.sizes) && draft.sizes.indexOf(input.value) !== -1;
+                });
+                document.getElementById('variant-custom-sizes').value = draft.custom_sizes || '';
+                document.getElementById('variant-colors').value = draft.colors || '';
+                document.getElementById('variant-stock-all').value = draft.stock_all || '0';
+
+                updateVariantPreview();
+
+                if (Array.isArray(draft.stock_inputs) && draft.stock_inputs.length) {
+                    document.querySelectorAll('.variant-stock-input').forEach(function(input, index) {
+                        if (draft.stock_inputs[index] !== undefined) {
+                            input.value = draft.stock_inputs[index];
+                        }
+                    });
+                    updateVariantTotalStock();
+                }
+            } catch (error) {
+                console.error('Error restoring variant draft:', error);
+            }
+        }
 
         async function loadProducts() {
             showLoading();
@@ -1205,7 +1573,10 @@
             }).join('');
         }
 
-        document.getElementById('product-search').addEventListener('input', () => renderProductList());
+        document.getElementById('product-search').addEventListener('input', () => {
+            persistProductFilter();
+            renderProductList();
+        });
 
         function computeVariantStatus(variant) {
             if (!variant) return 'unavailable';
@@ -1272,13 +1643,19 @@
         }
 
         function openDrawer(groupName) {
+            const group = groupedProducts[groupName];
+            if (!group) {
+                persistDrawerGroup(null);
+                return;
+            }
+
             const previousGroup = selectedGroup;
             selectedGroup = groupName;
             if (previousGroup !== groupName) {
                 variantTabState = { query: '', status: 'all', sort: 'color_asc', page: 1, pageSize: 25 };
             }
-            const group = groupedProducts[groupName];
-            if (!group) return;
+            persistDrawerGroup(groupName);
+
             const isAdmin = isAdminRole(currentUserRole);
             const activeVariants = group.variants.filter(v => (v.stock_quantity || 0) > 0).length;
             const lowVariants = group.variants.filter(v => (v.stock_quantity || 0) > 0 && (v.stock_quantity || 0) < getThreshold(v)).length;
@@ -1466,6 +1843,7 @@
 
         function closeDrawer() {
             selectedGroup = null;
+            persistDrawerGroup(null);
             document.getElementById('product-drawer').classList.remove('open');
             document.getElementById('drawer-overlay').classList.remove('show');
             document.getElementById('products-main').classList.remove('drawer-open');
@@ -2167,8 +2545,18 @@
         }
 
         // Add Product
-        function openAddProductModal() { updateCategoryDropdown(); document.getElementById('add-product-modal').classList.add('active'); }
-        function closeAddProductModal() { document.getElementById('add-product-modal').classList.remove('active'); document.getElementById('add-product-form').reset(); document.getElementById('custom-category-group').style.display='none'; document.getElementById('add-size-select').style.display=''; document.getElementById('add-custom-size').style.display='none'; }
+        function openAddProductModal() { updateCategoryDropdown(); document.getElementById('add-product-modal').classList.add('active'); setStoredFlag(addProductModalOpenKey, true); }
+        function closeAddProductModal(clearDraft) {
+            if (clearDraft === undefined) clearDraft = true;
+            document.getElementById('add-product-modal').classList.remove('active');
+            document.getElementById('add-product-form').reset();
+            document.getElementById('custom-category-group').style.display='none';
+            document.getElementById('add-size-select').style.display='';
+            document.getElementById('add-custom-size').style.display='none';
+            document.getElementById('custom-category-input').required = false;
+            if (clearDraft) clearAddProductDraft();
+            else setStoredFlag(addProductModalOpenKey, false);
+        }
 
         function updateCategoryDropdown() {
             const sel = document.getElementById('category-select');
@@ -2181,7 +2569,11 @@
         document.getElementById('category-select').addEventListener('change', function() {
             const cg = document.getElementById('custom-category-group'), ci = document.getElementById('custom-category-input');
             if (this.value==='__custom__') { cg.style.display='block'; ci.required=true; ci.focus(); } else { cg.style.display='none'; ci.required=false; ci.value=''; }
+            persistAddProductDraft();
         });
+
+        document.getElementById('add-product-form').addEventListener('input', persistAddProductDraft);
+        document.getElementById('add-product-form').addEventListener('change', persistAddProductDraft);
 
         document.getElementById('add-product-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -2208,7 +2600,7 @@
                 e.target.dataset.submitting = '1';
                 if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Adding...'; }
                 const r = await fetch('/api/products', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
-                if (r.ok) { showToast('Product added!','success'); closeAddProductModal(); loadProducts(); }
+                if (r.ok) { clearAddProductDraft(); showToast('Product added!','success'); closeAddProductModal(false); loadProducts(); }
                 else { const err = await r.json(); showToast('Error: '+err.error,'error'); }
             } catch(e){ showToast('Error adding product','error'); }
             finally {
@@ -2331,8 +2723,18 @@
             const all = [...new Set([...defs, ...cats])];
             sel.innerHTML = all.map(c => c==='' ? '<option value="">Select</option>' : `<option value="${c}">${c}</option>`).join('');
             document.getElementById('variant-modal').classList.add('active');
+            setStoredFlag(variantModalOpenKey, true);
         }
-        function closeVariantModal() { document.getElementById('variant-modal').classList.remove('active'); document.getElementById('variant-form').reset(); document.getElementById('variant-preview').style.display='none'; }
+        function closeVariantModal(clearDraft) {
+            if (clearDraft === undefined) clearDraft = true;
+            document.getElementById('variant-modal').classList.remove('active');
+            document.getElementById('variant-form').reset();
+            document.getElementById('variant-preview').style.display='none';
+            document.getElementById('variant-stock-table').innerHTML = '';
+            document.getElementById('variant-total-stock').textContent = '';
+            if (clearDraft) clearVariantDraft();
+            else setStoredFlag(variantModalOpenKey, false);
+        }
 
         function getVariantCombos() {
             const checked = [...document.querySelectorAll('#variant-sizes input[name="sizes"]:checked')].map(c=>c.value);
@@ -2397,13 +2799,16 @@
                     );
                 }
             } else { table.innerHTML = ''; preview.style.display = 'none'; }
+            persistVariantDraft();
         }
         function applyStockToAll() { const v = parseInt(document.getElementById('variant-stock-all').value)||0; document.querySelectorAll('.variant-stock-input').forEach(i=>{i.value=v;}); updateVariantTotalStock(); }
-        function updateVariantTotalStock() { let t=0; document.querySelectorAll('.variant-stock-input').forEach(i=>{t+=parseInt(i.value)||0;}); document.getElementById('variant-total-stock').textContent = 'Total: '+t+' units'; }
+        function updateVariantTotalStock() { let t=0; document.querySelectorAll('.variant-stock-input').forEach(i=>{t+=parseInt(i.value)||0;}); document.getElementById('variant-total-stock').textContent = 'Total: '+t+' units'; persistVariantDraft(); }
 
         document.getElementById('variant-sizes').addEventListener('change', updateVariantPreview);
         document.getElementById('variant-custom-sizes').addEventListener('input', updateVariantPreview);
         document.getElementById('variant-colors').addEventListener('input', updateVariantPreview);
+        document.getElementById('variant-form').addEventListener('input', persistVariantDraft);
+        document.getElementById('variant-form').addEventListener('change', persistVariantDraft);
 
         document.getElementById('variant-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -2437,8 +2842,9 @@
                 const res = await r.json();
                 if (r.ok && res.success) {
                     if ((res.created || 0) > 0) {
+                        clearVariantDraft();
                         showToast('Created '+res.created+' variants!','success');
-                        closeVariantModal();
+                        closeVariantModal(false);
                         loadProducts();
                     } else {
                         showToast('No variants created. Please set stock > 0 and avoid duplicates.','warning');
@@ -2496,9 +2902,19 @@
 
         // Init
         (async function initPage() {
+            restoreProductFilter();
             await loadUserInfo();
             await loadGlobalThreshold();
             await loadProducts();
+            restoreDrawerGroup();
+            if (getStoredFlag(addProductModalOpenKey)) {
+                openAddProductModal();
+                restoreAddProductDraft();
+            }
+            if (getStoredFlag(variantModalOpenKey)) {
+                openVariantModal();
+                restoreVariantDraft();
+            }
         })();
     </script>
     <script src="/static/js/session.js"></script>

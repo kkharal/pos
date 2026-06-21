@@ -3155,6 +3155,7 @@ def get_cashflow_report():
     flt_sql_i, flt_params_i = shop_filter('i')
     flt_sql_p, flt_params_p = shop_filter('p')
     flt_sql_c, flt_params_c = shop_filter('c')
+    flt_sql_sr, flt_params_sr = shop_filter('sr')
 
     try:
         end_date_time = end_date + ' 23:59:59'
@@ -3174,7 +3175,13 @@ def get_cashflow_report():
             WHERE created_at BETWEEN ? AND ? {flt_sql_p}
         ''', [start_date_time, end_date_time] + flt_params_p).fetchone()['total']
 
-        total_collected = walkin_cash + payments_collected
+        total_refunds = cursor.execute(f'''
+            SELECT COALESCE(SUM(sr.refund_amount), 0) as total
+            FROM sale_returns sr
+            WHERE sr.return_date BETWEEN ? AND ? {flt_sql_sr}
+        ''', [start_date_time, end_date_time] + flt_params_sr).fetchone()['total']
+
+        total_collected = walkin_cash + payments_collected - total_refunds
 
         # Credit given in period
         credit_given = cursor.execute(f'''
@@ -3213,6 +3220,13 @@ WHERE status != 'paid' AND due_date < CURDATE() AND due_date IS NOT NULL {flt_sq
             GROUP BY DATE(created_at)
         ''', [start_date_time, end_date_time] + flt_params_p).fetchall()
 
+        daily_refunds = cursor.execute(f'''
+            SELECT DATE(sr.return_date) as date, COALESCE(SUM(sr.refund_amount), 0) as cash_out
+            FROM sale_returns sr
+            WHERE sr.return_date BETWEEN ? AND ? {flt_sql_sr}
+            GROUP BY DATE(sr.return_date)
+        ''', [start_date_time, end_date_time] + flt_params_sr).fetchall()
+
         daily_credit = cursor.execute(f'''
             SELECT DATE(created_at) as date, COALESCE(SUM(total_amount - paid_amount), 0) as credit_out
             FROM invoices i
@@ -3237,6 +3251,11 @@ WHERE status != 'paid' AND due_date < CURDATE() AND due_date IS NOT NULL {flt_sq
             if d not in daily_map:
                 daily_map[d] = {'date': d, 'cash_collected': 0, 'credit_given': 0}
             daily_map[d]['credit_given'] += row['credit_out']
+        for row in daily_refunds:
+            d = row['date']
+            if d not in daily_map:
+                daily_map[d] = {'date': d, 'cash_collected': 0, 'credit_given': 0}
+            daily_map[d]['cash_collected'] -= row['cash_out']
 
         daily_cashflow = sorted(daily_map.values(), key=lambda x: x['date'])
 
@@ -3282,6 +3301,7 @@ WHERE status != 'paid' AND due_date < CURDATE() AND due_date IS NOT NULL {flt_sq
                 'total_collected': total_collected,
                 'walkin_cash': walkin_cash,
                 'payments_collected': payments_collected,
+                'total_refunds': total_refunds,
                 'credit_given': credit_given['total'],
                 'credit_invoice_count': credit_given['count'],
                 'total_outstanding': total_outstanding,
@@ -4229,6 +4249,7 @@ def export_cashflow_report(format):
     flt_sql_p, flt_params_p = shop_filter('p')
     flt_sql_i, flt_params_i = shop_filter('i')
     flt_sql_c, flt_params_c = shop_filter('c')
+    flt_sql_sr, flt_params_sr = shop_filter('sr')
 
     try:
         shop_id = get_current_shop_id() or session.get('shop_id')
@@ -4251,6 +4272,11 @@ def export_cashflow_report(format):
             FROM payments p WHERE created_at BETWEEN ? AND ? {flt_sql_p}
         ''', [start_date_time, end_date_time] + flt_params_p).fetchone()['total']
 
+        total_refunds = cursor.execute(f'''
+            SELECT COALESCE(SUM(sr.refund_amount), 0) as total
+            FROM sale_returns sr WHERE return_date BETWEEN ? AND ? {flt_sql_sr}
+        ''', [start_date_time, end_date_time] + flt_params_sr).fetchone()['total']
+
         credit_given = cursor.execute(f'''
             SELECT COALESCE(SUM(total_amount - paid_amount), 0) as total
             FROM invoices i WHERE created_at BETWEEN ? AND ? {flt_sql_i}
@@ -4269,11 +4295,12 @@ def export_cashflow_report(format):
 
         conn.close()
 
-        total_collected = walkin_cash + payments_collected
+        total_collected = walkin_cash + payments_collected - total_refunds
         summary = {
             'total_collected': total_collected,
             'walkin_cash': walkin_cash,
             'payments_collected': payments_collected,
+            'total_refunds': total_refunds,
             'credit_given': credit_given,
             'total_outstanding': total_outstanding,
             'net_cash_flow': total_collected - credit_given
@@ -4307,7 +4334,8 @@ def generate_cashflow_pdf(shop_name, currency, start_date, end_date, summary, cu
         ['Metric', 'Amount'],
         ['Cash Collected (Walk-in)', f"{currency}{summary['walkin_cash']:.2f}"],
         ['Payments Received (Credit)', f"{currency}{summary['payments_collected']:.2f}"],
-        ['Total Cash In', f"{currency}{summary['total_collected']:.2f}"],
+        ['Less: Refunds', f"({currency}{summary['total_refunds']:.2f})"],
+        ['Net Cash In', f"{currency}{summary['total_collected']:.2f}"],
         ['Credit Given', f"{currency}{summary['credit_given']:.2f}"],
         ['Net Cash Flow', f"{currency}{summary['net_cash_flow']:.2f}"],
         ['Total Outstanding', f"{currency}{summary['total_outstanding']:.2f}"],
@@ -4386,7 +4414,8 @@ def generate_cashflow_excel(shop_name, currency, start_date, end_date, summary, 
     metrics = [
         ('Cash Collected (Walk-in)', summary['walkin_cash']),
         ('Payments Received (Credit)', summary['payments_collected']),
-        ('Total Cash In', summary['total_collected']),
+        ('Less: Refunds', -summary['total_refunds']),
+        ('Net Cash In', summary['total_collected']),
         ('Credit Given', summary['credit_given']),
         ('Net Cash Flow', summary['net_cash_flow']),
         ('Total Outstanding', summary['total_outstanding']),
@@ -7325,7 +7354,24 @@ def export_pnl_report(format):
             FROM sale_returns WHERE return_date BETWEEN ? AND ? {flt_sql_plain}
         ''', [start_date_time, end_date_time] + flt_params_plain).fetchone()
         total_refunds = float(refunds['total'] or 0)
+
+        refunded_cogs_data = cursor.execute(f'''
+            SELECT COALESCE(SUM(
+                CASE
+                    WHEN COALESCE(s.total_amount, 0) > 0
+                        THEN LEAST(sr.refund_amount, s.total_amount) * (COALESCE(s.total_cost, 0) / s.total_amount)
+                    ELSE 0
+                END
+            ), 0) as refunded_cogs
+            FROM sale_returns sr
+            JOIN sales s ON s.id = sr.sale_id
+            WHERE sr.return_date BETWEEN ? AND ? {flt_sql_s}
+        ''', [start_date_time, end_date_time] + flt_params_s).fetchone()
+        total_refunded_cogs = float(refunded_cogs_data['refunded_cogs'] or 0)
+
         net_revenue = total_revenue - total_refunds
+        net_cogs = total_cogs - total_refunded_cogs
+        gross_profit = net_revenue - net_cogs
 
         # Expenses by category
         exp_cats = cursor.execute(f'''
@@ -7347,7 +7393,7 @@ def export_pnl_report(format):
             'total_revenue': total_revenue,
             'total_refunds': total_refunds,
             'net_revenue': net_revenue,
-            'total_cogs': total_cogs,
+            'total_cogs': net_cogs,
             'gross_profit': gross_profit,
             'gross_margin': gross_margin,
             'total_expenses': total_expenses,
@@ -7385,7 +7431,7 @@ def generate_pnl_pdf(shop_name, currency, start_date, end_date, data):
         ['', 'Amount'],
         ['Total Revenue (Sales)', f"{currency}{data['total_revenue']:,.2f}"],
         ['Less: Refunds', f"({currency}{data['total_refunds']:,.2f})"],
-        ['Net Revenue', f"{currency}{data['net_revenue']:,.2f}"],
+        ['Net Sales', f"{currency}{data['net_revenue']:,.2f}"],
     ]
     t = Table(pnl_rows, colWidths=[3.5*inch, 2.5*inch])
     t.setStyle(TableStyle([
@@ -7521,7 +7567,7 @@ def generate_pnl_excel(shop_name, currency, start_date, end_date, data):
     ws.cell(row=row, column=1, value='Less: Refunds')
     ws.cell(row=row, column=2, value=-data['total_refunds']).number_format = f'"{currency}"#,##0.00'
     row += 1
-    ws.cell(row=row, column=1, value='Net Revenue').font = bold_font
+    ws.cell(row=row, column=1, value='Net Sales').font = bold_font
     ws.cell(row=row, column=2, value=data['net_revenue']).number_format = f'"{currency}"#,##0.00'
     ws.cell(row=row, column=2).font = bold_font
     row += 2
