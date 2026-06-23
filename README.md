@@ -289,6 +289,36 @@ This section explains how key KPIs are calculated in the Reports pages.
 - **Available credit**: `credit_limit - balance`
 - **Net cash flow**: `total_collected - credit_given`
 
+#### Finance Ledger (Available Funds)
+- **Purpose**: Shows how much money is currently available to spend (liquidity).
+- **Opening Balance**:
+  - Per-shop starting cash baseline.
+  - Default is `0` on first setup.
+  - Set manually in the Finance page when starting cash tracking for a shop.
+  - Not auto-derived from sales alone.
+  - Normally set once and not changed monthly.
+- **Available Funds**:
+  - `Opening Balance + Money In - Money Out`
+- **Money In includes**:
+  - Cash sales
+  - QR/bank sales
+  - Customer invoice payments
+  - Owner investments
+- **Money Out includes**:
+  - Expenses
+  - Purchase Order payments (when PO is marked paid)
+  - Refunds
+  - Owner withdrawals
+- **Not included until cash moves**:
+  - Unpaid credit sales
+  - Outstanding invoices
+  - Inventory valuation
+  - Accounting profit
+
+Monthly interpretation:
+- Opening Balance does not automatically reset each month.
+- For monthly reporting, month opening is prior month closing; month closing is computed by monthly inflows/outflows.
+
 For full formula details (including weighted average cost and aging bucket logic), see `docs/formula.md`.
 
 ## Installation

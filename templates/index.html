@@ -115,6 +115,7 @@
             <a href="/reports" class="sidebar-item"><span class="sidebar-icon">📊</span><span class="sidebar-label">Reports</span></a>
             <div class="sidebar-divider admin-only"></div>
             <div class="sidebar-section-title admin-only">Finance</div>
+            <a href="/finance" class="sidebar-item admin-only"><span class="sidebar-icon">🏦</span><span class="sidebar-label">Finance</span></a>
             <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">💰</span><span class="sidebar-label">Expenses</span></a>
             <div class="sidebar-divider admin-only"></div>
             <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">Settings</span></a>
@@ -201,6 +202,10 @@
                     <div class="kpi-label">Discounts</div>
                     <div class="kpi-value orange" id="total-discount">$0.00</div>
                 </div>
+                <a href="/finance" class="kpi-card link admin-only" style="text-decoration:none; color:inherit;">
+                    <div class="kpi-label">Available Funds</div>
+                    <div class="kpi-value green" id="available-funds">$0.00</div>
+                </a>
                 <a href="/customers" class="kpi-card link admin-only" style="text-decoration:none; color:inherit;">
                     <div class="kpi-label">Outstanding</div>
                     <div class="kpi-value red" id="total-outstanding">$0.00</div>
@@ -301,6 +306,9 @@
                 // Outstanding
                 if (stats.cash_flow) {
                     document.getElementById('total-outstanding').textContent = currencySymbol + stats.cash_flow.total_outstanding.toFixed(2);
+                    if (stats.cash_flow.available_funds !== undefined) {
+                        document.getElementById('available-funds').textContent = currencySymbol + stats.cash_flow.available_funds.toFixed(2);
+                    }
                 }
 
                 // Low stock alert

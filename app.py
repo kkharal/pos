@@ -379,6 +379,20 @@ def scheduled_recurring_expenses():
                     f"REC-{item['id']}",
                     item['shop_id']
                 ))
+                expense_id = cursor.lastrowid
+
+                _record_finance_transaction(
+                    cursor,
+                    shop_id=item['shop_id'],
+                    direction='OUT',
+                    amount=item['amount'],
+                    transaction_type='expense_payment',
+                    source_table='expenses',
+                    source_id=expense_id,
+                    reference=f'EXP-{expense_id}',
+                    notes='Auto recurring expense',
+                    transaction_at=item['next_due_date'],
+                )
 
                 # Advance next_due_date based on frequency
                 next_date = _advance_date(item['next_due_date'], item['frequency'])
@@ -668,6 +682,109 @@ def shop_filter(alias=''):
         return '', []
     col = f'{alias}.shop_id' if alias else 'shop_id'
     return f' AND {col} = ?', [shop_id]
+
+
+def _as_float(value, default=0.0):
+    try:
+        if value is None:
+            return default
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _get_opening_balance(cursor):
+    """Return configured opening balance across current shop scope."""
+    flt_sql, flt_params = shop_filter('st')
+    row = cursor.execute(
+        f'''
+            SELECT COALESCE(SUM(CAST(st.value AS DECIMAL(14,2))), 0) as opening_balance
+            FROM settings st
+            WHERE st.`key` = 'finance_opening_balance' {flt_sql}
+        ''',
+        flt_params,
+    ).fetchone()
+    return _as_float(row['opening_balance'] if row else 0)
+
+
+def _record_finance_transaction(
+    cursor,
+    *,
+    shop_id,
+    direction,
+    amount,
+    transaction_type,
+    source_table=None,
+    source_id=None,
+    reference=None,
+    notes=None,
+    created_by=None,
+    transaction_at=None,
+):
+    """Insert a cash movement row into finance ledger with idempotency guard."""
+    direction = (direction or '').upper().strip()
+    if direction not in ('IN', 'OUT'):
+        raise ValueError('direction must be IN or OUT')
+
+    amount_value = round(_as_float(amount), 2)
+    if amount_value <= 0:
+        return
+
+    cursor.execute(
+        '''
+            INSERT INTO finance_transactions
+                (shop_id, direction, amount, transaction_type, source_table, source_id, reference, notes, created_by, transaction_at)
+            VALUES
+                (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, NOW()))
+            ON DUPLICATE KEY UPDATE id = id
+        ''',
+        (
+            shop_id,
+            direction,
+            amount_value,
+            (transaction_type or '').strip(),
+            (source_table or '').strip() or None,
+            source_id,
+            (reference or '').strip() or None,
+            (notes or '').strip() or None,
+            created_by,
+            transaction_at,
+        ),
+    )
+
+
+def _get_available_funds(cursor, date_from=None, date_to=None):
+    flt_sql, flt_params = shop_filter('ft')
+    range_sql = ''
+    params = list(flt_params)
+
+    if date_from:
+        range_sql += ' AND ft.transaction_at >= ?'
+        params.append(f'{date_from} 00:00:00')
+    if date_to:
+        range_sql += ' AND ft.transaction_at <= ?'
+        params.append(f'{date_to} 23:59:59')
+
+    totals = cursor.execute(
+        f'''
+            SELECT
+                COALESCE(SUM(CASE WHEN ft.direction = 'IN' THEN ft.amount ELSE 0 END), 0) as money_in,
+                COALESCE(SUM(CASE WHEN ft.direction = 'OUT' THEN ft.amount ELSE 0 END), 0) as money_out
+            FROM finance_transactions ft
+            WHERE 1=1 {flt_sql} {range_sql}
+        ''',
+        params,
+    ).fetchone()
+
+    money_in = _as_float(totals['money_in'])
+    money_out = _as_float(totals['money_out'])
+    opening_balance = _get_opening_balance(cursor)
+    return {
+        'opening_balance': opening_balance,
+        'money_in': money_in,
+        'money_out': money_out,
+        'available_funds': opening_balance + money_in - money_out,
+    }
 
 
 def normalize_color_value(value):
@@ -1647,6 +1764,7 @@ def create_sale():
     customer_id = data.get('customer_id')
     amount_paid = data.get('amount_paid')  # For partial/credit payments
     due_date = data.get('due_date')  # For credit sales
+    current_shop_id = get_current_shop_id()
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1680,7 +1798,7 @@ def create_sale():
         cursor.execute('''
             INSERT INTO sales (shop_id, user_id, total_amount, total_cost, discount_amount, items_json, payment_method, cash_tendered, customer_name, customer_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (get_current_shop_id(), session.get('user_id'), total_amount, total_cost, discount_amount, json.dumps(items), payment_method, cash_tendered, customer_name, customer_id))
+        ''', (current_shop_id, session.get('user_id'), total_amount, total_cost, discount_amount, json.dumps(items), payment_method, cash_tendered, customer_name, customer_id))
         sale_id = cursor.lastrowid
 
         # Validate stock availability before decrementing
@@ -1710,7 +1828,7 @@ def create_sale():
             cursor.execute('''
                 INSERT INTO stock_history (shop_id, product_id, quantity_change, action_type, note)
                 VALUES (?, ?, ?, ?, ?)
-            ''', (get_current_shop_id(), product_id, -quantity, 'sale', f'Sale by {session.get("username")}'))
+            ''', (current_shop_id, product_id, -quantity, 'sale', f'Sale by {session.get("username")}'))
 
         # Handle credit/partial payment - create invoice and update customer balance
         if customer_id and payment_method in ('credit', 'partial'):
@@ -1728,7 +1846,7 @@ def create_sale():
             cursor.execute('''
                 INSERT INTO invoices (shop_id, sale_id, customer_id, total_amount, paid_amount, status, due_date)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (get_current_shop_id(), sale_id, customer_id, total_amount, paid, inv_status, due_date))
+            ''', (current_shop_id, sale_id, customer_id, total_amount, paid, inv_status, due_date))
             invoice_id = cursor.lastrowid
 
             # Record the initial payment if any
@@ -1736,12 +1854,32 @@ def create_sale():
                 cursor.execute('''
                     INSERT INTO payments (shop_id, customer_id, invoice_id, amount, payment_method, received_by, notes)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                ''', (get_current_shop_id(), customer_id, invoice_id, paid, 'cash', session.get('user_id'), f'Initial payment for sale #{sale_id}'))
+                ''', (current_shop_id, customer_id, invoice_id, paid, 'cash', session.get('user_id'), f'Initial payment for sale #{sale_id}'))
 
             # Update customer balance (what they owe)
             cursor.execute('''
                 UPDATE customers SET balance = balance + ? WHERE id = ?
             ''', (outstanding, customer_id))
+
+        # Available funds include only cash actually received now.
+        paid_now = 0.0
+        if payment_method in ('partial', 'credit'):
+            paid_now = _as_float(amount_paid)
+        else:
+            paid_now = _as_float(total_amount)
+
+        _record_finance_transaction(
+            cursor,
+            shop_id=current_shop_id,
+            direction='IN',
+            amount=paid_now,
+            transaction_type='sale_payment',
+            source_table='sales',
+            source_id=sale_id,
+            reference=f'SALE-{sale_id}',
+            notes=f'Sale payment via {payment_method}',
+            created_by=session.get('user_id'),
+        )
 
         conn.commit()
         return jsonify({'success': True, 'sale_id': sale_id}), 201
@@ -2011,9 +2149,23 @@ def create_refund():
             INSERT INTO sale_returns (shop_id, sale_id, user_id, items_json, refund_amount, reason)
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (get_current_shop_id(), sale_id, session.get('user_id'), json.dumps(normalized_items), refund_amount, reason))
+        refund_id = cursor.lastrowid
+
+        _record_finance_transaction(
+            cursor,
+            shop_id=get_current_shop_id(),
+            direction='OUT',
+            amount=refund_amount,
+            transaction_type='refund',
+            source_table='sale_returns',
+            source_id=refund_id,
+            reference=f'REF-{refund_id}',
+            notes=reason or f'Refund for sale #{sale_id}',
+            created_by=session.get('user_id'),
+        )
 
         conn.commit()
-        return jsonify({'success': True, 'refund_id': cursor.lastrowid, 'refund_amount': refund_amount}), 201
+        return jsonify({'success': True, 'refund_id': refund_id, 'refund_amount': refund_amount}), 201
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'error': str(e)}), 400
@@ -3605,6 +3757,11 @@ def get_dashboard_stats():
         ''', flt_params_i).fetchone()
         cash_flow['overdue_count'] = overdue['count']
         cash_flow['overdue_amount'] = overdue['amount']
+
+        funds = _get_available_funds(cursor)
+        cash_flow['available_funds'] = funds['available_funds']
+        cash_flow['money_in_total'] = funds['money_in']
+        cash_flow['money_out_total'] = funds['money_out']
 
     conn.close()
 
@@ -5999,9 +6156,9 @@ def delete_purchase_order(po_id):
     if not order:
         conn.close()
         return jsonify({'error': 'Purchase order not found'}), 404
-    if order['status'] == 'received':
+    if order['status'] in ('received', 'paid'):
         conn.close()
-        return jsonify({'success': False, 'error': 'Cannot delete a received purchase order'}), 400
+        return jsonify({'success': False, 'error': 'Cannot delete a received/paid purchase order'}), 400
     try:
         conn.execute('DELETE FROM po_items WHERE po_id=?', (po_id,))
         conn.execute('DELETE FROM purchase_orders WHERE id=?', (po_id,))
@@ -6057,7 +6214,7 @@ def receive_purchase_order(po_id):
     if not order:
         conn.close()
         return jsonify({'error': 'Purchase order not found'}), 404
-    if order['status'] == 'received':
+    if order['status'] in ('received', 'paid'):
         conn.close()
         return jsonify({'success': False, 'error': 'This order has already been fully received'}), 400
 
@@ -6068,14 +6225,16 @@ def receive_purchase_order(po_id):
             if not po_item:
                 continue
 
-            qty_receiving = ri.get('quantity_received', 0)
+            qty_receiving = int(_as_float(ri.get('quantity_received', 0)))
+            item_received = int(_as_float(po_item.get('quantity_received', 0)))
+            item_ordered = int(_as_float(po_item.get('quantity_ordered', 0)))
             if qty_receiving <= 0:
-                if po_item['quantity_received'] < po_item['quantity_ordered']:
+                if item_received < item_ordered:
                     all_fully_received = False
                 continue
 
-            new_received = po_item['quantity_received'] + qty_receiving
-            if new_received > po_item['quantity_ordered']:
+            new_received = item_received + qty_receiving
+            if new_received > item_ordered:
                 conn.rollback()
                 conn.close()
                 return jsonify({'success': False, 'error': f'Cannot receive more than ordered for item {po_item["product_id"]}'}), 400
@@ -6086,9 +6245,14 @@ def receive_purchase_order(po_id):
             # Get current stock and cost for weighted average calculation
             product = cursor.execute('SELECT stock_quantity, cost_price FROM products WHERE id=?',
                                      (po_item['product_id'],)).fetchone()
-            old_stock = product['stock_quantity']
-            old_cost = product['cost_price'] or 0
-            new_cost = po_item['unit_cost']
+            if not product:
+                conn.rollback()
+                conn.close()
+                return jsonify({'success': False, 'error': f'Product not found for PO item {po_item["id"]}'}), 404
+
+            old_stock = int(_as_float(product.get('stock_quantity', 0)))
+            old_cost = _as_float(product.get('cost_price', 0))
+            new_cost = _as_float(po_item.get('unit_cost', 0))
 
             # Weighted Average Cost: (old_qty × old_cost + new_qty × new_cost) / total_qty
             total_qty = old_stock + qty_receiving
@@ -6116,7 +6280,7 @@ def receive_purchase_order(po_id):
         # Check remaining items not in received_items
         all_items = cursor.execute('SELECT * FROM po_items WHERE po_id=?', (po_id,)).fetchall()
         for item in all_items:
-            if item['quantity_received'] < item['quantity_ordered']:
+            if int(_as_float(item.get('quantity_received', 0))) < int(_as_float(item.get('quantity_ordered', 0))):
                 all_fully_received = False
                 break
 
@@ -6128,6 +6292,52 @@ def receive_purchase_order(po_id):
 
         conn.commit()
         return jsonify({'success': True, 'status': 'received' if all_fully_received else 'partial'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+
+@app.route('/api/purchase-orders/<int:po_id>/mark-paid', methods=['POST'])
+@login_required
+@admin_required
+def mark_purchase_order_paid(po_id):
+    """Mark a fully received purchase order as paid and post cash outflow to finance ledger."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    flt_sql, flt_params = shop_filter('po')
+
+    order = cursor.execute(
+        f'SELECT po.* FROM purchase_orders po WHERE po.id = ? {flt_sql}', [po_id] + flt_params
+    ).fetchone()
+    if not order:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Purchase order not found'}), 404
+
+    if order['status'] == 'paid':
+        conn.close()
+        return jsonify({'success': False, 'error': 'Purchase order is already paid'}), 400
+    if order['status'] != 'received':
+        conn.close()
+        return jsonify({'success': False, 'error': 'Only fully received purchase orders can be marked paid'}), 400
+
+    try:
+        cursor.execute("UPDATE purchase_orders SET status='paid' WHERE id=?", (po_id,))
+        _record_finance_transaction(
+            cursor,
+            shop_id=order.get('shop_id'),
+            direction='OUT',
+            amount=order.get('total_amount'),
+            transaction_type='po_payment',
+            source_table='purchase_orders',
+            source_id=po_id,
+            reference=order.get('po_number') or f'PO-{po_id:05d}',
+            notes='Purchase order payment',
+            created_by=session.get('user_id'),
+        )
+        conn.commit()
+        return jsonify({'success': True})
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'error': str(e)}), 400
@@ -6363,6 +6573,20 @@ def record_payment():
             INSERT INTO payments (shop_id, customer_id, invoice_id, amount, payment_method, received_by, notes)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (get_current_shop_id(), customer_id, invoice_id, amount, payment_method, session.get('user_id'), notes))
+        payment_id = cursor.lastrowid
+
+        _record_finance_transaction(
+            cursor,
+            shop_id=get_current_shop_id(),
+            direction='IN',
+            amount=amount,
+            transaction_type='invoice_payment',
+            source_table='payments',
+            source_id=payment_id,
+            reference=f'PAY-{payment_id}',
+            notes=notes or 'Invoice payment received',
+            created_by=session.get('user_id'),
+        )
 
         # Update customer balance
         cursor.execute('UPDATE customers SET balance = balance - ? WHERE id=?', (amount, customer_id))
@@ -6565,6 +6789,207 @@ def restore_database():
 # ══════════════════════════════════════════════════════════════════════════════
 # EXPENSE MANAGEMENT MODULE
 # ══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/finance')
+@login_required
+@admin_required
+def finance_page():
+    return render_template('finance.html')
+
+
+@app.route('/api/finance/summary', methods=['GET'])
+@login_required
+@admin_required
+def get_finance_summary():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        summary = _get_available_funds(cursor, date_from=start_date, date_to=end_date)
+
+        flt_sql, flt_params = shop_filter('ft')
+        range_sql = ''
+        params = list(flt_params)
+        if start_date:
+            range_sql += ' AND ft.transaction_at >= ?'
+            params.append(f'{start_date} 00:00:00')
+        if end_date:
+            range_sql += ' AND ft.transaction_at <= ?'
+            params.append(f'{end_date} 23:59:59')
+
+        by_type = cursor.execute(
+            f'''
+                SELECT ft.transaction_type,
+                       ft.direction,
+                       COUNT(*) as tx_count,
+                       COALESCE(SUM(ft.amount), 0) as total_amount
+                FROM finance_transactions ft
+                WHERE 1=1 {flt_sql} {range_sql}
+                GROUP BY ft.transaction_type, ft.direction
+                ORDER BY total_amount DESC
+            ''',
+            params,
+        ).fetchall()
+
+        return jsonify({
+            'summary': summary,
+            'by_type': [dict(row) for row in by_type],
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+
+@app.route('/api/finance/opening-balance', methods=['GET', 'PUT'])
+@login_required
+@admin_required
+def manage_finance_opening_balance():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    if request.method == 'GET':
+        try:
+            opening_balance = _get_opening_balance(cursor)
+            return jsonify({'opening_balance': opening_balance})
+        finally:
+            conn.close()
+
+    data = request.json or {}
+    amount = round(_as_float(data.get('opening_balance')), 2)
+    if amount < 0:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Opening balance cannot be negative'}), 400
+
+    shop_id = get_current_shop_id()
+    if shop_id is None:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Select a specific shop before setting opening balance'}), 400
+
+    try:
+        cursor.execute(
+            '''
+                INSERT INTO settings (`key`, value, shop_id)
+                VALUES ('finance_opening_balance', ?, ?)
+                ON DUPLICATE KEY UPDATE value = VALUES(value)
+            ''',
+            (str(amount), shop_id),
+        )
+        conn.commit()
+        return jsonify({'success': True, 'opening_balance': amount})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+
+@app.route('/api/finance/transactions', methods=['GET'])
+@login_required
+@admin_required
+def list_finance_transactions():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    direction = (request.args.get('direction') or '').strip().upper()
+    transaction_type = (request.args.get('transaction_type') or '').strip()
+    page = max(1, int(request.args.get('page', 1) or 1))
+    page_size = min(200, max(1, int(request.args.get('page_size', 50) or 50)))
+    offset = (page - 1) * page_size
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        flt_sql, flt_params = shop_filter('ft')
+        where_sql = ''
+        params = list(flt_params)
+
+        if start_date:
+            where_sql += ' AND ft.transaction_at >= ?'
+            params.append(f'{start_date} 00:00:00')
+        if end_date:
+            where_sql += ' AND ft.transaction_at <= ?'
+            params.append(f'{end_date} 23:59:59')
+        if direction in ('IN', 'OUT'):
+            where_sql += ' AND ft.direction = ?'
+            params.append(direction)
+        if transaction_type:
+            where_sql += ' AND ft.transaction_type = ?'
+            params.append(transaction_type)
+
+        total = cursor.execute(
+            f'''SELECT COUNT(*) as cnt FROM finance_transactions ft WHERE 1=1 {flt_sql} {where_sql}''',
+            params,
+        ).fetchone()['cnt']
+
+        rows = cursor.execute(
+            f'''
+                SELECT ft.*, u.username, u.full_name
+                FROM finance_transactions ft
+                LEFT JOIN users u ON u.id = ft.created_by
+                WHERE 1=1 {flt_sql} {where_sql}
+                ORDER BY ft.transaction_at DESC, ft.id DESC
+                LIMIT ? OFFSET ?
+            ''',
+            params + [page_size, offset],
+        ).fetchall()
+
+        return jsonify({
+            'page': page,
+            'page_size': page_size,
+            'total': total,
+            'transactions': [dict(row) for row in rows],
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+
+@app.route('/api/finance/owner-transaction', methods=['POST'])
+@login_required
+@admin_required
+def create_owner_transaction():
+    data = request.json or {}
+    movement_type = (data.get('movement_type') or '').strip().lower()
+    amount = _as_float(data.get('amount'))
+    notes = (data.get('notes') or '').strip()
+    reference = (data.get('reference') or '').strip()
+    transaction_date = (data.get('transaction_date') or '').strip()
+
+    if movement_type not in ('investment', 'withdrawal'):
+        return jsonify({'success': False, 'error': 'movement_type must be investment or withdrawal'}), 400
+    if amount <= 0:
+        return jsonify({'success': False, 'error': 'Amount must be greater than 0'}), 400
+
+    direction = 'IN' if movement_type == 'investment' else 'OUT'
+    tx_type = 'owner_investment' if movement_type == 'investment' else 'owner_withdrawal'
+    shop_id = get_current_shop_id()
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        _record_finance_transaction(
+            cursor,
+            shop_id=shop_id,
+            direction=direction,
+            amount=amount,
+            transaction_type=tx_type,
+            source_table='manual',
+            source_id=None,
+            reference=reference or None,
+            notes=notes or None,
+            created_by=session.get('user_id'),
+            transaction_at=transaction_date or None,
+        )
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
 
 @app.route('/expenses')
 @login_required
@@ -6812,8 +7237,23 @@ def add_expense():
               data.get('receipt_ref', '').strip(),
               session.get('user_id'),
               shop_id))
+        expense_id = cursor.lastrowid
+
+        _record_finance_transaction(
+            cursor,
+            shop_id=shop_id,
+            direction='OUT',
+            amount=float(data['amount']),
+            transaction_type='expense_payment',
+            source_table='expenses',
+            source_id=expense_id,
+            reference=f'EXP-{expense_id}',
+            notes=data.get('description', '').strip(),
+            created_by=session.get('user_id'),
+            transaction_at=data['expense_date'],
+        )
         conn.commit()
-        return jsonify({'success': True, 'id': cursor.lastrowid}), 201
+        return jsonify({'success': True, 'id': expense_id}), 201
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'error': str(e)}), 400

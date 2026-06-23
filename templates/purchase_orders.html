@@ -30,6 +30,7 @@
         .status-badge.ordered { background: #dbeafe; color: #1d4ed8; }
         .status-badge.partial { background: #fef3c7; color: #92400e; }
         .status-badge.received { background: #dcfce7; color: #166534; }
+        .status-badge.paid { background: #dcfce7; color: #166534; border: 1px solid #16a34a; }
 
         /* ===== Create PO form ===== */
         .po-form-section { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
@@ -234,6 +235,7 @@
             <a href="/reports" class="sidebar-item"><span class="sidebar-icon">📊</span><span class="sidebar-label">Reports</span></a>
             <div class="sidebar-divider admin-only"></div>
             <div class="sidebar-section-title admin-only">Finance</div>
+            <a href="/finance" class="sidebar-item admin-only"><span class="sidebar-icon">🏦</span><span class="sidebar-label">Finance</span></a>
             <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">💰</span><span class="sidebar-label">Expenses</span></a>
             <div class="sidebar-divider admin-only"></div>
             <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">Settings</span></a>
@@ -292,6 +294,7 @@
                     <option value="ordered">Ordered</option>
                     <option value="partial">Partially Received</option>
                     <option value="received">Received</option>
+                    <option value="paid">Paid</option>
                 </select>
                 <input type="date" id="po-date-from" title="From date">
                 <span style="font-size:0.82rem;color:#94a3b8;">to</span>
@@ -711,7 +714,8 @@
 
         // --- PO List ---
         function getStatusBadge(status) {
-            return `<span class="status-badge ${status}">${status === 'partial' ? 'Partial' : status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+            var label = status === 'partial' ? 'Partial' : status.charAt(0).toUpperCase() + status.slice(1);
+            return `<span class="status-badge ${status}">${label}</span>`;
         }
 
         function renderPOList() {
@@ -762,9 +766,10 @@
                         </div>
                         <div class="po-card-actions" onclick="event.stopPropagation()">
                             <button class="btn btn-secondary btn-sm" onclick="viewPO(${po.id})">View</button>
-                            ${po.status !== 'received' && po.status !== 'draft' ? `<button class="btn btn-success btn-sm" onclick="openReceiveModal(${po.id})">Receive</button>` : ''}
+                            ${['ordered', 'partial'].includes(po.status) ? `<button class="btn btn-success btn-sm" onclick="openReceiveModal(${po.id})">Receive</button>` : ''}
+                            ${po.status === 'received' ? `<button class="btn btn-primary btn-sm" onclick="markPaid(${po.id})">Mark Paid</button>` : ''}
                             ${po.status === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="submitDraft(${po.id})">Submit</button>` : ''}
-                            ${po.status !== 'received' ? `<button class="btn btn-danger btn-sm" onclick="deletePO(${po.id})">Delete</button>` : ''}
+                            ${!['received', 'paid'].includes(po.status) ? `<button class="btn btn-danger btn-sm" onclick="deletePO(${po.id})">Delete</button>` : ''}
                         </div>
                     </div>`;
                 }).join('');
@@ -786,9 +791,10 @@
                         <td>${date}<br><span style="font-size:0.78rem;color:#94a3b8;">${po.created_by_name || ''}</span></td>
                         <td onclick="event.stopPropagation()">
                             <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
-                                ${po.status !== 'received' && po.status !== 'draft' ? `<button class="btn btn-success btn-sm" onclick="openReceiveModal(${po.id})">Receive</button>` : ''}
+                                ${['ordered', 'partial'].includes(po.status) ? `<button class="btn btn-success btn-sm" onclick="openReceiveModal(${po.id})">Receive</button>` : ''}
+                                ${po.status === 'received' ? `<button class="btn btn-primary btn-sm" onclick="markPaid(${po.id})">Mark Paid</button>` : ''}
                                 ${po.status === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="submitDraft(${po.id})">Submit</button>` : ''}
-                                ${po.status !== 'received' ? `<button class="btn btn-danger btn-sm" onclick="deletePO(${po.id})">Delete</button>` : ''}
+                                ${!['received', 'paid'].includes(po.status) ? `<button class="btn btn-danger btn-sm" onclick="deletePO(${po.id})">Delete</button>` : ''}
                             </div>
                         </td>
                     </tr>`;
@@ -999,6 +1005,22 @@
                 if (r.ok || res.success) { showToast('PO submitted!', 'success'); loadData(); }
                 else showToast(res.error || 'Error', 'error');
             } catch(e) { showToast('Error', 'error'); }
+        }
+
+        async function markPaid(poId) {
+            if (!confirm('Mark this purchase order as paid? This will post a cash-out transaction.')) return;
+            try {
+                const r = await fetch(`/api/purchase-orders/${poId}/mark-paid`, { method: 'POST' });
+                const res = await r.json();
+                if (r.ok || res.success) {
+                    showToast('Purchase order marked as paid', 'success');
+                    loadData();
+                } else {
+                    showToast(res.error || 'Error marking PO paid', 'error');
+                }
+            } catch (e) {
+                showToast('Error marking PO paid', 'error');
+            }
         }
 
         // --- Receive PO ---
