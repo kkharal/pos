@@ -9,8 +9,10 @@ from datetime import datetime, date, timezone, timedelta
 from dotenv import load_dotenv
 import mysql.connector
 
-# Load .env file if present (does not override existing shell env vars)
-load_dotenv()
+# Load .env from the repository root, regardless of the current working directory.
+# override=True prevents stale service-level env vars from masking updated .env credentials.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"), override=True)
 
 DB_NAME = os.getenv("DB_NAME", "pos_mysql_app")
 DB_CONFIG = {
