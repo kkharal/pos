@@ -514,7 +514,31 @@ def init_db():
         """
     )
 
-    # ── 19. Scheduled alert send log (idempotency guard) ─────────────────────
+    # ── 19. Finance ledger (cash movement source of truth) ──────────────────
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS finance_transactions (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            shop_id INT NULL,
+            direction VARCHAR(8) NOT NULL,
+            amount DECIMAL(12,2) NOT NULL,
+            transaction_type VARCHAR(64) NOT NULL,
+            source_table VARCHAR(64) NULL,
+            source_id INT NULL,
+            reference VARCHAR(255) NULL,
+            notes TEXT,
+            created_by INT NULL,
+            transaction_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_finance_shop_time (shop_id, transaction_at),
+            INDEX idx_finance_direction (direction),
+            UNIQUE KEY uq_finance_source (shop_id, source_table, source_id, transaction_type),
+            FOREIGN KEY (created_by) REFERENCES users (id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """
+    )
+
+    # ── 20. Scheduled alert send log (idempotency guard) ─────────────────────
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS alert_send_log (
@@ -769,6 +793,7 @@ def init_db():
         ("smtp_password", ""),
         ("alert_email", ""),
         ("low_stock_threshold", "5"),
+        ("finance_opening_balance", "0"),
     ]
     all_shop_ids = [r[0] for r in cursor.execute("SELECT id FROM shops").fetchall()]
     for sid in all_shop_ids:

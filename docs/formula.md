@@ -166,6 +166,42 @@ Validation rules used in POS:
 Refund date rule for cash flow:
 - Refunds are deducted on the date the return is **processed**, not the original sale date.
 
+## Finance Ledger Formulas (Available Funds)
+
+Purpose:
+- Track real cash liquidity (money available to spend), separate from accounting profit.
+
+Opening Balance:
+- Per-shop starting cash baseline.
+- Default value is `0` until set.
+- Normally set once when starting ledger tracking for a shop.
+- Does not auto-reset monthly.
+
+Available Funds:
+- `Opening Balance + Money In - Money Out`
+
+Money In:
+- Cash sales
+- QR/bank sales
+- Customer invoice payments (credit invoices paid)
+- Owner investments
+
+Money Out:
+- Expenses
+- Purchase order payments (when PO is marked paid)
+- Refunds
+- Owner withdrawals
+
+Not counted until cash movement happens:
+- Unpaid credit sales
+- Outstanding invoices
+- Inventory valuation
+- Net profit
+
+Monthly interpretation:
+- Month Opening = previous period Closing
+- Month Closing = Month Opening + monthly inflows - monthly outflows
+
 ## Aging Bucket Logic (Cashflow)
 
 Outstanding invoice balances are grouped by invoice age:

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance - POS System</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=7">
+    <script src="/static/js/loading.js?v=1" defer></script>
+    <script src="/static/js/ui.js"></script>
+    <style>
+        .finance-wrap { padding: 1.25rem; }
+        .finance-head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .finance-head h1 { margin: 0; font-size: 1.35rem; color: #1e293b; }
+
+        .finance-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+        .finance-filters input, .finance-filters select {
+            padding: 0.45rem 0.6rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #fff;
+            font-size: 0.85rem;
+            height: 36px;
+        }
+
+        .finance-kpis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .finance-kpi {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.9rem 1rem;
+        }
+        .finance-kpi-label { font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.03em; }
+        .finance-kpi-value { font-size: 1.35rem; font-weight: 700; margin-top: 0.25rem; color: #1e293b; }
+        .finance-kpi-value.in { color: #16a34a; }
+        .finance-kpi-value.out { color: #dc2626; }
+
+        .finance-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 0.9rem; }
+        .finance-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 1rem;
+        }
+        .finance-card h3 { margin: 0 0 0.75rem 0; font-size: 0.95rem; color: #334155; }
+
+        .tx-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+        .tx-table th, .tx-table td { padding: 0.5rem 0.45rem; border-bottom: 1px solid #f1f5f9; text-align: left; }
+        .tx-table th { color: #64748b; font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.03em; }
+        .tx-amount.in { color: #16a34a; font-weight: 600; }
+        .tx-amount.out { color: #dc2626; font-weight: 600; }
+
+        .inline-form { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; }
+        .inline-form textarea {
+            grid-column: 1 / -1;
+            min-height: 80px;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 980px) {
+            .finance-grid { grid-template-columns: 1fr; }
+            .inline-form { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body class="has-sidebar">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <div class="navbar-brand-icon">🛒</div>
+                <span class="sidebar-brand-name" id="shop-name-title">POS System</span>
+            </div>
+        </div>
+        <div class="sidebar-nav">
+            <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span><span class="sidebar-label">Home</span></a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Sales</div>
+            <a href="/pos" class="sidebar-item"><span class="sidebar-icon">🛒</span><span class="sidebar-label">Point of Sale</span></a>
+            <a href="/sales" class="sidebar-item"><span class="sidebar-icon">📋</span><span class="sidebar-label">Orders</span></a>
+            <div class="sidebar-divider admin-only"></div>
+            <div class="sidebar-section-title admin-only">Products</div>
+            <a href="/products" class="sidebar-item admin-only"><span class="sidebar-icon">📦</span><span class="sidebar-label">Inventory</span></a>
+            <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-icon">🏭</span><span class="sidebar-label">Suppliers</span></a>
+            <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-icon">📌</span><span class="sidebar-label">Purchase Orders</span></a>
+            <div class="sidebar-divider admin-only"></div>
+            <div class="sidebar-section-title admin-only">People</div>
+            <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-icon">👥</span><span class="sidebar-label">Customers</span></a>
+            <a href="/users" class="sidebar-item admin-only"><span class="sidebar-icon">👤</span><span class="sidebar-label">Users</span></a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Analytics</div>
+            <a href="/reports" class="sidebar-item"><span class="sidebar-icon">📊</span><span class="sidebar-label">Reports</span></a>
+            <div class="sidebar-divider admin-only"></div>
+            <div class="sidebar-section-title admin-only">Finance</div>
+            <a href="/finance" class="sidebar-item admin-only active"><span class="sidebar-icon">🏦</span><span class="sidebar-label">Finance</span></a>
+            <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-icon">💰</span><span class="sidebar-label">Expenses</span></a>
+            <div class="sidebar-divider admin-only"></div>
+            <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">Settings</span></a>
+        </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <div class="main-wrapper" id="main-wrapper">
+        <header class="topbar">
+            <button class="topbar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
+            <div class="topbar-spacer"></div>
+            <div class="user-profile-container">
+                <div class="user-profile">
+                    <div class="user-profile-icon" id="user-icon">A</div>
+                    <div class="user-profile-info">
+                        <span class="user-profile-name" id="user-name">Admin</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="finance-wrap">
+            <div class="finance-head">
+                <h1>🏦 Finance Ledger</h1>
+            </div>
+
+            <div class="finance-filters">
+                <input type="date" id="start-date">
+                <input type="date" id="end-date">
+                <select id="direction-filter">
+                    <option value="">All Directions</option>
+                    <option value="IN">Money In</option>
+                    <option value="OUT">Money Out</option>
+                </select>
+                <button class="btn btn-primary" onclick="loadFinanceData()">Apply</button>
+            </div>
+
+            <div class="finance-kpis">
+                <div class="finance-kpi">
+                    <div class="finance-kpi-label">Opening Balance</div>
+                    <div class="finance-kpi-value" id="kpi-opening">$0.00</div>
+                </div>
+                <div class="finance-kpi">
+                    <div class="finance-kpi-label">Available Funds</div>
+                    <div class="finance-kpi-value" id="kpi-available">$0.00</div>
+                </div>
+                <div class="finance-kpi">
+                    <div class="finance-kpi-label">Money In</div>
+                    <div class="finance-kpi-value in" id="kpi-in">$0.00</div>
+                </div>
+                <div class="finance-kpi">
+                    <div class="finance-kpi-label">Money Out</div>
+                    <div class="finance-kpi-value out" id="kpi-out">$0.00</div>
+                </div>
+            </div>
+
+            <div class="finance-grid">
+                <div class="finance-card">
+                    <h3>Cash Movement History</h3>
+                    <div style="overflow:auto; max-height: 62vh;">
+                        <table class="tx-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Ref</th>
+                                    <th>Note</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tx-body">
+                                <tr><td colspan="5" style="text-align:center;color:#94a3b8;">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="finance-card">
+                    <h3>Opening Balance</h3>
+                    <div class="inline-form" style="margin-bottom:0.8rem;">
+                        <input type="number" id="opening-balance-input" step="0.01" min="0" placeholder="Opening balance amount">
+                        <div style="display:flex;align-items:center;">
+                            <button class="btn btn-primary" onclick="saveOpeningBalance()">Set Opening Balance</button>
+                        </div>
+                    </div>
+
+                    <h3>Owner Investment / Withdrawal</h3>
+                    <div class="inline-form">
+                        <select id="owner-movement-type">
+                            <option value="investment">Owner Investment (IN)</option>
+                            <option value="withdrawal">Owner Withdrawal (OUT)</option>
+                        </select>
+                        <input type="number" id="owner-amount" step="0.01" min="0" placeholder="Amount">
+                        <input type="date" id="owner-date">
+                        <input type="text" id="owner-reference" placeholder="Reference (optional)">
+                        <textarea id="owner-notes" placeholder="Notes (optional)"></textarea>
+                    </div>
+                    <div style="margin-top:0.6rem;display:flex;justify-content:flex-end;">
+                        <button class="btn btn-primary" onclick="submitOwnerTransaction()">Save Transaction</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var currencySymbol = '$';
+
+        function asMoney(v) {
+            return currencySymbol + (parseFloat(v || 0)).toFixed(2);
+        }
+
+        function buildQuery() {
+            var params = new URLSearchParams();
+            var sd = document.getElementById('start-date').value;
+            var ed = document.getElementById('end-date').value;
+            var dir = document.getElementById('direction-filter').value;
+            if (sd) params.set('start_date', sd);
+            if (ed) params.set('end_date', ed);
+            if (dir) params.set('direction', dir);
+            return params.toString();
+        }
+
+        async function loadUserInfo() {
+            try {
+                var res = await fetch('/api/current-user');
+                var user = await res.json();
+                if (user.currency) currencySymbol = user.currency;
+                if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
+                var icon = document.querySelector('.navbar-brand-icon');
+                if (icon && user.shop_icon) icon.textContent = user.shop_icon;
+                document.getElementById('user-icon').textContent = (user.full_name || user.username || 'A').charAt(0).toUpperCase();
+                document.getElementById('user-name').textContent = user.full_name || user.username || 'Admin';
+                document.querySelectorAll('.admin-only').forEach(function(el) {
+                    el.style.display = (user.role === 'admin' || user.role === 'super_admin' || user.role === 'shop_owner') ? '' : 'none';
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function loadFinanceData() {
+            try {
+                var query = buildQuery();
+
+                var summaryRes = await fetch('/api/finance/summary' + (query ? '?' + query : ''));
+                var summaryData = await summaryRes.json();
+                if (summaryData.summary) {
+                    document.getElementById('kpi-opening').textContent = asMoney(summaryData.summary.opening_balance);
+                    document.getElementById('kpi-available').textContent = asMoney(summaryData.summary.available_funds);
+                    document.getElementById('kpi-in').textContent = asMoney(summaryData.summary.money_in);
+                    document.getElementById('kpi-out').textContent = asMoney(summaryData.summary.money_out);
+                }
+
+                var txRes = await fetch('/api/finance/transactions?page=1&page_size=100' + (query ? '&' + query : ''));
+                var txData = await txRes.json();
+                var body = document.getElementById('tx-body');
+                var rows = txData.transactions || [];
+                if (!rows.length) {
+                    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No transactions found</td></tr>';
+                    return;
+                }
+                body.innerHTML = rows.map(function(tx) {
+                    var dt = tx.transaction_at ? new Date(tx.transaction_at).toLocaleString() : '-';
+                    var amtClass = (tx.direction || '').toLowerCase() === 'in' ? 'in' : 'out';
+                    var sign = amtClass === 'in' ? '+' : '-';
+                    return '<tr>' +
+                        '<td>' + dt + '</td>' +
+                        '<td>' + (tx.transaction_type || '-') + '</td>' +
+                        '<td>' + (tx.reference || '-') + '</td>' +
+                        '<td>' + (tx.notes || '-') + '</td>' +
+                        '<td class="tx-amount ' + amtClass + '">' + sign + asMoney(tx.amount) + '</td>' +
+                    '</tr>';
+                }).join('');
+            } catch (e) {
+                console.error(e);
+                showToast('Failed to load finance data', 'error');
+            }
+        }
+
+        async function loadOpeningBalance() {
+            try {
+                var res = await fetch('/api/finance/opening-balance');
+                var data = await res.json();
+                if (res.ok) {
+                    var opening = parseFloat(data.opening_balance || 0);
+                    document.getElementById('opening-balance-input').value = opening.toFixed(2);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function saveOpeningBalance() {
+            var amount = parseFloat(document.getElementById('opening-balance-input').value || '0');
+            if (amount < 0) {
+                showToast('Opening balance cannot be negative', 'warning');
+                return;
+            }
+
+            try {
+                var res = await fetch('/api/finance/opening-balance', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ opening_balance: amount })
+                });
+                var data = await res.json();
+                if (!res.ok || !data.success) {
+                    showToast(data.error || 'Failed to save opening balance', 'error');
+                    return;
+                }
+                showToast('Opening balance updated', 'success');
+                loadFinanceData();
+            } catch (e) {
+                console.error(e);
+                showToast('Failed to save opening balance', 'error');
+            }
+        }
+
+        async function submitOwnerTransaction() {
+            var movementType = document.getElementById('owner-movement-type').value;
+            var amount = parseFloat(document.getElementById('owner-amount').value || '0');
+            var transactionDate = document.getElementById('owner-date').value;
+            var reference = document.getElementById('owner-reference').value;
+            var notes = document.getElementById('owner-notes').value;
+
+            if (amount <= 0) {
+                showToast('Enter a valid amount', 'warning');
+                return;
+            }
+
+            try {
+                var res = await fetch('/api/finance/owner-transaction', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        movement_type: movementType,
+                        amount: amount,
+                        transaction_date: transactionDate,
+                        reference: reference,
+                        notes: notes
+                    })
+                });
+                var data = await res.json();
+                if (!res.ok || !data.success) {
+                    showToast(data.error || 'Failed to save transaction', 'error');
+                    return;
+                }
+
+                document.getElementById('owner-amount').value = '';
+                document.getElementById('owner-reference').value = '';
+                document.getElementById('owner-notes').value = '';
+                showToast('Transaction saved', 'success');
+                loadFinanceData();
+            } catch (e) {
+                console.error(e);
+                showToast('Failed to save transaction', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            var now = new Date();
+            var start = new Date(now.getFullYear(), now.getMonth(), 1);
+            var sd = start.toISOString().split('T')[0];
+            var ed = now.toISOString().split('T')[0];
+            document.getElementById('start-date').value = sd;
+            document.getElementById('end-date').value = ed;
+            document.getElementById('owner-date').value = ed;
+            await loadUserInfo();
+            await loadOpeningBalance();
+            await loadFinanceData();
+        });
+    </script>
+</body>
+</html>
