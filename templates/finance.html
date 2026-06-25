@@ -64,6 +64,10 @@
             grid-template-columns: 1fr;
             gap: var(--space-1);
         }
+
+        #range-preset {
+            max-width: 160px;
+        }
             .custom-range {
                 display: grid;
                 grid-template-columns: 1fr;
@@ -71,6 +75,7 @@
             }
 
         .date-range-group input,
+        .date-range-group select,
         .ledger-toolbar input,
         .ledger-toolbar select,
         .modal-body input,
@@ -640,7 +645,7 @@
             }
 
             .date-range-group {
-                    grid-template-columns: 180px auto;
+                    grid-template-columns: 160px auto;
                 }
                 .custom-range {
                     grid-template-columns: 150px 150px auto;
