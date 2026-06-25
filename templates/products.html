@@ -1070,7 +1070,7 @@
                 <div class="form-group"><label>Description</label><textarea id="variant-description" placeholder="Shared description"></textarea></div>
                 <hr style="margin:1rem 0;border:none;border-top:2px dashed #ddd;">
                 <h3 style="margin-bottom:0.75rem;font-size:1rem;color:#2c3e50;">Sizes & Colors</h3>
-                <div class="form-group"><label>Sizes</label>
+                <div class="form-group"><label>Sizes *</label>
                     <div id="variant-sizes" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.3rem;margin-bottom:0.5rem;">
                         <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="sizes" value="XS"> XS</label>
                         <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="sizes" value="S"> S</label>
@@ -1083,7 +1083,7 @@
                     </div>
                     <input type="text" id="variant-custom-sizes" placeholder="Custom sizes (comma-separated)" style="margin-top:0.4rem;font-size:0.85rem;">
                 </div>
-                <div class="form-group"><label>Colors (comma-separated)</label><input type="text" id="variant-colors" placeholder="e.g. Red, Blue, Black"></div>
+                <div class="form-group"><label>Colors (comma-separated) *</label><input type="text" id="variant-colors" placeholder="e.g. Red, Blue, Black"></div>
                 <div id="variant-preview" style="margin:1rem 0;padding:0.75rem;background:#f8f9fa;border-radius:6px;display:none;">
                     <strong style="font-size:0.85rem;">Stock per Variant:</strong>
                     <div class="variant-preview-toolbar">
@@ -2772,8 +2772,6 @@
             const preview = document.getElementById('variant-preview'), table = document.getElementById('variant-stock-table');
             let combos = [];
             if (sizes.length && colors.length) { for(const s of sizes) for(const c of colors) combos.push(s+' / '+c); }
-            else if (sizes.length) combos = sizes.map(s=>s);
-            else if (colors.length) combos = colors.map(c=>c);
             if (combos.length > 0) {
                 let h = '<table style="width:100%;border-collapse:collapse;font-size:0.82rem;"><thead><tr style="background:#e9ecef;"><th style="padding:0.4rem 0.6rem;text-align:left;">Variant</th><th style="padding:0.4rem 0.6rem;text-align:center;width:90px;">Stock</th></tr></thead><tbody>';
                 combos.forEach((c,i) => { h += `<tr style="background:${i%2===0?'#fff':'#f8f9fa'};"><td style="padding:0.35rem 0.6rem;">${c}</td><td style="padding:0.35rem 0.6rem;text-align:center;"><input type="number" class="variant-stock-input" min="0" value="0" style="width:70px;text-align:center;padding:0.2rem;font-size:0.85rem;border:1px solid #ccc;border-radius:3px;" oninput="updateVariantTotalStock()"></td></tr>`; });
@@ -2815,12 +2813,10 @@
             if (e.target.dataset.submitting === '1') return;
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const { sizes, colors, normalizedChanges, mergedDuplicates } = getVariantCombos();
-            if (!sizes.length && !colors.length) { showToast('Select sizes or enter colors','warning'); return; }
+            if (!sizes.length || !colors.length) { showToast('Select at least one size and one color','warning'); return; }
             const stockInputs = document.querySelectorAll('.variant-stock-input');
             let combos = [];
-            if (sizes.length && colors.length) { for(const s of sizes) for(const c of colors) combos.push({size:s,color:c}); }
-            else if (sizes.length) { for(const s of sizes) combos.push({size:s,color:null}); }
-            else { for(const c of colors) combos.push({size:null,color:c}); }
+            for(const s of sizes) for(const c of colors) combos.push({size:s,color:c});
             const stock_map = combos.map((c,i) => ({size:c.size, color:c.color, stock:parseInt(stockInputs[i]?.value)||0}));
             const data = { name:document.getElementById('variant-name').value.trim(), category:document.getElementById('variant-category').value,
                 cost_price:parseFloat(document.getElementById('variant-cost-price').value)||0, price:parseFloat(document.getElementById('variant-price').value)||0,

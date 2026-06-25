@@ -722,6 +722,7 @@
             const dateTo = document.getElementById('po-date-to').value;
             const clearBtn = document.getElementById('po-clear-dates');
             if (clearBtn) clearBtn.style.display = (dateFrom || dateTo) ? '' : 'none';
+            const mobileContainer = document.getElementById('po-cards-mobile');
 
             const filtered = purchaseOrders.filter(po => {
                 if (statusFilter && po.status !== statusFilter) return false;
@@ -734,16 +735,19 @@
             const tbody = document.getElementById('po-table');
             const isMobile = window.innerWidth <= 640;
             if (filtered.length === 0) {
-                tbody.innerHTML = isMobile
-                    ? `<tr><td colspan="1"><div class="po-empty-state"><div class="empty-icon">📋</div><p>No purchase orders found</p></div></td></tr>`
-                    : `<tr><td colspan="8"><div class="po-empty-state"><div class="empty-icon">📋</div><p>No purchase orders found</p></div></td></tr>`;
+                if (isMobile) {
+                    mobileContainer.innerHTML = `<div class="po-empty-state"><div class="empty-icon">📋</div><p>No purchase orders found</p></div>`;
+                    tbody.innerHTML = '';
+                } else {
+                    mobileContainer.innerHTML = '';
+                    tbody.innerHTML = `<tr><td colspan="8"><div class="po-empty-state"><div class="empty-icon">📋</div><p>No purchase orders found</p></div></td></tr>`;
+                }
                 return;
             }
 
             if (isMobile) {
                 // Mobile: card-based layout rendered outside the table
-                const container = document.getElementById('po-cards-mobile');
-                container.innerHTML = filtered.map(po => {
+                mobileContainer.innerHTML = filtered.map(po => {
                     const itemCount = po.items ? po.items.length : 0;
                     const date = parseUTC(po.created_at).toLocaleDateString();
                     const poNum = po.po_number || `PO-${String(po.id).padStart(5,'0')}`;
@@ -770,7 +774,7 @@
                 }).join('');
                 tbody.innerHTML = '';
             } else {
-                document.getElementById('po-cards-mobile').innerHTML = '';
+                mobileContainer.innerHTML = '';
                 tbody.innerHTML = filtered.map(po => {
                     const itemCount = po.items ? po.items.length : 0;
                     const date = parseUTC(po.created_at).toLocaleDateString();

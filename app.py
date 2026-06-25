@@ -5344,21 +5344,14 @@ def create_product_variants():
 
     if not name or not category:
         return jsonify({'success': False, 'error': 'Name and Category are required'}), 400
-    if not sizes and not colors:
-        return jsonify({'success': False, 'error': 'At least one size or color is required'}), 400
+    if not sizes or not colors:
+        return jsonify({'success': False, 'error': 'At least one size and one color are required'}), 400
 
-    # Build combinations
+    # Build combinations. Bulk variants must always include both dimensions.
     combos = []
-    if sizes and colors:
-        for size in sizes:
-            for color in colors:
-                combos.append(((size or '').strip() or None, normalize_color_value(color)))
-    elif sizes:
-        for size in sizes:
-            combos.append(((size or '').strip() or None, None))
-    else:
+    for size in sizes:
         for color in colors:
-            combos.append((None, normalize_color_value(color)))
+            combos.append(((size or '').strip() or None, normalize_color_value(color)))
 
     if len(combos) > 100:
         return jsonify({'success': False, 'error': 'Too many variants (max 100)'}), 400
@@ -5371,6 +5364,11 @@ def create_product_variants():
     for size, color in combos:
         size_clean = (size or '').strip() or None
         color_clean = normalize_color_value(color)
+        if not size_clean or not color_clean:
+            return jsonify({
+                'success': False,
+                'error': 'Each variant must include both a size and a color'
+            }), 400
         pair_key = (size_clean, color_clean)
         if pair_key in seen_payload:
             duplicate_payload.append(pair_key)
