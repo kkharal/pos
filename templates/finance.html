@@ -8,68 +8,682 @@
     <script src="/static/js/loading.js?v=1" defer></script>
     <script src="/static/js/ui.js"></script>
     <style>
-        .finance-wrap { padding: 1.25rem; }
-        .finance-head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
-        .finance-head h1 { margin: 0; font-size: 1.35rem; color: #1e293b; }
-
-        .finance-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
-        .finance-filters input, .finance-filters select {
-            padding: 0.45rem 0.6rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            background: #fff;
-            font-size: 0.85rem;
-            height: 36px;
+        :root {
+            --finance-bg: #f4f6f8;
+            --finance-surface: #ffffff;
+            --finance-surface-soft: #f8fafc;
+            --finance-border: #e2e8f0;
+            --finance-text: #0f172a;
+            --finance-muted: #64748b;
+            --finance-green: #15803d;
+            --finance-red: #dc2626;
+            --finance-amber: #b45309;
+            --finance-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            --space-1: 8px;
+            --space-2: 16px;
+            --space-3: 24px;
+            --radius: 12px;
         }
 
-        .finance-kpis {
+        body {
+            background: var(--finance-bg);
+            color: var(--finance-text);
+            font-family: Manrope, "Nunito Sans", "Segoe UI", sans-serif;
+        }
+
+        .finance-shell {
+            padding: var(--space-2);
+            width: 100%;
+            max-width: none;
+            margin: 0;
+        }
+
+        .finance-header {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            margin-bottom: var(--space-2);
+        }
+
+        .finance-title {
+            font-size: 1.75rem;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .finance-header-right {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 0.75rem;
-            margin-bottom: 1rem;
+            grid-template-columns: 1fr;
+            gap: var(--space-1);
+            width: 100%;
         }
-        .finance-kpi {
-            background: #fff;
-            border: 1px solid #e2e8f0;
+
+        .date-range-group,
+        .header-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-1);
+        }
+            .custom-range {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: var(--space-1);
+            }
+
+        .date-range-group input,
+        .ledger-toolbar input,
+        .ledger-toolbar select,
+        .modal-body input,
+        .modal-body textarea {
+            height: 40px;
+            border: 1px solid var(--finance-border);
             border-radius: 10px;
-            padding: 0.9rem 1rem;
-        }
-        .finance-kpi-label { font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.03em; }
-        .finance-kpi-value { font-size: 1.35rem; font-weight: 700; margin-top: 0.25rem; color: #1e293b; }
-        .finance-kpi-value.in { color: #16a34a; }
-        .finance-kpi-value.out { color: #dc2626; }
-
-        .finance-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 0.9rem; }
-        .finance-card {
+            padding: 0 12px;
             background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 1rem;
+            font-size: 0.9rem;
+            color: var(--finance-text);
         }
-        .finance-card h3 { margin: 0 0 0.75rem 0; font-size: 0.95rem; color: #334155; }
 
-        .tx-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-        .tx-table th, .tx-table td { padding: 0.5rem 0.45rem; border-bottom: 1px solid #f1f5f9; text-align: left; }
-        .tx-table th { color: #64748b; font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.03em; }
-        .tx-amount.in { color: #16a34a; font-weight: 600; }
-        .tx-amount.out { color: #dc2626; font-weight: 600; }
-
-        .inline-form { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; }
-        .inline-form textarea {
-            grid-column: 1 / -1;
-            min-height: 80px;
-            padding: 0.5rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
+        .modal-body textarea {
+            height: auto;
+            min-height: 88px;
+            padding: 10px 12px;
             resize: vertical;
-            font-family: inherit;
-            font-size: 0.85rem;
         }
 
-        @media (max-width: 980px) {
-            .finance-grid { grid-template-columns: 1fr; }
-            .inline-form { grid-template-columns: 1fr; }
+        .hero-card {
+            background: var(--finance-surface);
+            border: 1px solid var(--finance-border);
+            border-radius: var(--radius);
+            box-shadow: var(--finance-shadow);
+            padding: var(--space-3);
+            margin-bottom: var(--space-2);
+            display: grid;
+            gap: var(--space-2);
         }
+
+        .hero-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+        }
+
+        .hero-label {
+            font-size: 0.86rem;
+            color: var(--finance-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+
+        .hero-amount {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        .hero-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: #ecfdf3;
+            color: var(--finance-green);
+        }
+
+        .hero-status.low {
+            background: #fff7ed;
+            color: var(--finance-amber);
+        }
+
+        .hero-status.negative {
+            background: #fef2f2;
+            color: var(--finance-red);
+        }
+
+        .hero-message {
+            margin: 0;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #334155;
+            font-size: 0.92rem;
+        }
+
+        .hero-message.negative {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-1);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+            gap: var(--space-2);
+            margin-bottom: var(--space-2);
+        }
+
+        .metric-card {
+            background: var(--finance-surface);
+            border: 1px solid var(--finance-border);
+            border-radius: var(--radius);
+            padding: 14px;
+        }
+
+        .owner-funds-card {
+            background: var(--finance-surface);
+            border: 1px solid var(--finance-border);
+            border-radius: var(--radius);
+            box-shadow: var(--finance-shadow);
+            padding: var(--space-2);
+            margin-bottom: var(--space-2);
+        }
+
+        .balance-breakdown-card {
+            background: var(--finance-surface);
+            border: 1px solid var(--finance-border);
+            border-radius: var(--radius);
+            box-shadow: var(--finance-shadow);
+            padding: var(--space-2);
+            margin-bottom: var(--space-2);
+        }
+
+        .breakdown-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eef2f7;
+            padding-bottom: 6px;
+            font-size: 0.88rem;
+        }
+
+        .breakdown-row:last-child {
+            border-bottom: none;
+            padding-top: 6px;
+            font-weight: 800;
+            font-size: 0.96rem;
+        }
+
+        .breakdown-value.in { color: var(--finance-green); font-weight: 700; }
+        .breakdown-value.out { color: var(--finance-red); font-weight: 700; }
+
+        .owner-funds-grid {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+
+        .owner-funds-item {
+            border: 1px solid var(--finance-border);
+            border-radius: 10px;
+            background: var(--finance-surface-soft);
+            padding: 10px;
+        }
+
+        .owner-funds-item strong {
+            display: block;
+            color: var(--finance-muted);
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .owner-funds-item span {
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+
+        .owner-funds-item span.in { color: var(--finance-green); }
+        .owner-funds-item span.out { color: var(--finance-red); }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--finance-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .metric-value.in { color: var(--finance-green); }
+        .metric-value.out { color: var(--finance-red); }
+
+        .metric-trend {
+            margin-top: 6px;
+            font-size: 0.8rem;
+            color: var(--finance-muted);
+        }
+            .metric-breakdown {
+                margin-top: 8px;
+                display: grid;
+                gap: 4px;
+                font-size: 0.77rem;
+                color: #64748b;
+            }
+            .metric-breakdown div {
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+            }
+            .metric-link {
+                margin-top: 6px;
+                border: none;
+                background: transparent;
+                padding: 0;
+                color: #2563eb;
+                font-size: 0.78rem;
+                font-weight: 700;
+                cursor: pointer;
+                text-align: left;
+            }
+
+        .insights-card,
+        .activity-card,
+        .cashflow-card,
+        .ledger-card {
+            background: var(--finance-surface);
+            border: 1px solid var(--finance-border);
+            border-radius: var(--radius);
+            box-shadow: var(--finance-shadow);
+            padding: var(--space-2);
+            margin-bottom: var(--space-2);
+        }
+            .breakdown-row.optional {
+                display: none;
+            }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-1);
+            margin-bottom: var(--space-2);
+        }
+
+        .section-head h2 {
+            margin: 0;
+            font-size: 1.04rem;
+            letter-spacing: -0.01em;
+        }
+
+        .insight-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .insight-item {
+            border: 1px solid var(--finance-border);
+            border-radius: 10px;
+            padding: 12px;
+            background: var(--finance-surface-soft);
+        }
+
+        .insight-item.warning {
+            border-color: #fecaca;
+            background: #fef2f2;
+        }
+
+        .insight-item.info {
+            border-color: #dbeafe;
+            background: #eff6ff;
+        }
+
+        .insight-item strong {
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .insight-item span {
+            font-size: 0.86rem;
+            color: #475569;
+        }
+
+        .insight-item .insight-action {
+            margin-top: 10px;
+        }
+
+        .activity-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .activity-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 10px;
+            align-items: center;
+            border: 1px solid var(--finance-border);
+            background: var(--finance-surface-soft);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: #e2e8f0;
+            font-size: 1rem;
+        }
+
+        .activity-main {
+            min-width: 0;
+        }
+
+        .activity-title {
+            margin: 0;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .activity-sub {
+            margin: 2px 0 0 0;
+            font-size: 0.78rem;
+            color: var(--finance-muted);
+        }
+
+        .activity-meta {
+            margin: 2px 0 0 0;
+            font-size: 0.74rem;
+            color: #94a3b8;
+        }
+
+        .activity-amount {
+            font-weight: 800;
+            font-size: 0.94rem;
+        }
+
+        .activity-amount.in { color: var(--finance-green); }
+        .activity-amount.out { color: var(--finance-red); }
+
+        .ledger-toolbar {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-1);
+            margin-bottom: var(--space-2);
+        }
+
+        .section-link {
+            border: none;
+            background: transparent;
+            color: #334155;
+            font-weight: 700;
+            font-size: 0.84rem;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 8px;
+        }
+
+        .section-link.ledger-toggle {
+            border: 1px solid var(--finance-border);
+            background: #fff;
+            padding: 6px 10px;
+        }
+
+        .section-link:hover {
+            background: #eef2f7;
+        }
+
+        .ledger-content {
+            display: none;
+            margin-top: var(--space-2);
+        }
+
+        .ledger-card.expanded .ledger-content {
+            display: block;
+        }
+
+        .cashflow-bars {
+            display: grid;
+            gap: 10px;
+        }
+
+        .flow-row {
+            display: grid;
+            grid-template-columns: 84px 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .flow-date {
+            font-size: 0.76rem;
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        .flow-track {
+            height: 10px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .flow-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            border-radius: 999px;
+        }
+
+        .flow-fill.in { background: #16a34a; }
+        .flow-fill.out { background: #dc2626; }
+
+        .flow-amount {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #334155;
+            min-width: 90px;
+            text-align: right;
+        }
+
+        .ledger-table-wrap {
+            overflow: auto;
+            border: 1px solid var(--finance-border);
+            border-radius: 10px;
+            background: #fff;
+        }
+
+        .ledger-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 980px;
+        }
+
+        .ledger-table th,
+        .ledger-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eef2f7;
+            text-align: left;
+            font-size: 0.85rem;
+            vertical-align: top;
+        }
+
+        .ledger-table th {
+            background: #f8fafc;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.74rem;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .amount-cell.in { color: var(--finance-green); font-weight: 700; }
+        .amount-cell.out { color: var(--finance-red); font-weight: 700; }
+
+        .running-cell.negative { color: var(--finance-red); }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .pill.in { background: #ecfdf3; color: var(--finance-green); }
+        .pill.out { background: #fef2f2; color: var(--finance-red); }
+
+        .empty-state {
+            text-align: center;
+            padding: 22px;
+            color: var(--finance-muted);
+            font-size: 0.9rem;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-2);
+            z-index: 999;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal-card {
+            width: 100%;
+            max-width: 520px;
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid var(--finance-border);
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.24);
+            overflow: hidden;
+        }
+
+        .modal-head {
+            padding: 16px;
+            border-bottom: 1px solid var(--finance-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-head h3 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .modal-body {
+            padding: 16px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .modal-actions {
+            padding: 16px;
+            border-top: 1px solid var(--finance-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn-light {
+            border: 1px solid var(--finance-border);
+            background: #fff;
+            color: #334155;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            border-color: #ef4444;
+            color: #fff;
+        }
+
+        @media (min-width: 760px) {
+            .finance-header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: flex-end;
+            }
+
+            .finance-header-right {
+                width: auto;
+                grid-template-columns: auto auto;
+                align-items: end;
+            }
+
+            .date-range-group {
+                    grid-template-columns: 180px auto;
+                }
+                .custom-range {
+                    grid-template-columns: 150px 150px auto;
+            }
+
+            .header-actions {
+                grid-template-columns: auto auto;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .owner-funds-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .ledger-toolbar {
+                grid-template-columns: 1.4fr 0.85fr 0.9fr 0.9fr auto;
+            }
+        }
+            @media (max-width: 767px) {
+                .finance-shell { padding: 12px; }
+                .finance-title { font-size: 1.35rem; }
+                .hero-card { padding: 14px; gap: 12px; }
+                .hero-amount { font-size: 2.1rem; }
+                .hero-actions .btn { width: 100%; }
+                .metrics-grid { gap: 10px; }
+                .metric-card { padding: 10px; }
+                .metric-label { font-size: 0.74rem; }
+                .metric-value { font-size: 1.05rem; }
+                .metric-trend { font-size: 0.74rem; }
+                .metric-breakdown { font-size: 0.72rem; }
+                .section-head h2 { font-size: 0.96rem; }
+                .activity-item { grid-template-columns: 1fr auto; gap: 8px; }
+                .activity-icon { display: none; }
+                .activity-title { font-size: 0.86rem; }
+                .activity-sub, .activity-meta { font-size: 0.72rem; }
+                .activity-amount { font-size: 0.86rem; }
+                .owner-funds-grid { gap: 8px; }
+                .breakdown-row { font-size: 0.8rem; }
+                .breakdown-row:last-child { font-size: 0.88rem; }
+            }
     </style>
 </head>
 <body class="has-sidebar">
@@ -122,106 +736,700 @@
             </div>
         </header>
 
-        <div class="finance-wrap">
-            <div class="finance-head">
-                <h1>🏦 Finance Ledger</h1>
-            </div>
-
-            <div class="finance-filters">
-                <input type="date" id="start-date">
-                <input type="date" id="end-date">
-                <select id="direction-filter">
-                    <option value="">All Directions</option>
-                    <option value="IN">Money In</option>
-                    <option value="OUT">Money Out</option>
-                </select>
-                <button class="btn btn-primary" onclick="loadFinanceData()">Apply</button>
-            </div>
-
-            <div class="finance-kpis">
-                <div class="finance-kpi">
-                    <div class="finance-kpi-label">Opening Balance</div>
-                    <div class="finance-kpi-value" id="kpi-opening">$0.00</div>
-                </div>
-                <div class="finance-kpi">
-                    <div class="finance-kpi-label">Available Funds</div>
-                    <div class="finance-kpi-value" id="kpi-available">$0.00</div>
-                </div>
-                <div class="finance-kpi">
-                    <div class="finance-kpi-label">Money In</div>
-                    <div class="finance-kpi-value in" id="kpi-in">$0.00</div>
-                </div>
-                <div class="finance-kpi">
-                    <div class="finance-kpi-label">Money Out</div>
-                    <div class="finance-kpi-value out" id="kpi-out">$0.00</div>
+        <div class="finance-shell">
+            <div class="finance-header">
+                <h1 class="finance-title">Finance</h1>
+                <div class="finance-header-right">
+                    <div class="date-range-group">
+                            <select id="range-preset" aria-label="Date range preset">
+                                <option value="30d">Last 30 Days</option>
+                                <option value="this_month">This Month</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                            <div class="custom-range" id="custom-range-wrap" style="display:none;">
+                                <input type="date" id="start-date" aria-label="Start date">
+                                <input type="date" id="end-date" aria-label="End date">
+                                <button class="btn btn-light" id="apply-dates-btn">Apply Range</button>
+                            </div>
+                    </div>
+                    <div class="header-actions">
+                            <button class="btn btn-primary" id="add-funds-btn">+ Add Funds</button>
+                            <button class="btn btn-danger" id="withdraw-btn">Withdraw</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="finance-grid">
-                <div class="finance-card">
-                    <h3>Cash Movement History</h3>
-                    <div style="overflow:auto; max-height: 62vh;">
-                        <table class="tx-table">
+            <section class="hero-card">
+                <div class="hero-top">
+                    <div>
+                        <div class="hero-label">Current Cash Balance</div>
+                        <h2 class="hero-amount" id="hero-balance">$0.00</h2>
+                    </div>
+                    <span class="hero-status" id="hero-status">● Positive</span>
+                </div>
+                <p class="hero-message" id="hero-message">Cash flow is stable.</p>
+                <div class="hero-actions">
+                    <button class="btn btn-primary" id="hero-add-funds">Add Funds</button>
+                </div>
+            </section>
+
+            <section class="balance-breakdown-card">
+                <div class="section-head">
+                    <h2>Balance Breakdown</h2>
+                </div>
+                <div class="breakdown-grid">
+                    <div class="breakdown-row"><span>Opening Balance</span><span id="bd-opening">$0.00</span></div>
+                    <div class="breakdown-row"><span>Owner Investments</span><span class="breakdown-value in" id="bd-owner-invest">+$0.00</span></div>
+                    <div class="breakdown-row"><span>Owner Withdrawals</span><span class="breakdown-value out" id="bd-owner-withdraw">-$0.00</span></div>
+                    <div class="breakdown-row"><span>Expenses</span><span class="breakdown-value out" id="bd-expenses">-$0.00</span></div>
+                    <div class="breakdown-row"><span>PO Payments</span><span class="breakdown-value out" id="bd-po">-$0.00</span></div>
+                        <div class="breakdown-row optional" id="bd-other-in-row"><span>Other Inflows</span><span class="breakdown-value in" id="bd-other-in">+$0.00</span></div>
+                        <div class="breakdown-row optional" id="bd-other-out-row"><span>Other Outflows</span><span class="breakdown-value out" id="bd-other-out">-$0.00</span></div>
+                    <div class="breakdown-row"><span>Current Balance</span><span id="bd-current">$0.00</span></div>
+                </div>
+            </section>
+
+            <section class="metrics-grid">
+                <article class="metric-card">
+                    <div class="metric-label">Cash Out (30 Days)</div>
+                    <div class="metric-value out" id="metric-month-out">$0.00</div>
+                    <div class="metric-trend" id="trend-month-out">No comparison data</div>
+                        <div class="metric-breakdown" id="outflow-breakdown" style="display:none;">
+                            <div><span>PO Payments</span><span id="pct-po">0%</span></div>
+                            <div><span>Expenses</span><span id="pct-expense">0%</span></div>
+                            <div><span>Owner Withdrawals</span><span id="pct-owner-withdraw">0%</span></div>
+                        </div>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-label">Largest Payment</div>
+                    <div class="metric-value out" id="metric-largest-payment">$0.00</div>
+                    <div class="metric-trend" id="trend-largest-payment">No large payment in range</div>
+                        <button class="metric-link" id="largest-payment-link" style="display:none;">View transaction</button>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-label">Transactions</div>
+                    <div class="metric-value" id="metric-total-tx">0</div>
+                    <div class="metric-trend" id="trend-total-tx">No comparison data</div>
+                </article>
+            </section>
+
+            <section class="activity-card">
+                <div class="section-head">
+                    <h2>Recent Activity</h2>
+                    <button class="section-link" id="view-ledger-link">View All Activity</button>
+                </div>
+                <div class="activity-list" id="activity-list">
+                    <div class="empty-state">No recent activity for this period.</div>
+                </div>
+            </section>
+
+            <section class="owner-funds-card">
+                <div class="section-head">
+                    <h2>Owner Funds</h2>
+                </div>
+                <div class="owner-funds-grid">
+                    <div class="owner-funds-item">
+                        <strong>Invested</strong>
+                        <span class="in" id="owner-invested">$0.00</span>
+                    </div>
+                    <div class="owner-funds-item">
+                        <strong>Withdrawn</strong>
+                        <span class="out" id="owner-withdrawn">$0.00</span>
+                    </div>
+                    <div class="owner-funds-item">
+                        <strong>Net</strong>
+                        <span id="owner-net">$0.00</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="cashflow-card" id="cashflow-section">
+                <div class="section-head">
+                    <h2>Cash Flow</h2>
+                </div>
+                <div id="cashflow-bars" class="cashflow-bars"></div>
+            </section>
+
+            <section class="ledger-card" id="full-ledger-section">
+                <div class="section-head">
+                    <h2>Advanced Ledger</h2>
+                    <button class="section-link ledger-toggle" id="toggle-ledger-btn">▶ Show Ledger</button>
+                </div>
+                <div class="ledger-content" id="ledger-content">
+                    <div class="ledger-toolbar">
+                        <input type="search" id="ledger-search" placeholder="Search reference, notes, transaction type">
+                        <select id="ledger-direction-filter">
+                            <option value="">All directions</option>
+                            <option value="IN">Cash In</option>
+                            <option value="OUT">Cash Out</option>
+                        </select>
+                        <select id="ledger-type-filter">
+                            <option value="">All transaction types</option>
+                        </select>
+                        <select id="ledger-sort">
+                            <option value="date_asc">Oldest first</option>
+                            <option value="date_desc">Newest first</option>
+                            <option value="amount_desc">Amount high to low</option>
+                            <option value="amount_asc">Amount low to high</option>
+                        </select>
+                        <button class="btn btn-light" id="export-csv-btn">Export CSV</button>
+                    </div>
+
+                    <div class="ledger-table-wrap">
+                        <table class="ledger-table">
                             <thead>
                                 <tr>
                                     <th>Date</th>
-                                    <th>Type</th>
-                                    <th>Ref</th>
-                                    <th>Note</th>
+                                    <th>Transaction Type</th>
+                                    <th>Reference</th>
+                                    <th>Notes</th>
                                     <th>Amount</th>
+                                    <th>Running Balance</th>
                                 </tr>
                             </thead>
-                            <tbody id="tx-body">
-                                <tr><td colspan="5" style="text-align:center;color:#94a3b8;">Loading...</td></tr>
+                            <tbody id="ledger-body">
+                                <tr><td colspan="6" class="empty-state">Loading ledger data...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
+            </section>
+        </div>
+    </div>
 
-                <div class="finance-card">
-                    <h3>Opening Balance</h3>
-                    <div class="inline-form" style="margin-bottom:0.8rem;">
-                        <input type="number" id="opening-balance-input" step="0.01" min="0" placeholder="Opening balance amount">
-                        <div style="display:flex;align-items:center;">
-                            <button class="btn btn-primary" onclick="saveOpeningBalance()">Set Opening Balance</button>
-                        </div>
-                    </div>
-
-                    <h3>Owner Investment / Withdrawal</h3>
-                    <div class="inline-form">
-                        <select id="owner-movement-type">
-                            <option value="investment">Owner Investment (IN)</option>
-                            <option value="withdrawal">Owner Withdrawal (OUT)</option>
-                        </select>
-                        <input type="number" id="owner-amount" step="0.01" min="0" placeholder="Amount">
-                        <input type="date" id="owner-date">
-                        <input type="text" id="owner-reference" placeholder="Reference (optional)">
-                        <textarea id="owner-notes" placeholder="Notes (optional)"></textarea>
-                    </div>
-                    <div style="margin-top:0.6rem;display:flex;justify-content:flex-end;">
-                        <button class="btn btn-primary" onclick="submitOwnerTransaction()">Save Transaction</button>
-                    </div>
-                </div>
+    <div class="modal-overlay" id="owner-modal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="owner-modal-title">
+            <div class="modal-head">
+                <h3 id="owner-modal-title">Add Funds</h3>
+                <button class="btn btn-light" id="modal-close-btn">Close</button>
+            </div>
+            <div class="modal-body">
+                <input type="number" id="modal-amount" min="0" step="0.01" placeholder="Amount">
+                <input type="date" id="modal-date">
+                <input type="text" id="modal-reference" placeholder="Reference">
+                <textarea id="modal-notes" placeholder="Notes"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-light" id="modal-cancel-btn">Cancel</button>
+                <button class="btn btn-primary" id="modal-submit-btn">Save</button>
             </div>
         </div>
     </div>
 
     <script>
         var currencySymbol = '$';
+        var financeRows = [];
+        var previousRowsCount = 0;
+        var currentMovementType = 'investment';
+        var ledgerExpanded = false;
 
-        function asMoney(v) {
-            return currencySymbol + (parseFloat(v || 0)).toFixed(2);
+        function money(value) {
+            return currencySymbol + Number(value || 0).toFixed(2);
         }
 
-        function buildQuery() {
-            var params = new URLSearchParams();
-            var sd = document.getElementById('start-date').value;
-            var ed = document.getElementById('end-date').value;
-            var dir = document.getElementById('direction-filter').value;
-            if (sd) params.set('start_date', sd);
-            if (ed) params.set('end_date', ed);
-            if (dir) params.set('direction', dir);
-            return params.toString();
+        function moneySigned(value) {
+            var amt = Number(value || 0);
+            return (amt >= 0 ? '+' : '-') + money(Math.abs(amt));
+        }
+
+        function formatDateTime(value) {
+            if (!value) return '-';
+            var date = new Date(value);
+            if (isNaN(date.getTime())) return value;
+            return date.toLocaleString([], {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function getDateRange() {
+            return {
+                start: document.getElementById('start-date').value,
+                end: document.getElementById('end-date').value
+            };
+        }
+
+        function buildQuery(extra) {
+            var q = new URLSearchParams();
+            if (extra && extra.start) q.set('start_date', extra.start);
+            if (extra && extra.end) q.set('end_date', extra.end);
+            return q.toString();
+        }
+
+        function shiftRangeForComparison(start, end) {
+            var s = new Date(start + 'T00:00:00');
+            var e = new Date(end + 'T00:00:00');
+            if (isNaN(s.getTime()) || isNaN(e.getTime()) || e < s) {
+                return null;
+            }
+            var dayMs = 24 * 60 * 60 * 1000;
+            var spanDays = Math.floor((e - s) / dayMs) + 1;
+            var prevEnd = new Date(s.getTime() - dayMs);
+            var prevStart = new Date(prevEnd.getTime() - (spanDays - 1) * dayMs);
+            return {
+                start: prevStart.toISOString().slice(0, 10),
+                end: prevEnd.toISOString().slice(0, 10)
+            };
+        }
+
+        function typeLabel(raw) {
+            var txt = (raw || '').replace(/_/g, ' ').trim();
+            return txt ? txt.replace(/\b\w/g, function(c) { return c.toUpperCase(); }) : '-';
+        }
+
+        function shortRef(value) {
+            var ref = (value || '').trim();
+            if (!ref) return 'No reference';
+            return ref;
+        }
+
+        function activityTitle(tx) {
+            var t = (tx.transaction_type || '').toLowerCase();
+            var ref = shortRef(tx.reference);
+            if (t.indexOf('purchase_order') >= 0) return ref;
+            if (t === 'po_payment') return ref;
+            if (t === 'expense_payment') return ref !== 'No reference' ? ref : 'Expense Payment';
+            if (t === 'owner_investment') return 'Owner Investment';
+            if (t === 'owner_withdrawal') return 'Owner Withdrawal';
+            if (t.indexOf('sale') >= 0) return ref;
+            return typeLabel(tx.transaction_type);
+        }
+
+        function activitySubline(tx) {
+            var t = (tx.transaction_type || '').toLowerCase();
+            if (t.indexOf('purchase_order') >= 0) return 'Purchase Order Payment';
+            if (t === 'po_payment') return 'Purchase Order Payment';
+            if (t === 'expense_payment') return 'Expense Payment';
+            if (t === 'owner_investment') return 'Owner Funding';
+            if (t === 'owner_withdrawal') return 'Owner Draw';
+            if (tx.notes) return tx.notes;
+            return shortRef(tx.reference);
+        }
+
+        function iconForType(tx) {
+            var t = (tx.transaction_type || '').toLowerCase();
+            if (t.indexOf('purchase_order') >= 0) return '📦';
+            if (t === 'po_payment') return '📦';
+            if (t.indexOf('expense') >= 0) return '🧾';
+            if (t.indexOf('owner_investment') >= 0) return '💸';
+            if (t.indexOf('owner_withdrawal') >= 0) return '🏧';
+            if (t.indexOf('sale') >= 0) return '🛒';
+            return tx.direction === 'IN' ? '➕' : '➖';
+        }
+
+        function parseAmount(tx) {
+            return Number(tx.amount || 0);
+        }
+
+        function effectiveTimestamp(tx) {
+            var raw = tx ? tx.transaction_at : null;
+            if (raw && String(raw).length <= 10 && tx.created_at) {
+                raw = tx.created_at;
+            }
+            var ms = new Date(raw || (tx ? tx.created_at : null) || 0).getTime();
+            return isNaN(ms) ? 0 : ms;
+        }
+
+        function effectiveDateTimeLabel(tx) {
+            if (!tx) return '-';
+            if (tx.transaction_at && String(tx.transaction_at).length > 10) {
+                return formatDateTime(tx.transaction_at);
+            }
+            return formatDateTime(tx.created_at || tx.transaction_at);
+        }
+
+        function comparePct(current, previous) {
+            var c = Number(current || 0);
+            var p = Number(previous || 0);
+            if (p === 0 && c === 0) return 'No change vs previous period';
+            if (p === 0) return 'Up from 0 in previous period';
+            var pct = ((c - p) / Math.abs(p)) * 100;
+            var arrow = pct > 0 ? '▲' : (pct < 0 ? '▼' : '■');
+            return arrow + ' ' + Math.abs(pct).toFixed(1) + '% vs previous period';
+        }
+
+        function updateHero(summary) {
+            var balance = Number(summary.available_funds || 0);
+            var moneyOut = Number(summary.money_out || 0);
+            var lowThreshold = Math.max(100, moneyOut * 0.15);
+            var statusEl = document.getElementById('hero-status');
+            var messageEl = document.getElementById('hero-message');
+            var amountEl = document.getElementById('hero-balance');
+
+            amountEl.textContent = money(balance);
+            amountEl.style.color = balance < 0 ? '#dc2626' : '#0f172a';
+
+            statusEl.classList.remove('low', 'negative');
+            messageEl.classList.remove('negative');
+
+            if (balance < 0) {
+                statusEl.classList.add('negative');
+                statusEl.textContent = '⚠ Negative';
+                messageEl.textContent = 'Your cash balance is below zero.';
+                messageEl.classList.add('negative');
+                return;
+            }
+
+            if (balance <= lowThreshold) {
+                statusEl.classList.add('low');
+                statusEl.textContent = '● Low';
+                messageEl.textContent = 'Cash balance is running low. Consider adding funds soon.';
+                return;
+            }
+
+            statusEl.textContent = '● Positive';
+            messageEl.textContent = 'Cash balance is healthy and supports current operations.';
+        }
+
+        function largestOutgoing(rows) {
+            return rows.filter(function(tx) {
+                return String(tx.direction || '').toUpperCase() === 'OUT';
+            }).sort(function(a, b) {
+                return parseAmount(b) - parseAmount(a);
+            })[0] || null;
+        }
+
+        function updateMetrics(currentSummary, previousSummary, rows, currentCount, previousCount) {
+            var currentOut = Number(currentSummary.money_out || 0);
+            var prevOut = Number(previousSummary.money_out || 0);
+            var topOut = largestOutgoing(rows);
+            var poOut = 0;
+            var expenseOut = 0;
+            var ownerWithdrawOut = 0;
+
+            rows.forEach(function(tx) {
+                var t = (tx.transaction_type || '').toLowerCase();
+                var amt = parseAmount(tx);
+                if (String(tx.direction || '').toUpperCase() !== 'OUT') return;
+                if (t === 'po_payment' || t.indexOf('purchase_order') >= 0) poOut += amt;
+                else if (t === 'expense_payment') expenseOut += amt;
+                else if (t === 'owner_withdrawal') ownerWithdrawOut += amt;
+            });
+
+            document.getElementById('metric-month-out').textContent = money(currentOut);
+            document.getElementById('metric-largest-payment').textContent = topOut ? money(parseAmount(topOut)) : money(0);
+            document.getElementById('metric-total-tx').textContent = String(currentCount || 0);
+
+            document.getElementById('trend-month-out').textContent = comparePct(currentOut, prevOut);
+            document.getElementById('trend-largest-payment').textContent = topOut
+                ? typeLabel(topOut.transaction_type) + ' · ' + shortRef(topOut.reference)
+                : 'No large payment in range';
+            document.getElementById('trend-total-tx').textContent = comparePct(currentCount, previousCount);
+
+            var pctWrap = document.getElementById('outflow-breakdown');
+            if (currentOut > 0) {
+                pctWrap.style.display = '';
+                document.getElementById('pct-po').textContent = ((poOut / currentOut) * 100).toFixed(1) + '%';
+                document.getElementById('pct-expense').textContent = ((expenseOut / currentOut) * 100).toFixed(1) + '%';
+                document.getElementById('pct-owner-withdraw').textContent = ((ownerWithdrawOut / currentOut) * 100).toFixed(1) + '%';
+            } else {
+                pctWrap.style.display = 'none';
+            }
+
+            var link = document.getElementById('largest-payment-link');
+            if (topOut) {
+                link.style.display = '';
+                link.textContent = 'View ' + shortRef(topOut.reference);
+                link.onclick = function() {
+                    setLedgerExpanded(true);
+                    document.getElementById('ledger-search').value = (topOut.reference || '').trim();
+                    applyLedgerFilters();
+                    document.getElementById('full-ledger-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                };
+            } else {
+                link.style.display = 'none';
+                link.onclick = null;
+            }
+        }
+
+        function renderActivity(rows) {
+            var list = document.getElementById('activity-list');
+            var top = rows.slice(0, 6);
+            if (!top.length) {
+                list.innerHTML = '<div class="empty-state">No recent activity for this period.</div>';
+                return;
+            }
+
+            list.innerHTML = top.map(function(tx) {
+                var direction = String(tx.direction || '').toUpperCase() === 'IN' ? 'in' : 'out';
+                var sign = direction === 'in' ? '+' : '-';
+                return '<article class="activity-item">' +
+                    '<div class="activity-icon">' + iconForType(tx) + '</div>' +
+                    '<div class="activity-main">' +
+                        '<p class="activity-title">' + activityTitle(tx) + '</p>' +
+                        '<p class="activity-sub">' + activitySubline(tx) + '</p>' +
+                        '<p class="activity-meta">' + effectiveDateTimeLabel(tx) + '</p>' +
+                    '</div>' +
+                    '<div class="activity-amount ' + direction + '">' + sign + money(tx.amount) + '</div>' +
+                '</article>';
+            }).join('');
+        }
+
+        function renderCashFlow(rows) {
+            var section = document.getElementById('cashflow-section');
+            var wrap = document.getElementById('cashflow-bars');
+            if (!rows.length) {
+                section.style.display = 'none';
+                return;
+            }
+
+            var map = {};
+            rows.forEach(function(tx) {
+                var d = tx.transaction_at ? String(tx.transaction_at).slice(0, 10) : 'unknown';
+                if (!map[d]) map[d] = { in: 0, out: 0 };
+                var amt = parseAmount(tx);
+                if (String(tx.direction || '').toUpperCase() === 'IN') map[d].in += amt;
+                else map[d].out += amt;
+            });
+
+            var points = Object.keys(map).sort().slice(-7).map(function(date) {
+                return { date: date, net: map[date].in - map[date].out };
+            });
+
+            if (points.length < 7) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = '';
+
+            var maxAbs = points.reduce(function(max, p) {
+                return Math.max(max, Math.abs(p.net));
+            }, 1);
+
+            wrap.innerHTML = points.map(function(point) {
+                var width = Math.max(4, Math.round((Math.abs(point.net) / maxAbs) * 100));
+                var dir = point.net >= 0 ? 'in' : 'out';
+                var prettyDate = formatDateTime(point.date + 'T00:00:00').split(',')[0];
+                return '<div class="flow-row">' +
+                    '<div class="flow-date">' + prettyDate + '</div>' +
+                    '<div class="flow-track"><div class="flow-fill ' + dir + '" style="width:' + width + '%"></div></div>' +
+                    '<div class="flow-amount">' + moneySigned(point.net) + '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function setLedgerExpanded(expanded) {
+            ledgerExpanded = !!expanded;
+            var section = document.getElementById('full-ledger-section');
+            var btn = document.getElementById('toggle-ledger-btn');
+            section.classList.toggle('expanded', ledgerExpanded);
+            btn.textContent = ledgerExpanded ? '▼ Hide Ledger' : '▶ Show Ledger';
+        }
+
+        function populateTypeFilter(rows) {
+            var filter = document.getElementById('ledger-type-filter');
+            var selected = filter.value;
+            var unique = {};
+            rows.forEach(function(tx) {
+                var t = tx.transaction_type || '';
+                if (t) unique[t] = true;
+            });
+            var options = Object.keys(unique).sort().map(function(t) {
+                var isSelected = selected === t ? ' selected' : '';
+                return '<option value="' + t + '"' + isSelected + '>' + typeLabel(t) + '</option>';
+            }).join('');
+            filter.innerHTML = '<option value="">All transaction types</option>' + options;
+        }
+
+        function computeRunningBalance(rows, openingBalance) {
+            var sorted = rows.slice().sort(function(a, b) {
+                var da = effectiveTimestamp(a);
+                var db = effectiveTimestamp(b);
+                if (da !== db) return da - db;
+                return Number(a.id || 0) - Number(b.id || 0);
+            });
+
+            var balance = Number(openingBalance || 0);
+            var map = {};
+            sorted.forEach(function(tx) {
+                var direction = String(tx.direction || '').toUpperCase() === 'IN' ? 1 : -1;
+                balance += direction * parseAmount(tx);
+                map[tx.id] = balance;
+            });
+            return map;
+        }
+
+        function applyLedgerFilters() {
+            var search = (document.getElementById('ledger-search').value || '').toLowerCase().trim();
+            var direction = document.getElementById('ledger-direction-filter').value;
+            var type = document.getElementById('ledger-type-filter').value;
+            var sortBy = document.getElementById('ledger-sort').value;
+
+            var rows = financeRows.filter(function(tx) {
+                var dirMatch = !direction || String(tx.direction || '').toUpperCase() === direction;
+                var typeMatch = !type || (tx.transaction_type || '') === type;
+                var searchable = [tx.reference, tx.notes, tx.transaction_type].join(' ').toLowerCase();
+                var searchMatch = !search || searchable.indexOf(search) >= 0;
+                return dirMatch && typeMatch && searchMatch;
+            });
+
+            rows.sort(function(a, b) {
+                var da = effectiveTimestamp(a);
+                var db = effectiveTimestamp(b);
+                var aa = parseAmount(a);
+                var ab = parseAmount(b);
+
+                if (sortBy === 'date_asc') return da - db;
+                if (sortBy === 'amount_desc') return ab - aa;
+                if (sortBy === 'amount_asc') return aa - ab;
+                return db - da;
+            });
+
+            renderLedger(rows);
+        }
+
+        function renderLedger(rows) {
+            var body = document.getElementById('ledger-body');
+            if (!rows.length) {
+                body.innerHTML = '<tr><td colspan="6" class="empty-state">No ledger entries for the selected filters.</td></tr>';
+                return;
+            }
+
+            var opening = Number(window.currentOpeningBalance || 0);
+            var runningMap = computeRunningBalance(financeRows, opening);
+
+            body.innerHTML = rows.map(function(tx) {
+                var direction = String(tx.direction || '').toUpperCase() === 'IN' ? 'in' : 'out';
+                var sign = direction === 'in' ? '+' : '-';
+                var running = Number(runningMap[tx.id] || 0);
+                var runningClass = running < 0 ? 'negative' : '';
+                return '<tr>' +
+                    '<td>' + effectiveDateTimeLabel(tx) + '</td>' +
+                    '<td><span class="pill ' + direction + '">' + typeLabel(tx.transaction_type) + '</span></td>' +
+                    '<td>' + (tx.reference || '-') + '</td>' +
+                    '<td>' + (tx.notes || '-') + '</td>' +
+                    '<td class="amount-cell ' + direction + '">' + sign + money(tx.amount) + '</td>' +
+                    '<td class="running-cell ' + runningClass + '">' + money(running) + '</td>' +
+                '</tr>';
+            }).join('');
+        }
+
+        function renderOwnerFunds(rows) {
+            var invested = 0;
+            var withdrawn = 0;
+            var ownerTxCount = 0;
+            rows.forEach(function(tx) {
+                var t = (tx.transaction_type || '').toLowerCase();
+                var amt = parseAmount(tx);
+                if (t === 'owner_investment') {
+                    invested += amt;
+                    ownerTxCount += 1;
+                }
+                if (t === 'owner_withdrawal') {
+                    withdrawn += amt;
+                    ownerTxCount += 1;
+                }
+            });
+
+            var net = invested - withdrawn;
+            var section = document.querySelector('.owner-funds-card');
+            if (net === 0 && ownerTxCount < 3) {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = '';
+            document.getElementById('owner-invested').textContent = money(invested);
+            document.getElementById('owner-withdrawn').textContent = money(withdrawn);
+            document.getElementById('owner-net').textContent = moneySigned(net);
+            document.getElementById('owner-net').className = net >= 0 ? 'in' : 'out';
+        }
+
+        function renderBalanceBreakdown(summary, rows) {
+            var opening = Number(summary.opening_balance || 0);
+            var current = Number(summary.available_funds || 0);
+            var ownerInvest = 0;
+            var ownerWithdraw = 0;
+            var expenses = 0;
+            var poPayments = 0;
+            var otherIn = 0;
+            var otherOut = 0;
+
+            rows.forEach(function(tx) {
+                var t = (tx.transaction_type || '').toLowerCase();
+                var amt = parseAmount(tx);
+                var dir = String(tx.direction || '').toUpperCase();
+                if (t === 'owner_investment') ownerInvest += amt;
+                else if (t === 'owner_withdrawal') ownerWithdraw += amt;
+                else if (t === 'expense_payment') expenses += amt;
+                else if (t === 'po_payment' || t.indexOf('purchase_order') >= 0) poPayments += amt;
+                else if (dir === 'IN') otherIn += amt;
+                else if (dir === 'OUT') otherOut += amt;
+            });
+
+            document.getElementById('bd-opening').textContent = money(opening);
+            document.getElementById('bd-owner-invest').textContent = '+' + money(ownerInvest);
+            document.getElementById('bd-owner-withdraw').textContent = '-' + money(ownerWithdraw);
+            document.getElementById('bd-expenses').textContent = '-' + money(expenses);
+            document.getElementById('bd-po').textContent = '-' + money(poPayments);
+            document.getElementById('bd-other-in').textContent = '+' + money(otherIn);
+            document.getElementById('bd-other-out').textContent = '-' + money(otherOut);
+            document.getElementById('bd-other-in-row').style.display = otherIn > 0.005 ? 'flex' : 'none';
+            document.getElementById('bd-other-out-row').style.display = otherOut > 0.005 ? 'flex' : 'none';
+            document.getElementById('bd-current').textContent = money(current);
+            document.getElementById('bd-current').className = current >= 0 ? 'breakdown-value in' : 'breakdown-value out';
+        }
+
+        function applyRangePreset() {
+            var preset = document.getElementById('range-preset').value;
+            var customWrap = document.getElementById('custom-range-wrap');
+            var now = new Date();
+            if (preset === 'custom') {
+                customWrap.style.display = '';
+                return;
+            }
+
+            customWrap.style.display = 'none';
+            if (preset === '30d') {
+                var start30 = new Date(now.getTime() - (29 * 24 * 60 * 60 * 1000));
+                document.getElementById('start-date').value = start30.toISOString().slice(0, 10);
+                document.getElementById('end-date').value = now.toISOString().slice(0, 10);
+            } else if (preset === 'this_month') {
+                var first = new Date(now.getFullYear(), now.getMonth(), 1);
+                document.getElementById('start-date').value = first.toISOString().slice(0, 10);
+                document.getElementById('end-date').value = now.toISOString().slice(0, 10);
+            }
+            loadFinanceDashboard();
+        }
+
+        function toCsvValue(value) {
+            var text = String(value == null ? '' : value);
+            if (text.indexOf(',') >= 0 || text.indexOf('"') >= 0 || text.indexOf('\n') >= 0) {
+                return '"' + text.replace(/"/g, '""') + '"';
+            }
+            return text;
+        }
+
+        function exportLedgerCsv() {
+            var bodyRows = Array.from(document.querySelectorAll('#ledger-body tr'));
+            if (!bodyRows.length || bodyRows[0].querySelector('.empty-state')) {
+                showToast('No ledger rows to export', 'warning');
+                return;
+            }
+
+            var headers = ['Date', 'Transaction Type', 'Reference', 'Notes', 'Amount', 'Running Balance'];
+            var lines = [headers.join(',')];
+
+            bodyRows.forEach(function(tr) {
+                var cols = Array.from(tr.querySelectorAll('td')).map(function(td) {
+                    return toCsvValue(td.textContent.trim());
+                });
+                lines.push(cols.join(','));
+            });
+
+            var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            var range = getDateRange();
+            a.href = url;
+            a.download = 'finance_ledger_' + (range.start || 'start') + '_to_' + (range.end || 'end') + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
         async function loadUserInfo() {
@@ -242,90 +1450,87 @@
             }
         }
 
-        async function loadFinanceData() {
+        async function fetchSummary(range) {
+            var query = buildQuery(range);
+            var res = await fetch('/api/finance/summary' + (query ? '?' + query : ''));
+            if (!res.ok) throw new Error('Failed to load summary');
+            return res.json();
+        }
+
+        async function fetchTransactions(range) {
+            var query = buildQuery(range);
+            var suffix = query ? '&' + query : '';
+            var res = await fetch('/api/finance/transactions?page=1&page_size=500' + suffix);
+            if (!res.ok) throw new Error('Failed to load transactions');
+            return res.json();
+        }
+
+        async function loadFinanceDashboard() {
+            var range = getDateRange();
             try {
-                var query = buildQuery();
+                var summaryPayload = await fetchSummary(range);
+                var txPayload = await fetchTransactions(range);
+                var summary = summaryPayload.summary || {
+                    opening_balance: 0,
+                    money_in: 0,
+                    money_out: 0,
+                    available_funds: 0
+                };
 
-                var summaryRes = await fetch('/api/finance/summary' + (query ? '?' + query : ''));
-                var summaryData = await summaryRes.json();
-                if (summaryData.summary) {
-                    document.getElementById('kpi-opening').textContent = asMoney(summaryData.summary.opening_balance);
-                    document.getElementById('kpi-available').textContent = asMoney(summaryData.summary.available_funds);
-                    document.getElementById('kpi-in').textContent = asMoney(summaryData.summary.money_in);
-                    document.getElementById('kpi-out').textContent = asMoney(summaryData.summary.money_out);
+                window.currentOpeningBalance = Number(summary.opening_balance || 0);
+                financeRows = txPayload.transactions || [];
+
+                updateHero(summary);
+
+                var prevRange = shiftRangeForComparison(range.start, range.end);
+                var previousSummary = { money_in: 0, money_out: 0 };
+                previousRowsCount = 0;
+
+                if (prevRange) {
+                    var prevSummaryPayload = await fetchSummary(prevRange);
+                    var prevTxPayload = await fetchTransactions(prevRange);
+                    previousSummary = prevSummaryPayload.summary || previousSummary;
+                    previousRowsCount = Number(prevTxPayload.total || 0);
                 }
 
-                var txRes = await fetch('/api/finance/transactions?page=1&page_size=100' + (query ? '&' + query : ''));
-                var txData = await txRes.json();
-                var body = document.getElementById('tx-body');
-                var rows = txData.transactions || [];
-                if (!rows.length) {
-                    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No transactions found</td></tr>';
-                    return;
-                }
-                body.innerHTML = rows.map(function(tx) {
-                    var dt = tx.transaction_at ? new Date(tx.transaction_at).toLocaleString() : '-';
-                    var amtClass = (tx.direction || '').toLowerCase() === 'in' ? 'in' : 'out';
-                    var sign = amtClass === 'in' ? '+' : '-';
-                    return '<tr>' +
-                        '<td>' + dt + '</td>' +
-                        '<td>' + (tx.transaction_type || '-') + '</td>' +
-                        '<td>' + (tx.reference || '-') + '</td>' +
-                        '<td>' + (tx.notes || '-') + '</td>' +
-                        '<td class="tx-amount ' + amtClass + '">' + sign + asMoney(tx.amount) + '</td>' +
-                    '</tr>';
-                }).join('');
+                updateMetrics(summary, previousSummary, financeRows, Number(txPayload.total || financeRows.length), previousRowsCount);
+                renderActivity(financeRows);
+                renderOwnerFunds(financeRows);
+                renderBalanceBreakdown(summary, financeRows);
+                renderCashFlow(financeRows);
+                populateTypeFilter(financeRows);
+                applyLedgerFilters();
             } catch (e) {
                 console.error(e);
-                showToast('Failed to load finance data', 'error');
+                showToast('Failed to load finance dashboard', 'error');
             }
         }
 
-        async function loadOpeningBalance() {
-            try {
-                var res = await fetch('/api/finance/opening-balance');
-                var data = await res.json();
-                if (res.ok) {
-                    var opening = parseFloat(data.opening_balance || 0);
-                    document.getElementById('opening-balance-input').value = opening.toFixed(2);
-                }
-            } catch (e) {
-                console.error(e);
-            }
+        function openOwnerModal(mode) {
+            currentMovementType = mode;
+            var isFunds = mode === 'investment';
+            document.getElementById('owner-modal-title').textContent = isFunds ? 'Add Funds' : 'Record Withdrawal';
+            var submitBtn = document.getElementById('modal-submit-btn');
+            submitBtn.textContent = isFunds ? 'Add Funds' : 'Record Withdrawal';
+            submitBtn.className = 'btn ' + (isFunds ? 'btn-primary' : 'btn-danger');
+
+            document.getElementById('modal-amount').value = '';
+            document.getElementById('modal-reference').value = '';
+            document.getElementById('modal-notes').value = '';
+            document.getElementById('owner-modal').classList.add('open');
+            document.getElementById('owner-modal').setAttribute('aria-hidden', 'false');
         }
 
-        async function saveOpeningBalance() {
-            var amount = parseFloat(document.getElementById('opening-balance-input').value || '0');
-            if (amount < 0) {
-                showToast('Opening balance cannot be negative', 'warning');
-                return;
-            }
-
-            try {
-                var res = await fetch('/api/finance/opening-balance', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ opening_balance: amount })
-                });
-                var data = await res.json();
-                if (!res.ok || !data.success) {
-                    showToast(data.error || 'Failed to save opening balance', 'error');
-                    return;
-                }
-                showToast('Opening balance updated', 'success');
-                loadFinanceData();
-            } catch (e) {
-                console.error(e);
-                showToast('Failed to save opening balance', 'error');
-            }
+        function closeOwnerModal() {
+            document.getElementById('owner-modal').classList.remove('open');
+            document.getElementById('owner-modal').setAttribute('aria-hidden', 'true');
         }
 
-        async function submitOwnerTransaction() {
-            var movementType = document.getElementById('owner-movement-type').value;
-            var amount = parseFloat(document.getElementById('owner-amount').value || '0');
-            var transactionDate = document.getElementById('owner-date').value;
-            var reference = document.getElementById('owner-reference').value;
-            var notes = document.getElementById('owner-notes').value;
+        async function submitOwnerMovement() {
+            var amount = Number(document.getElementById('modal-amount').value || 0);
+            var transactionDate = document.getElementById('modal-date').value;
+            var reference = document.getElementById('modal-reference').value;
+            var notes = document.getElementById('modal-notes').value;
 
             if (amount <= 0) {
                 showToast('Enter a valid amount', 'warning');
@@ -337,41 +1542,71 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        movement_type: movementType,
+                        movement_type: currentMovementType,
                         amount: amount,
                         transaction_date: transactionDate,
                         reference: reference,
                         notes: notes
                     })
                 });
+
                 var data = await res.json();
                 if (!res.ok || !data.success) {
                     showToast(data.error || 'Failed to save transaction', 'error');
                     return;
                 }
 
-                document.getElementById('owner-amount').value = '';
-                document.getElementById('owner-reference').value = '';
-                document.getElementById('owner-notes').value = '';
-                showToast('Transaction saved', 'success');
-                loadFinanceData();
+                closeOwnerModal();
+                showToast(currentMovementType === 'investment' ? 'Funds added' : 'Withdrawal recorded', 'success');
+                await loadFinanceDashboard();
             } catch (e) {
                 console.error(e);
                 showToast('Failed to save transaction', 'error');
             }
         }
 
+        function bindEvents() {
+            document.getElementById('apply-dates-btn').addEventListener('click', loadFinanceDashboard);
+            document.getElementById('range-preset').addEventListener('change', applyRangePreset);
+            document.getElementById('add-funds-btn').addEventListener('click', function() { openOwnerModal('investment'); });
+            document.getElementById('withdraw-btn').addEventListener('click', function() { openOwnerModal('withdrawal'); });
+            document.getElementById('hero-add-funds').addEventListener('click', function() { openOwnerModal('investment'); });
+            document.getElementById('view-ledger-link').addEventListener('click', function() {
+                setLedgerExpanded(true);
+                document.getElementById('full-ledger-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            document.getElementById('toggle-ledger-btn').addEventListener('click', function() {
+                setLedgerExpanded(!ledgerExpanded);
+            });
+
+            ['ledger-search', 'ledger-direction-filter', 'ledger-type-filter', 'ledger-sort'].forEach(function(id) {
+                document.getElementById(id).addEventListener('input', applyLedgerFilters);
+                document.getElementById(id).addEventListener('change', applyLedgerFilters);
+            });
+
+            document.getElementById('export-csv-btn').addEventListener('click', exportLedgerCsv);
+            document.getElementById('modal-close-btn').addEventListener('click', closeOwnerModal);
+            document.getElementById('modal-cancel-btn').addEventListener('click', closeOwnerModal);
+            document.getElementById('modal-submit-btn').addEventListener('click', submitOwnerMovement);
+
+            document.getElementById('owner-modal').addEventListener('click', function(e) {
+                if (e.target.id === 'owner-modal') closeOwnerModal();
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', async function() {
             var now = new Date();
-            var start = new Date(now.getFullYear(), now.getMonth(), 1);
-            var sd = start.toISOString().split('T')[0];
-            var ed = now.toISOString().split('T')[0];
-            document.getElementById('start-date').value = sd;
-            document.getElementById('end-date').value = ed;
-            document.getElementById('owner-date').value = ed;
+            var today = now.toISOString().slice(0, 10);
+            var start30 = new Date(now.getTime() - (29 * 24 * 60 * 60 * 1000));
+            document.getElementById('start-date').value = start30.toISOString().slice(0, 10);
+            document.getElementById('end-date').value = today;
+            document.getElementById('modal-date').value = today;
+            document.getElementById('range-preset').value = '30d';
+
+            bindEvents();
+            setLedgerExpanded(false);
             await loadUserInfo();
-            await loadOpeningBalance();
-            await loadFinanceData();
+            await loadFinanceDashboard();
         });
     </script>
 </body>

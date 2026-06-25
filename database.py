@@ -596,33 +596,58 @@ def init_db():
         cursor.execute("ALTER TABLE products ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1")
 
     # Backfill missing variant_group values so manually added variants join the correct family.
+    # Legacy databases may not have products.shop_id yet at this point in the migration.
     import uuid
-    null_variant_rows = cursor.execute(
-        '''
-        SELECT id, shop_id, name, category, size, color
-        FROM products
-        WHERE variant_group IS NULL
-        ORDER BY shop_id, name, category, id
-        '''
-    ).fetchall()
+    has_products_shop_id = _column_exists(cursor, "products", "shop_id")
+    if has_products_shop_id:
+        null_variant_rows = cursor.execute(
+            '''
+            SELECT id, shop_id, name, category, size, color
+            FROM products
+            WHERE variant_group IS NULL
+            ORDER BY shop_id, name, category, id
+            '''
+        ).fetchall()
+    else:
+        null_variant_rows = cursor.execute(
+            '''
+            SELECT id, name, category, size, color
+            FROM products
+            WHERE variant_group IS NULL
+            ORDER BY name, category, id
+            '''
+        ).fetchall()
 
     variant_group_updates = []
     grouped_null_rows = {}
     for row in null_variant_rows:
-        group_key = (row['shop_id'], row['name'], row['category'])
+        row_shop_id = row['shop_id'] if has_products_shop_id else None
+        group_key = (row_shop_id, row['name'], row['category'])
         grouped_null_rows.setdefault(group_key, []).append(row)
 
     for (shop_id, name, category), rows in grouped_null_rows.items():
-        sibling = cursor.execute(
-            '''
-            SELECT variant_group
-            FROM products
-            WHERE shop_id = ? AND name = ? AND variant_group IS NOT NULL
-            ORDER BY id
-            LIMIT 1
-            ''',
-            (shop_id, name)
-        ).fetchone()
+        if has_products_shop_id:
+            sibling = cursor.execute(
+                '''
+                SELECT variant_group
+                FROM products
+                WHERE shop_id = ? AND name = ? AND variant_group IS NOT NULL
+                ORDER BY id
+                LIMIT 1
+                ''',
+                (shop_id, name)
+            ).fetchone()
+        else:
+            sibling = cursor.execute(
+                '''
+                SELECT variant_group
+                FROM products
+                WHERE name = ? AND variant_group IS NOT NULL
+                ORDER BY id
+                LIMIT 1
+                ''',
+                (name,)
+            ).fetchone()
 
         inherited_group = sibling['variant_group'] if sibling else None
         if not inherited_group:

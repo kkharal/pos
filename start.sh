@@ -277,7 +277,7 @@ fi
 
 # Determine run mode
 MODE="${RUN_MODE:-production}"
-HOST="${HOST:-127.0.0.1}"
+HOST="${HOST:-0.0.0.0}"
 PORT="${PORT:-5000}"
 WORKERS="${GUNICORN_WORKERS:-4}"
 
