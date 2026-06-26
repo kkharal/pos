@@ -988,6 +988,7 @@
                 <input type="file" id="csv-file-input" accept=".csv" style="display:none;" onchange="importCSV(this)">
                 <button class="btn btn-primary admin-only" id="add-product-btn" onclick="openAddProductModal()" style="display:none;">+ Add Product</button>
                 <button class="btn btn-secondary admin-only" id="add-variants-btn" onclick="openVariantModal()" style="font-size:0.82rem; padding:0.4rem 0.75rem; display:none;">Variants</button>
+                <button class="btn btn-secondary admin-only" id="add-blueprint-btn" onclick="openBlueprintModal()" style="font-size:0.82rem; padding:0.4rem 0.75rem; display:none;">PO Seed</button>
             </div>
         </div>
         <div class="summary-row" id="product-summary"></div>
@@ -1094,6 +1095,45 @@
                     <div id="variant-stock-table" style="max-height:200px;overflow-y:auto;border:1px solid #e9ecef;border-radius:4px;"></div>
                 </div>
                 <div class="modal-actions"><button type="submit" class="btn btn-primary">Create All Variants</button><button type="button" class="btn btn-secondary" onclick="closeVariantModal()">Cancel</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Zero-Stock Variant Blueprint Modal -->
+    <div id="blueprint-modal" class="modal">
+        <div class="modal-content variant-entry-modal" style="max-width:700px;">
+            <div class="modal-header"><h2>Create PO Seed Variants</h2><button class="close-btn" onclick="closeBlueprintModal()">&times;</button></div>
+            <form id="blueprint-form">
+                <div class="form-group"><label>Product Name *</label><input type="text" id="blueprint-name" required placeholder="e.g. Basic T-Shirt"></div>
+                <div class="form-group"><label>Category *</label><select id="blueprint-category" required><option value="">Select</option><option value="Shirts">Shirts</option><option value="Pants">Pants</option><option value="Co-ord Sets">Co-ord Sets</option><option value="Dresses">Dresses</option><option value="Jackets">Jackets</option><option value="Shoes">Shoes</option><option value="Accessories">Accessories</option><option value="Other">Other</option></select></div>
+                <div class="modal-two-col"><div class="form-group" style="flex:1;"><label>Cost Price *</label><input type="number" id="blueprint-cost-price" step="0.01" min="0" required></div><div class="form-group" style="flex:1;"><label>Sell Price *</label><input type="number" id="blueprint-price" step="0.01" min="0" required></div></div>
+                <div class="form-group"><label>Description</label><textarea id="blueprint-description" placeholder="Shared description"></textarea></div>
+                <hr style="margin:1rem 0;border:none;border-top:2px dashed #ddd;">
+                <h3 style="margin-bottom:0.75rem;font-size:1rem;color:#2c3e50;">Sizes & Colors</h3>
+                <div class="form-group"><label>Sizes *</label>
+                    <div id="blueprint-sizes" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.3rem;margin-bottom:0.5rem;">
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="blueprint-sizes" value="XS"> XS</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="blueprint-sizes" value="S"> S</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="blueprint-sizes" value="M"> M</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="blueprint-sizes" value="L"> L</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="blueprint-sizes" value="XL"> XL</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="blueprint-sizes" value="XXL"> XXL</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="blueprint-sizes" value="XXXL"> XXXL</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;cursor:pointer;padding:0.25rem 0.45rem;font-size:0.9rem;border:1px solid #ddd;border-radius:4px;white-space:nowrap;"><input type="checkbox" name="blueprint-sizes" value="Free Size"> Free</label>
+                    </div>
+                    <input type="text" id="blueprint-custom-sizes" placeholder="Custom sizes (comma-separated)" style="margin-top:0.4rem;font-size:0.85rem;">
+                </div>
+                <div class="form-group"><label>Colors (comma-separated) *</label><input type="text" id="blueprint-colors" placeholder="e.g. Red, Blue, Black"></div>
+                <div id="blueprint-preview" style="margin:1rem 0;padding:0.75rem;background:#f8f9fa;border-radius:6px;display:none;">
+                    <strong style="font-size:0.85rem;">Select variants to create with zero stock</strong>
+                    <div style="margin-top:0.45rem;display:flex;gap:0.45rem;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-secondary" style="font-size:0.72rem;padding:0.24rem 0.55rem;" onclick="setAllBlueprintCombos(true)">Select All</button>
+                        <button type="button" class="btn btn-secondary" style="font-size:0.72rem;padding:0.24rem 0.55rem;" onclick="setAllBlueprintCombos(false)">Clear All</button>
+                    </div>
+                    <div id="blueprint-combo-count" style="margin-top:0.4rem;font-size:0.8rem;color:#64748b;"></div>
+                    <div id="blueprint-combo-table" style="max-height:200px;overflow-y:auto;border:1px solid #e9ecef;border-radius:4px;margin-top:0.5rem;"></div>
+                </div>
+                <div class="modal-actions"><button type="submit" class="btn btn-primary">Create Zero-Stock Variants</button><button type="button" class="btn btn-secondary" onclick="closeBlueprintModal()">Cancel</button></div>
             </form>
         </div>
     </div>
@@ -2736,6 +2776,23 @@
             else setStoredFlag(variantModalOpenKey, false);
         }
 
+        function openBlueprintModal() {
+            const sel = document.getElementById('blueprint-category');
+            const cats = [...new Set(products.map(p=>normalizeCategoryLabel(p.category)).filter(Boolean))].sort();
+            const defs = ['','Shirts','Pants','Co-ord Sets','Dresses','Jackets','Shoes','Accessories','Other'];
+            const all = [...new Set([...defs, ...cats])];
+            sel.innerHTML = all.map(c => c==='' ? '<option value="">Select</option>' : `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('blueprint-modal').classList.add('active');
+        }
+
+        function closeBlueprintModal() {
+            document.getElementById('blueprint-modal').classList.remove('active');
+            document.getElementById('blueprint-form').reset();
+            document.getElementById('blueprint-preview').style.display='none';
+            document.getElementById('blueprint-combo-table').innerHTML = '';
+            document.getElementById('blueprint-combo-count').textContent = '';
+        }
+
         function getVariantCombos() {
             const checked = [...document.querySelectorAll('#variant-sizes input[name="sizes"]:checked')].map(c=>c.value);
             const custom = document.getElementById('variant-custom-sizes').value.split(',').map(s=>s.trim()).filter(Boolean);
@@ -2766,6 +2823,89 @@
             });
 
             return { sizes, colors, normalizedChanges, mergedDuplicates };
+        }
+
+        function getBlueprintCombos() {
+            const checked = [...document.querySelectorAll('#blueprint-sizes input[name="blueprint-sizes"]:checked')].map(c=>c.value);
+            const custom = document.getElementById('blueprint-custom-sizes').value.split(',').map(s=>s.trim()).filter(Boolean);
+            const sizes = [...new Set([...checked, ...custom])];
+            const rawColors = document.getElementById('blueprint-colors').value.split(',').map(c=>c.trim()).filter(Boolean);
+
+            const colors = [];
+            const seen = new Set();
+            const normalizedChanges = [];
+            const mergedDuplicates = [];
+
+            rawColors.forEach(function(raw) {
+                const normalized = normalizeColorInput(raw);
+                if (!normalized) return;
+
+                const key = normalized.toLowerCase();
+                if (raw !== normalized) {
+                    normalizedChanges.push({ from: raw, to: normalized });
+                }
+
+                if (seen.has(key)) {
+                    mergedDuplicates.push({ from: raw, to: normalized });
+                    return;
+                }
+
+                seen.add(key);
+                colors.push(normalized);
+            });
+
+            return { sizes, colors, normalizedChanges, mergedDuplicates };
+        }
+
+        function updateBlueprintPreview() {
+            const { sizes, colors } = getBlueprintCombos();
+            const preview = document.getElementById('blueprint-preview');
+            const table = document.getElementById('blueprint-combo-table');
+            const count = document.getElementById('blueprint-combo-count');
+            let combos = [];
+            if (sizes.length && colors.length) {
+                for (const s of sizes) for (const c of colors) combos.push({ size: s, color: c });
+            }
+
+            if (combos.length > 0) {
+                let h = '<table style="width:100%;border-collapse:collapse;font-size:0.82rem;"><thead><tr style="background:#e9ecef;"><th style="padding:0.4rem 0.6rem;text-align:center;width:86px;">Create</th><th style="padding:0.4rem 0.6rem;text-align:left;">Variant</th><th style="padding:0.4rem 0.6rem;text-align:center;width:120px;">Initial Stock</th></tr></thead><tbody>';
+                combos.forEach((c,i) => {
+                    const key = `${c.size}||${c.color}`;
+                    h += `<tr style="background:${i%2===0?'#fff':'#f8f9fa'};"><td style="padding:0.35rem 0.6rem;text-align:center;"><input type="checkbox" class="blueprint-combo-check" data-key="${key}" data-size="${c.size}" data-color="${c.color}" checked></td><td style="padding:0.35rem 0.6rem;">${c.size} / ${c.color}</td><td style="padding:0.35rem 0.6rem;text-align:center;">0</td></tr>`;
+                });
+                h += '</tbody></table>';
+                table.innerHTML = h;
+                updateBlueprintSelectionCount();
+                preview.style.display = 'block';
+            } else {
+                table.innerHTML = '';
+                count.textContent = '';
+                preview.style.display = 'none';
+            }
+        }
+
+        function updateBlueprintSelectionCount() {
+            const total = document.querySelectorAll('.blueprint-combo-check').length;
+            const selected = document.querySelectorAll('.blueprint-combo-check:checked').length;
+            const count = document.getElementById('blueprint-combo-count');
+            if (!count) return;
+            count.textContent = 'Selected: ' + selected + ' of ' + total + ' variants (created with stock = 0)';
+        }
+
+        function setAllBlueprintCombos(checked) {
+            document.querySelectorAll('.blueprint-combo-check').forEach(function(input) {
+                input.checked = !!checked;
+            });
+            updateBlueprintSelectionCount();
+        }
+
+        function getSelectedBlueprintPairs() {
+            return Array.from(document.querySelectorAll('.blueprint-combo-check:checked')).map(function(input) {
+                return {
+                    size: input.getAttribute('data-size') || '',
+                    color: input.getAttribute('data-color') || ''
+                };
+            });
         }
         function updateVariantPreview() {
             const { sizes, colors, normalizedChanges, mergedDuplicates } = getVariantCombos();
@@ -2805,6 +2945,14 @@
         document.getElementById('variant-sizes').addEventListener('change', updateVariantPreview);
         document.getElementById('variant-custom-sizes').addEventListener('input', updateVariantPreview);
         document.getElementById('variant-colors').addEventListener('input', updateVariantPreview);
+        document.getElementById('blueprint-sizes').addEventListener('change', updateBlueprintPreview);
+        document.getElementById('blueprint-custom-sizes').addEventListener('input', updateBlueprintPreview);
+        document.getElementById('blueprint-colors').addEventListener('input', updateBlueprintPreview);
+        document.getElementById('blueprint-combo-table').addEventListener('change', function(e) {
+            if (e.target && e.target.classList && e.target.classList.contains('blueprint-combo-check')) {
+                updateBlueprintSelectionCount();
+            }
+        });
         document.getElementById('variant-form').addEventListener('input', persistVariantDraft);
         document.getElementById('variant-form').addEventListener('change', persistVariantDraft);
 
@@ -2854,6 +3002,78 @@
             }
         });
 
+        document.getElementById('blueprint-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (e.target.dataset.submitting === '1') return;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            const { sizes, colors, normalizedChanges, mergedDuplicates } = getBlueprintCombos();
+            if (!sizes.length || !colors.length) {
+                showToast('Select at least one size and one color', 'warning');
+                return;
+            }
+
+            const selectedPairs = getSelectedBlueprintPairs();
+            if (!selectedPairs.length) {
+                showToast('Select at least one size/color combination', 'warning');
+                return;
+            }
+
+            const data = {
+                name: document.getElementById('blueprint-name').value.trim(),
+                category: normalizeCategoryLabel(document.getElementById('blueprint-category').value),
+                cost_price: parseFloat(document.getElementById('blueprint-cost-price').value) || 0,
+                price: parseFloat(document.getElementById('blueprint-price').value) || 0,
+                description: document.getElementById('blueprint-description').value.trim(),
+                sizes,
+                colors,
+                selected_pairs: selectedPairs
+            };
+
+            if (!data.name || !data.category) {
+                showToast('Name and Category required', 'warning');
+                return;
+            }
+
+            if (normalizedChanges.length) {
+                showToast('Normalized variant colors to consistent format', 'warning');
+            }
+            if (mergedDuplicates.length) {
+                showToast('Merged duplicate colors after normalization', 'warning');
+            }
+
+            try {
+                e.target.dataset.submitting = '1';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Creating...';
+                }
+
+                const r = await fetch('/api/products/create-variant-blueprint', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const res = await r.json();
+
+                if (r.ok && res.success) {
+                    showToast('Created ' + (res.created || 0) + ' zero-stock variants for PO planning', 'success');
+                    closeBlueprintModal();
+                    loadProducts();
+                } else {
+                    showToast('Error: ' + (res.error || 'Unknown'), 'error');
+                }
+            } catch (err) {
+                showToast('Error creating zero-stock variants', 'error');
+            } finally {
+                delete e.target.dataset.submitting;
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Create Zero-Stock Variants';
+                }
+            }
+        });
+
         // User Info & Auth
         async function loadUserInfo() {
             try {
@@ -2869,6 +3089,7 @@
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display='');
                     document.getElementById('add-product-btn').style.display='inline-block';
                     document.getElementById('add-variants-btn').style.display='inline-block';
+                    document.getElementById('add-blueprint-btn').style.display='inline-block';
                     document.getElementById('import-csv-btn').style.display='inline-block';
                 } else { document.querySelectorAll('.admin-only').forEach(el => el.style.display='none'); }
                 if (user.role==='super_admin') { document.querySelectorAll('.super-admin-only').forEach(el=>el.style.display=''); loadShopSwitcher(user.active_shop_id); }

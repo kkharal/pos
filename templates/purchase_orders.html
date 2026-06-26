@@ -391,6 +391,8 @@
                 <!-- Summary -->
                 <div class="po-summary">
                     <div class="po-summary-box">
+                        <div class="po-summary-row"><span>Total Variants</span><span id="po-variant-count">0</span></div>
+                        <div class="po-summary-row"><span>Total Qty</span><span id="po-total-qty">0</span></div>
                         <div class="po-summary-row"><span>Subtotal</span><span id="po-subtotal">$0.00</span></div>
                         <div class="po-summary-row total"><span>Total</span><span id="po-total">$0.00</span></div>
                     </div>
@@ -825,6 +827,33 @@
             document.getElementById('view-po-title').textContent = poNum;
 
             const items = po.items || [];
+            const totalVariants = items.length;
+            const totalOrderedQty = items.reduce(function(sum, item) {
+                return sum + (parseInt(item.quantity_ordered, 10) || 0);
+            }, 0);
+            const totalReceivedQty = items.reduce(function(sum, item) {
+                return sum + (parseInt(item.quantity_received, 10) || 0);
+            }, 0);
+            const totalRemainingQty = Math.max(0, totalOrderedQty - totalReceivedQty);
+            const totalAmount = parseFloat(po.total_amount || 0);
+            const remainingAmount = items.reduce(function(sum, item) {
+                const ordered = parseInt(item.quantity_ordered, 10) || 0;
+                const received = parseInt(item.quantity_received, 10) || 0;
+                const remainingQty = Math.max(0, ordered - received);
+                const unitCost = parseFloat(item.unit_cost || 0);
+                return sum + (remainingQty * unitCost);
+            }, 0);
+
+            var totalLiveStock = 0;
+            var hasLiveStock = false;
+            items.forEach(function(item) {
+                const product = products.find(function(p) { return p.id === item.product_id; });
+                if (product && typeof product.stock_quantity !== 'undefined') {
+                    totalLiveStock += (parseInt(product.stock_quantity, 10) || 0);
+                    hasLiveStock = true;
+                }
+            });
+
             let html = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem 1.5rem; margin-bottom:1.25rem; font-size:0.9rem;">
                 <div><span style="color:#64748b;">Supplier:</span> <strong>${po.supplier_name}</strong></div>
                 <div><span style="color:#64748b;">Status:</span> ${getStatusBadge(po.status)}</div>
@@ -832,6 +861,16 @@
                 <div><span style="color:#64748b;">Expected:</span> ${po.expected_date ? new Date(po.expected_date).toLocaleDateString() : '-'}</div>
                 ${po.reference ? `<div><span style="color:#64748b;">Reference:</span> ${escapeHtml(po.reference)}</div>` : ''}
                 ${po.received_at ? `<div><span style="color:#64748b;">Received:</span> ${parseUTC(po.received_at).toLocaleDateString()}</div>` : ''}
+            </div>`;
+
+            html += `<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:0.5rem; margin-bottom:1rem;">
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.5rem 0.65rem;"><div style="font-size:0.72rem; color:#64748b; text-transform:uppercase; letter-spacing:0.03em;">Variants</div><div style="font-size:0.95rem; font-weight:700; color:#1e293b; margin-top:0.1rem;">${totalVariants}</div></div>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.5rem 0.65rem;"><div style="font-size:0.72rem; color:#64748b; text-transform:uppercase; letter-spacing:0.03em;">Ordered Qty</div><div style="font-size:0.95rem; font-weight:700; color:#1e293b; margin-top:0.1rem;">${totalOrderedQty}</div></div>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.5rem 0.65rem;"><div style="font-size:0.72rem; color:#64748b; text-transform:uppercase; letter-spacing:0.03em;">Received Qty</div><div style="font-size:0.95rem; font-weight:700; color:#166534; margin-top:0.1rem;">${totalReceivedQty}</div></div>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.5rem 0.65rem;"><div style="font-size:0.72rem; color:#64748b; text-transform:uppercase; letter-spacing:0.03em;">Remaining Qty</div><div style="font-size:0.95rem; font-weight:700; color:${totalRemainingQty > 0 ? '#92400e' : '#166534'}; margin-top:0.1rem;">${totalRemainingQty}</div></div>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.5rem 0.65rem;"><div style="font-size:0.72rem; color:#64748b; text-transform:uppercase; letter-spacing:0.03em;">Live Stock</div><div style="font-size:0.95rem; font-weight:700; color:#1e293b; margin-top:0.1rem;">${hasLiveStock ? totalLiveStock : '-'}</div></div>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.5rem 0.65rem;"><div style="font-size:0.72rem; color:#64748b; text-transform:uppercase; letter-spacing:0.03em;">Total Amount</div><div style="font-size:0.95rem; font-weight:700; color:#1e293b; margin-top:0.1rem;">${currencySymbol}${totalAmount.toFixed(2)}</div></div>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.5rem 0.65rem;"><div style="font-size:0.72rem; color:#64748b; text-transform:uppercase; letter-spacing:0.03em;">Remaining Amount</div><div style="font-size:0.95rem; font-weight:700; color:${remainingAmount > 0 ? '#92400e' : '#166534'}; margin-top:0.1rem;">${currencySymbol}${remainingAmount.toFixed(2)}</div></div>
             </div>`;
             if (po.notes) html += `<div style="background:#f8fafc; padding:0.6rem 0.8rem; border-radius:6px; margin-bottom:1rem; font-size:0.85rem; color:#475569;"><strong>Notes:</strong> ${escapeHtml(po.notes)}</div>`;
 
@@ -875,8 +914,6 @@
                 });
                 html += `</tbody></table></div>`;
             }
-            html += `<div style="text-align:right; margin-top:0.75rem; font-weight:700; font-size:1.05rem; color:#1e293b;">Total: ${currencySymbol}${po.total_amount.toFixed(2)}</div>`;
-
             document.getElementById('view-po-content').innerHTML = html;
             document.getElementById('view-po-modal').classList.add('active');
         }
@@ -928,6 +965,8 @@
 
             if (orderItems.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6"><div class="po-empty-state"><div class="empty-icon">📦</div><p>Search and add products above</p></div></td></tr>';
+                document.getElementById('po-variant-count').textContent = '0';
+                document.getElementById('po-total-qty').textContent = '0';
                 document.getElementById('po-subtotal').textContent = `${currencySymbol}0.00`;
                 document.getElementById('po-total').textContent = `${currencySymbol}0.00`;
                 submitBtn.disabled = true;
@@ -936,9 +975,11 @@
             }
 
             var total = 0;
+            var totalQty = 0;
             tbody.innerHTML = orderItems.map(function(item, idx) {
                 const lineTotal = item.quantity * item.unit_cost;
                 total += lineTotal;
+                totalQty += item.quantity || 0;
                 const stockClass = item.stock <= 0 ? ' low' : '';
                 return `<tr>
                     <td>
@@ -953,6 +994,8 @@
                 </tr>`;
             }).join('');
 
+            document.getElementById('po-variant-count').textContent = String(orderItems.length);
+            document.getElementById('po-total-qty').textContent = String(totalQty);
             document.getElementById('po-subtotal').textContent = `${currencySymbol}${total.toFixed(2)}`;
             document.getElementById('po-total').textContent = `${currencySymbol}${total.toFixed(2)}`;
             submitBtn.disabled = false;
@@ -1377,10 +1420,8 @@
 
             document.getElementById('step-quantity-summary').textContent =
                 escapeHtml(selectorState.product.name) + ' (' + selectorState.colors.length + ' color(s), ' + rows.length + ' variants)';
-            document.getElementById('selector-variant-display').textContent = rows.length + ' color/size variants';
-
-            var totalStock = rows.reduce(function(sum, r) { return sum + (r.stock_quantity || 0); }, 0);
-            document.getElementById('selector-stock-display').textContent = 'Total stock: ' + totalStock;
+            document.getElementById('selector-variant-display').textContent = 'Selected: 0 of ' + rows.length + ' color/size variants';
+            document.getElementById('selector-stock-display').textContent = 'Total qty: 0';
 
             const lines = document.getElementById('selector-multi-lines');
             lines.innerHTML = rows.map(function(v) {
@@ -1413,6 +1454,8 @@
 
         function updateLineTotal() {
             var grand = 0;
+            var selectedVariantCount = 0;
+            var totalQty = 0;
             document.querySelectorAll('.selector-line-item').forEach(function(row) {
                 var pid = row.getAttribute('data-product-id');
                 var qtyInput = document.querySelector('.selector-row-qty[data-product-id="' + pid + '"]');
@@ -1423,11 +1466,19 @@
                 var cost = parseFloat(costInput ? costInput.value : '0');
                 if (!qty || qty < 0) qty = 0;
                 if (!cost || cost < 0) cost = 0;
+                if (qty > 0) {
+                    selectedVariantCount += 1;
+                    totalQty += qty;
+                }
                 var line = qty * cost;
                 grand += line;
                 if (totalEl) totalEl.textContent = currencySymbol + line.toFixed(2);
             });
             document.getElementById('selector-line-total').textContent = currencySymbol + grand.toFixed(2);
+
+            var totalRows = document.querySelectorAll('.selector-line-item').length;
+            document.getElementById('selector-variant-display').textContent = 'Selected: ' + selectedVariantCount + ' of ' + totalRows + ' color/size variants';
+            document.getElementById('selector-stock-display').textContent = 'Total qty: ' + totalQty;
         }
 
         document.addEventListener('input', function(e) {

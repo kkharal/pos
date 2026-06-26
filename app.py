@@ -5667,6 +5667,162 @@ def create_product_variants():
         conn.close()
 
 
+# --- Products: Create Zero-Stock Variant Blueprints ---
+@app.route('/api/products/create-variant-blueprint', methods=['POST'])
+@login_required
+@admin_required
+def create_variant_blueprint():
+    """Create all size/color combinations as zero-stock variants for future PO planning."""
+    data = request.json
+    name = normalize_product_name(data.get('name', '').strip())
+    category = data.get('category', '').strip()
+    cost_price = float(data.get('cost_price', 0))
+    price = float(data.get('price', 0))
+    description = data.get('description', '').strip()
+    sizes = data.get('sizes', [])
+    colors = data.get('colors', [])
+    selected_pairs = data.get('selected_pairs', [])
+
+    if not name or not category:
+        return jsonify({'success': False, 'error': 'Name and Category are required'}), 400
+
+    combos = []
+    if selected_pairs:
+        # Explicit pair mode: create only the selected size/color rows.
+        for pair in selected_pairs:
+            combos.append(((pair.get('size') or '').strip() or None, normalize_color_value(pair.get('color'))))
+    else:
+        # Backward-compatible mode: full cartesian product from sizes and colors.
+        if not sizes or not colors:
+            return jsonify({'success': False, 'error': 'At least one size and one color are required'}), 400
+        for size in sizes:
+            for color in colors:
+                combos.append(((size or '').strip() or None, normalize_color_value(color)))
+
+    if len(combos) > 100:
+        return jsonify({'success': False, 'error': 'Too many variants (max 100)'}), 400
+
+    if not combos:
+        return jsonify({'success': False, 'error': 'No variant combinations selected'}), 400
+
+    normalized_combos = []
+    seen_payload = set()
+    duplicate_payload = []
+    for size, color in combos:
+        size_clean = (size or '').strip() or None
+        color_clean = normalize_color_value(color)
+        if not size_clean or not color_clean:
+            return jsonify({
+                'success': False,
+                'error': 'Each variant must include both a size and a color'
+            }), 400
+        pair_key = (size_clean, color_clean)
+        if pair_key in seen_payload:
+            duplicate_payload.append(pair_key)
+            continue
+        seen_payload.add(pair_key)
+        normalized_combos.append((size_clean, color_clean))
+
+    if duplicate_payload:
+        sample = ', '.join([f"size={d[0] or '-'}, color={d[1] or '-'}" for d in duplicate_payload[:5]])
+        return jsonify({
+            'success': False,
+            'error': f'Duplicate size/color rows in request: {sample}'
+        }), 400
+
+    combos = normalized_combos
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    shop_id = get_current_shop_id()
+    flt_sql, flt_params = shop_filter()
+
+    try:
+        canonical_name = name
+        canonical_category = category
+        existing_variant_group = None
+        siblings = cursor.execute(
+            '''
+            SELECT id, name, category, variant_group
+            FROM products
+            WHERE shop_id = ? AND is_active = 1
+            ORDER BY id
+            ''',
+            (shop_id,)
+        ).fetchall()
+        for sibling in siblings:
+            if normalize_product_name(sibling['name']) == name:
+                canonical_name = sibling['name']
+                if sibling['category']:
+                    canonical_category = sibling['category']
+                if sibling['variant_group']:
+                    existing_variant_group = sibling['variant_group']
+                break
+
+        name = canonical_name
+        category = canonical_category
+
+        if existing_variant_group:
+            variant_group = existing_variant_group
+        else:
+            import uuid
+            variant_group = f"{name[:20].lower().replace(' ', '-')}-{uuid.uuid4().hex[:8]}"
+
+        existing_conflicts = []
+        for size, color in combos:
+            existing = find_existing_variant_by_normalized_color(
+                cursor,
+                shop_id,
+                name,
+                size,
+                color,
+            )
+            if existing:
+                existing_conflicts.append((size, color))
+
+        if existing_conflicts:
+            sample = ', '.join([f"size={c[0] or '-'}, color={c[1] or '-'}" for c in existing_conflicts[:8]])
+            return jsonify({
+                'success': False,
+                'error': f'Cannot create duplicate variants for "{name}". Already exists: {sample}'
+            }), 400
+
+        created_ids = []
+        for size, color in combos:
+            prefix = category[:3].upper()
+            existing_count = cursor.execute(
+                f"SELECT COUNT(*) FROM products WHERE sku LIKE ? {flt_sql}", [f'{prefix}-%'] + flt_params
+            ).fetchone()[0]
+            sku = f'{prefix}-{existing_count + 1:03d}'
+            while cursor.execute(
+                f"SELECT COUNT(*) FROM products WHERE sku=? {flt_sql}", [sku] + flt_params
+            ).fetchone()[0] > 0:
+                existing_count += 1
+                sku = f'{prefix}-{existing_count + 1:03d}'
+
+            cursor.execute('''
+                INSERT INTO products (shop_id, name, category, cost_price, price, stock_quantity, sku, description, size, color, variant_group)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (shop_id, name, category, cost_price, price, 0, sku, description,
+                  size, color, variant_group))
+
+            created_ids.append(cursor.lastrowid)
+
+        conn.commit()
+        return jsonify({
+            'success': True,
+            'created': len(created_ids),
+            'variant_group': variant_group,
+            'ids': created_ids,
+            'zero_stock': True
+        }), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+
 # --- Products: Bulk stock update ---
 @app.route('/api/products/bulk-stock', methods=['POST'])
 @login_required
