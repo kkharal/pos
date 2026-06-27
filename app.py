@@ -7428,16 +7428,69 @@ def update_expense(expense_id):
 
     conn = get_db_connection()
     try:
-        flt_sql, flt_params = shop_filter()
-        conn.execute(f'''
-            UPDATE expenses SET category_id=?, amount=?, description=?, expense_date=?, payment_method=?, receipt_ref=?
-            WHERE id=? {flt_sql}
-        ''', [int(data['category_id']), float(data['amount']),
-              data.get('description', '').strip(),
-              data['expense_date'],
-              data.get('payment_method', 'cash'),
-              data.get('receipt_ref', '').strip(),
-              expense_id] + flt_params)
+        cursor = conn.cursor()
+        flt_sql, flt_params = shop_filter('e')
+
+        expense_row = cursor.execute(
+            f'''SELECT e.id, e.shop_id FROM expenses e WHERE e.id=? {flt_sql}''',
+            [expense_id] + flt_params,
+        ).fetchone()
+        if not expense_row:
+            return jsonify({'success': False, 'error': 'Expense not found'}), 404
+
+        amount = round(float(data['amount']), 2)
+        description = data.get('description', '').strip()
+        expense_date = data['expense_date']
+        payment_method = data.get('payment_method', 'cash')
+        receipt_ref = data.get('receipt_ref', '').strip()
+
+        cursor.execute(
+            '''
+            UPDATE expenses
+            SET category_id=?, amount=?, description=?, expense_date=?, payment_method=?, receipt_ref=?
+            WHERE id=?
+            ''',
+            [
+                int(data['category_id']),
+                amount,
+                description,
+                expense_date,
+                payment_method,
+                receipt_ref,
+                expense_id,
+            ],
+        )
+
+        # Keep linked ledger row in sync so available funds stays accurate.
+        cursor.execute(
+            '''
+            UPDATE finance_transactions
+            SET amount=?, transaction_at=?, notes=?, reference=?
+            WHERE source_table='expenses'
+              AND source_id=?
+              AND shop_id=?
+              AND transaction_type='expense_payment'
+              AND direction='OUT'
+            ''',
+            [amount, expense_date, description or None, f'EXP-{expense_id}', expense_id, expense_row['shop_id']],
+        )
+
+        # Self-heal older/missing ledger links for existing expenses.
+        if cursor.rowcount == 0:
+            _record_finance_transaction(
+                cursor,
+                shop_id=expense_row['shop_id'],
+                direction='OUT',
+                amount=amount,
+                transaction_type='expense_payment',
+                source_table='expenses',
+                source_id=expense_id,
+                reference=f'EXP-{expense_id}',
+                notes=description,
+                created_by=session.get('user_id'),
+                transaction_at=expense_date,
+            )
+
         conn.commit()
         return jsonify({'success': True})
     except Exception as e:
@@ -7452,8 +7505,31 @@ def update_expense(expense_id):
 def delete_expense(expense_id):
     conn = get_db_connection()
     try:
-        flt_sql, flt_params = shop_filter()
-        conn.execute(f'DELETE FROM expenses WHERE id=? {flt_sql}', [expense_id] + flt_params)
+        cursor = conn.cursor()
+        flt_sql, flt_params = shop_filter('e')
+
+        expense_row = cursor.execute(
+            f'''SELECT e.id, e.shop_id FROM expenses e WHERE e.id=? {flt_sql}''',
+            [expense_id] + flt_params,
+        ).fetchone()
+        if not expense_row:
+            return jsonify({'success': False, 'error': 'Expense not found'}), 404
+
+        cursor.execute('DELETE FROM expenses WHERE id=?', [expense_id])
+
+        # Remove linked OUT movement so available funds restores on delete.
+        cursor.execute(
+            '''
+            DELETE FROM finance_transactions
+            WHERE source_table='expenses'
+              AND source_id=?
+              AND shop_id=?
+              AND transaction_type='expense_payment'
+              AND direction='OUT'
+            ''',
+            [expense_id, expense_row['shop_id']],
+        )
+
         conn.commit()
         return jsonify({'success': True})
     except Exception as e:
