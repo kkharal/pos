@@ -414,7 +414,10 @@
 
         function renderKPIs() {
             var now = Date.now();
-            var active24h = users.filter(function(u){ return u.last_login && (now - parseUTC(u.last_login).getTime()) < 86400000; }).length;
+            var active24h = users.filter(function(u){
+                var ts = u.last_activity || u.last_login;
+                return ts && (now - parseUTC(ts).getTime()) < 86400000;
+            }).length;
             var admins = users.filter(function(u){ return u.role === 'admin' || u.role === 'super_admin' || u.role === 'shop_owner'; }).length;
             var staff = users.filter(function(u){ return u.role === 'user'; }).length;
             document.getElementById('kpi-total').textContent = users.length;
@@ -453,8 +456,9 @@
             grid.innerHTML = filtered.map(function(u) {
                 var color = roleColor(u.role);
                 var initial = (u.full_name || u.username).charAt(0).toUpperCase();
-                var lastActive = timeAgo(u.last_login);
-                var isOnline = u.last_login && (Date.now() - parseUTC(u.last_login).getTime()) < 300000;
+                var activityAt = u.last_activity || u.last_login;
+                var lastActive = timeAgo(activityAt);
+                var isOnline = activityAt && (Date.now() - parseUTC(activityAt).getTime()) < 300000;
                 var shopDisplay = u.role === 'shop_owner' && u.assigned_shops && u.assigned_shops.length
                     ? u.assigned_shops.join(', ')
                     : (u.shop_name || '—');
@@ -489,7 +493,7 @@
 
             var color = roleColor(u.role);
             var initial = (u.full_name || u.username).charAt(0).toUpperCase();
-            var lastActive = timeAgo(u.last_login);
+            var lastActive = timeAgo(u.last_activity || u.last_login);
             var perms = rolePermissions(u.role);
             var denied = roleDenied(u.role);
             var shopDisplay = u.role === 'shop_owner' && u.assigned_shops && u.assigned_shops.length

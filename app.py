@@ -604,12 +604,39 @@ def _start_scheduler_once():
 
 _start_scheduler_once()
 
+
+def _touch_user_activity():
+    """Best-effort heartbeat for currently authenticated user activity."""
+    user_id = session.get('user_id')
+    if not user_id:
+        return
+    conn = None
+    try:
+        conn = get_db_connection()
+        conn.execute(
+            '''
+            UPDATE users
+            SET last_activity = NOW()
+            WHERE id = ?
+              AND (last_activity IS NULL OR last_activity < DATE_SUB(NOW(), INTERVAL 1 MINUTE))
+            ''',
+            (user_id,),
+        )
+        conn.commit()
+    except Exception:
+        # Never block request flow for heartbeat updates.
+        pass
+    finally:
+        if conn:
+            conn.close()
+
 # Decorator for login required
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             return redirect(url_for('login'))
+        _touch_user_activity()
         return f(*args, **kwargs)
     return decorated_function
 
@@ -946,7 +973,7 @@ def login():
     user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
 
     if user and user['password'] == hash_password(password):
-        conn.execute('UPDATE users SET last_login = NOW() WHERE id = ?', (user['id'],))
+        conn.execute('UPDATE users SET last_login = NOW(), last_activity = NOW() WHERE id = ?', (user['id'],))
         conn.commit()
         session['user_id'] = user['id']
         session['username'] = user['username']
@@ -2322,13 +2349,13 @@ def get_users():
         active_shop_id = session.get('active_shop_id')
         if active_shop_id:
             users = conn.execute(
-                'SELECT u.id, u.username, u.role, u.full_name, u.created_at, u.last_login, u.shop_id, s.name as shop_name '
+                'SELECT u.id, u.username, u.role, u.full_name, u.created_at, u.last_login, u.last_activity, u.shop_id, s.name as shop_name '
                 'FROM users u LEFT JOIN shops s ON u.shop_id = s.id WHERE u.shop_id = ? ORDER BY u.created_at DESC',
                 (active_shop_id,)
             ).fetchall()
         else:
             users = conn.execute(
-                'SELECT u.id, u.username, u.role, u.full_name, u.created_at, u.last_login, u.shop_id, s.name as shop_name '
+                'SELECT u.id, u.username, u.role, u.full_name, u.created_at, u.last_login, u.last_activity, u.shop_id, s.name as shop_name '
                 'FROM users u LEFT JOIN shops s ON u.shop_id = s.id ORDER BY u.created_at DESC'
             ).fetchall()
     elif role == 'shop_owner':
@@ -2336,14 +2363,14 @@ def get_users():
         allowed_ids = _get_user_shop_ids()
         if active_shop_id and active_shop_id in allowed_ids:
             users = conn.execute(
-                'SELECT u.id, u.username, u.role, u.full_name, u.created_at, u.last_login, u.shop_id, s.name as shop_name '
+                'SELECT u.id, u.username, u.role, u.full_name, u.created_at, u.last_login, u.last_activity, u.shop_id, s.name as shop_name '
                 'FROM users u LEFT JOIN shops s ON u.shop_id = s.id WHERE u.shop_id = ? ORDER BY u.created_at DESC',
                 (active_shop_id,)
             ).fetchall()
         elif allowed_ids:
             placeholders = ','.join(['?'] * len(allowed_ids))
             users = conn.execute(
-                f'SELECT u.id, u.username, u.role, u.full_name, u.created_at, u.last_login, u.shop_id, s.name as shop_name '
+                f'SELECT u.id, u.username, u.role, u.full_name, u.created_at, u.last_login, u.last_activity, u.shop_id, s.name as shop_name '
                 f'FROM users u LEFT JOIN shops s ON u.shop_id = s.id WHERE u.shop_id IN ({placeholders}) ORDER BY u.created_at DESC',
                 allowed_ids
             ).fetchall()
@@ -2352,7 +2379,7 @@ def get_users():
     else:
         shop_id = session.get('shop_id')
         users = conn.execute(
-            'SELECT u.id, u.username, u.role, u.full_name, u.created_at, u.last_login, u.shop_id, s.name as shop_name '
+            'SELECT u.id, u.username, u.role, u.full_name, u.created_at, u.last_login, u.last_activity, u.shop_id, s.name as shop_name '
             'FROM users u LEFT JOIN shops s ON u.shop_id = s.id WHERE u.shop_id = ? ORDER BY u.created_at DESC',
             (shop_id,)
         ).fetchall()

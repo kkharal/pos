@@ -665,6 +665,8 @@ def init_db():
     # Users extras
     if not _column_exists(cursor, "users", "last_login"):
         cursor.execute("ALTER TABLE users ADD COLUMN last_login DATETIME NULL")
+    if not _column_exists(cursor, "users", "last_activity"):
+        cursor.execute("ALTER TABLE users ADD COLUMN last_activity DATETIME NULL")
 
     # Settings: migrate from single global key to per-shop key
     if not _column_exists(cursor, "settings", "shop_id"):
