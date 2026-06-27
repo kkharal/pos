@@ -1766,6 +1766,10 @@ def create_sale():
     due_date = data.get('due_date')  # For credit sales
     current_shop_id = get_current_shop_id()
 
+    # POS sales must always be recorded against a specific shop.
+    if not current_shop_id:
+        return jsonify({'success': False, 'error': 'Select a specific shop before creating a sale'}), 400
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -1787,10 +1791,15 @@ def create_sale():
             # Use customer name from account
             customer_name = customer['name']
 
-        # Calculate total cost
+        # Calculate total cost from products in the active shop only.
         total_cost = 0
         for item in items:
-            product = cursor.execute('SELECT cost_price FROM products WHERE id=? AND is_active = 1', (item['product_id'],)).fetchone()
+            product = cursor.execute(
+                'SELECT cost_price FROM products WHERE id=? AND shop_id=? AND is_active = 1',
+                (item['product_id'], current_shop_id),
+            ).fetchone()
+            if not product:
+                return jsonify({'success': False, 'error': f'Product ID {item["product_id"]} not found in selected shop'}), 404
             if product:
                 total_cost += product['cost_price'] * item['quantity']
 
@@ -1805,10 +1814,13 @@ def create_sale():
         for item in items:
             product_id = item['product_id']
             quantity = item['quantity']
-            product = cursor.execute('SELECT stock_quantity, name FROM products WHERE id=? AND is_active = 1', (product_id,)).fetchone()
+            product = cursor.execute(
+                'SELECT stock_quantity, name FROM products WHERE id=? AND shop_id=? AND is_active = 1',
+                (product_id, current_shop_id),
+            ).fetchone()
             if not product:
                 conn.rollback()
-                return jsonify({'success': False, 'error': f'Product ID {product_id} not found'}), 404
+                return jsonify({'success': False, 'error': f'Product ID {product_id} not found in selected shop'}), 404
             if product['stock_quantity'] < quantity:
                 conn.rollback()
                 return jsonify({'success': False, 'error': f'Insufficient stock for {product["name"]}. Available: {product["stock_quantity"]}, Requested: {quantity}'}), 400
@@ -1821,8 +1833,8 @@ def create_sale():
             cursor.execute('''
                 UPDATE products
                 SET stock_quantity = stock_quantity - ?
-                WHERE id=?
-            ''', (quantity, product_id))
+                WHERE id=? AND shop_id=?
+            ''', (quantity, product_id, current_shop_id))
 
             # Log stock history
             cursor.execute('''
