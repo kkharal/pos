@@ -180,6 +180,10 @@ Opening Balance:
 Available Funds:
 - `Opening Balance + Money In - Money Out`
 
+Ledger source of truth:
+- Available Funds is calculated from `finance_transactions` totals (plus opening balance), not directly from the `expenses` table.
+- Formula used by API: `opening_balance + SUM(IN amounts) - SUM(OUT amounts)`.
+
 Money In:
 - Cash sales
 - QR/bank sales
@@ -191,6 +195,11 @@ Money Out:
 - Purchase order payments (when PO is marked paid)
 - Refunds
 - Owner withdrawals
+
+Expense-to-ledger synchronization rules:
+- On expense create: insert one OUT ledger row (`transaction_type = expense_payment`).
+- On expense update: update the linked OUT ledger row amount/date/notes so Available Funds stays accurate.
+- On expense delete: delete the linked OUT ledger row so Available Funds increases back by the deleted expense amount.
 
 Not counted until cash movement happens:
 - Unpaid credit sales
