@@ -103,6 +103,175 @@ function closeSidebar() {
     if (overlay) overlay.classList.remove('active');
 }
 
+function initSidebarAccordions() {
+    const nav = document.querySelector('#sidebar .sidebar-nav');
+    if (!nav || nav.dataset.accordionReady === '1') return;
+    nav.dataset.accordionReady = '1';
+
+    const homeLink = nav.querySelector('.sidebar-item[href="/"]');
+    if (homeLink) {
+        homeLink.classList.add('sidebar-single-tab');
+        const next = homeLink.nextElementSibling;
+        if (next && next.classList && next.classList.contains('sidebar-divider')) {
+            next.classList.add('sidebar-divider-after-single-tab');
+        }
+    }
+
+    const storageKey = 'sidebar_group_state_v1';
+    let stored = {};
+    try {
+        const raw = localStorage.getItem(storageKey);
+        if (raw) stored = JSON.parse(raw) || {};
+    } catch (e) {
+        stored = {};
+    }
+
+    function normalizePath(path) {
+        if (!path) return '/';
+        const clean = path.split('?')[0].split('#')[0];
+        if (clean.length > 1 && clean.endsWith('/')) return clean.slice(0, -1);
+        return clean || '/';
+    }
+
+    function saveState(key, isOpen) {
+        stored[key] = !!isOpen;
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(stored));
+        } catch (e) {}
+    }
+
+    function syncChildVisibility(li, link) {
+        const isHidden = link.style.display === 'none' || link.hidden || link.getAttribute('aria-hidden') === 'true';
+        li.style.display = isHidden ? 'none' : '';
+    }
+
+    const currentPath = normalizePath(window.location.pathname);
+    const allNodes = Array.from(nav.children);
+    const grouped = [];
+
+    for (let i = 0; i < allNodes.length; i++) {
+        const title = allNodes[i];
+        if (!title.classList || !title.classList.contains('sidebar-section-title')) continue;
+
+        const links = [];
+        for (let j = i + 1; j < allNodes.length; j++) {
+            const next = allNodes[j];
+            if (next.classList && next.classList.contains('sidebar-item')) {
+                links.push(next);
+                continue;
+            }
+            break;
+        }
+        if (!links.length) continue;
+
+        const raw = (title.textContent || '').trim();
+        const match = raw.match(/^(\S+)\s+(.+)$/);
+        const icon = match ? match[1] : '•';
+        const label = match ? match[2] : raw;
+        const groupKey = 'group_' + label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+
+        const group = document.createElement('div');
+        group.className = 'sidebar-group';
+        title.classList.forEach((cls) => {
+            if (cls !== 'sidebar-section-title') group.classList.add(cls);
+        });
+        group.dataset.groupKey = groupKey;
+
+        const trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'sidebar-group-toggle';
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.innerHTML =
+            '<span class="sidebar-group-toggle-title">' +
+            '<span class="sidebar-group-icon" aria-hidden="true">' + icon + '</span>' +
+            '<span class="sidebar-group-toggle-label">' + label + '</span>' +
+            '</span>' +
+            '<span class="sidebar-group-chevron" aria-hidden="true">▸</span>';
+
+        const panel = document.createElement('div');
+        panel.className = 'sidebar-group-panel';
+
+        const list = document.createElement('ul');
+        list.className = 'sidebar-group-list';
+
+        let hasActiveChild = false;
+        links.forEach((link) => {
+            link.classList.add('sidebar-group-child');
+            const itemPath = normalizePath(link.getAttribute('href') || '');
+            if (itemPath === currentPath || link.classList.contains('active')) {
+                link.classList.add('active');
+                hasActiveChild = true;
+            }
+            const li = document.createElement('li');
+            li.appendChild(link);
+            syncChildVisibility(li, link);
+
+            const observer = new MutationObserver(() => {
+                syncChildVisibility(li, link);
+            });
+            observer.observe(link, { attributes: true, attributeFilter: ['style', 'hidden', 'aria-hidden'] });
+
+            list.appendChild(li);
+        });
+
+        panel.appendChild(list);
+        group.appendChild(trigger);
+        group.appendChild(panel);
+        nav.insertBefore(group, title);
+        title.remove();
+
+        grouped.push({ group, trigger, panel, hasActiveChild, groupKey, groupLabel: label.toLowerCase() });
+    }
+
+    const financeIndex = grouped.findIndex((item) => item.groupLabel === 'finance');
+    const administrationIndex = grouped.findIndex((item) => item.groupLabel === 'administration');
+    if (financeIndex !== -1 && administrationIndex !== -1 && financeIndex !== administrationIndex - 1) {
+        const administrationItem = grouped[administrationIndex];
+        const financeItem = grouped[financeIndex];
+        nav.insertBefore(administrationItem.group, financeItem.group.nextSibling);
+
+        grouped.splice(administrationIndex, 1);
+        const newFinanceIndex = grouped.findIndex((item) => item.groupLabel === 'finance');
+        grouped.splice(newFinanceIndex + 1, 0, administrationItem);
+    }
+
+    function setOpen(item, open, save) {
+        item.group.classList.toggle('is-open', open);
+        item.trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        item.panel.style.maxHeight = open ? item.panel.scrollHeight + 'px' : '0px';
+        if (save) saveState(item.groupKey, open);
+    }
+
+    grouped.forEach((item) => {
+        const hasPersisted = Object.prototype.hasOwnProperty.call(stored, item.groupKey);
+        const persisted = hasPersisted ? !!stored[item.groupKey] : false;
+        const startOpen = hasPersisted ? persisted : item.hasActiveChild;
+        if (item.hasActiveChild) item.group.classList.add('has-active');
+        setOpen(item, startOpen, false);
+
+        item.trigger.addEventListener('click', () => {
+            const currentlyOpen = item.trigger.getAttribute('aria-expanded') === 'true';
+            if (currentlyOpen) {
+                setOpen(item, false, true);
+                return;
+            }
+
+            grouped.forEach((other) => {
+                if (other !== item) setOpen(other, false, true);
+            });
+            setOpen(item, true, true);
+        });
+    });
+
+    window.addEventListener('resize', () => {
+        grouped.forEach((item) => {
+            if (item.trigger.getAttribute('aria-expanded') === 'true') {
+                item.panel.style.maxHeight = item.panel.scrollHeight + 'px';
+            }
+        });
+    });
+}
+
 // Restore sidebar state on page load
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
@@ -116,6 +285,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch(e) {}
     }
+
+    initSidebarAccordions();
 });
 
 // Close any active modal when clicking the backdrop (outside modal-content)
