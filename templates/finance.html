@@ -31,6 +31,23 @@
             font-family: Manrope, "Nunito Sans", "Segoe UI", sans-serif;
         }
 
+        /* Keep action controls visually consistent across the finance page. */
+        .finance-shell .btn,
+        .finance-shell select,
+        #owner-modal .btn {
+            height: 40px;
+            min-height: 40px;
+        }
+
+        .finance-shell .btn,
+        #owner-modal .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 14px;
+            line-height: 1;
+        }
+
         .finance-shell {
             padding: var(--space-2);
             width: 100%;
@@ -66,7 +83,9 @@
         }
 
         #range-preset {
-            max-width: 160px;
+            width: fit-content;
+            max-width: none;
+            padding: 0 14px;
         }
             .custom-range {
                 display: grid;
@@ -76,6 +95,7 @@
 
         .date-range-group input,
         .date-range-group select,
+        .date-range-group button,
         .ledger-toolbar input,
         .ledger-toolbar select,
         .modal-body input,
@@ -87,6 +107,14 @@
             background: #fff;
             font-size: 0.9rem;
             color: var(--finance-text);
+        }
+
+        .date-range-group button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            padding: 0 14px;
         }
 
         .modal-body textarea {
