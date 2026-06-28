@@ -263,7 +263,12 @@
 
         /* ── Card layout  < 768 px ──────────────────────────────────────── */
         @media (max-width: 767px) {
-            .products-main { padding: 1rem; }
+            .products-main {
+                padding: 1rem;
+                height: auto;
+                min-height: calc(100vh - 70px);
+                overflow-y: visible;
+            }
             .products-header { align-items: flex-start; }
             .header-actions {
                 width: 100%;
@@ -273,10 +278,65 @@
             .header-actions .btn {
                 font-size: 0.74rem !important;
                 padding: 0.34rem 0.52rem !important;
+                flex: 1 1 calc(50% - 0.2rem);
+                min-width: 0;
             }
             #add-blueprint-btn {
                 max-width: 100%;
             }
+
+            .summary-row {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .summary-card {
+                min-height: 88px;
+                padding: 0.55rem 0.62rem;
+                border-radius: 10px;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: center;
+                gap: 0.14rem;
+            }
+
+            .summary-card .num {
+                font-size: 1.02rem;
+                line-height: 1.15;
+            }
+
+            .summary-card .label {
+                font-size: 0.72rem;
+                line-height: 1.15;
+            }
+
+            .inv-product-toolbar {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.35rem;
+            }
+
+            .inv-product-toolbar .btn {
+                width: 100%;
+            }
+
+            .inv-side {
+                position: static;
+                top: auto;
+                max-height: none;
+                overflow-y: visible;
+            }
+
+            .inv-matrix thead th,
+            .inv-matrix thead th:first-child,
+            .inv-matrix tbody th {
+                position: static;
+                left: auto;
+                top: auto;
+            }
+
             .products-main.drawer-open { margin-right: 0; }
             .product-drawer { width: 100%; }
             .product-list { gap: 0.65rem; }
@@ -615,11 +675,32 @@
 
         @media (max-width: 900px) {
             .product-drawer { width: 100vw; right: -100vw; border-radius: 0; }
+            .products-main {
+                height: auto;
+                min-height: calc(100vh - 70px);
+                overflow-y: visible;
+            }
+            .product-list {
+                max-height: none !important;
+                overflow-y: visible !important;
+            }
             .inv-product-header { grid-template-columns: 1fr; }
             .inv-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
             .inv-workspace { grid-template-columns: 1fr; }
             .inv-side { position: static; max-height: none; }
             .inv-analytics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 900px) {
+            #products-main {
+                height: auto !important;
+                min-height: calc(100vh - 70px) !important;
+                overflow-y: visible !important;
+            }
+            #products-main .product-list {
+                max-height: none !important;
+                overflow-y: visible !important;
+            }
         }
 
         @media (max-width: 640px) {
@@ -745,6 +826,10 @@
 
         /* ── Variant sizes ultra-compact for small screens ────── */
         @media (max-width: 480px) {
+            .header-actions .btn {
+                flex: 1 1 100%;
+            }
+
             #variant-sizes {
                 gap: 0.15rem !important;
             }

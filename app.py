@@ -32,6 +32,34 @@ if not _secret:
 app.secret_key = _secret
 CORS(app, origins=os.environ.get('ALLOWED_ORIGINS', 'http://localhost:5000').split(','))
 
+# Build/version token that can be used in templates for cache-busting query params.
+ASSET_VERSION = os.environ.get('ASSET_VERSION') or datetime.utcnow().strftime('%Y%m%d%H%M%S')
+
+
+@app.context_processor
+def inject_asset_version():
+    return {'asset_version': ASSET_VERSION}
+
+
+@app.after_request
+def apply_cache_headers(response):
+    """
+    Force clients to revalidate HTML and static assets so stale mobile caches refresh.
+    This is intentionally strict to support emergency cache-reset scenarios.
+    """
+    if request.path.startswith('/static/'):
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+
+    if response.mimetype == 'text/html':
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+
+    return response
+
 # Initialize database on startup
 init_db()
 
