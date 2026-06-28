@@ -2857,11 +2857,51 @@ def get_sales_report():
         ''', [start_date_time, end_date_time] + flt_params).fetchone()
 
         # --- Category breakdown ---
+        # Build product category lookup for fallback when historical items_json is missing category.
+        flt_sql_p, flt_params_p = shop_filter('p')
+        product_rows = cursor.execute(f'''
+            SELECT p.id, p.sku, p.category
+            FROM products p
+            WHERE 1=1 {flt_sql_p}
+        ''', flt_params_p).fetchall()
+
+        product_category_by_id = {}
+        product_category_by_sku = {}
+        for row in product_rows:
+            cat_val = (row['category'] or '').strip()
+            if cat_val:
+                product_category_by_id[row['id']] = cat_val
+                sku_val = (row['sku'] or '').strip().lower()
+                if sku_val:
+                    product_category_by_sku[sku_val] = cat_val
+
         category_stats = {}
+        generic_categories = {'', 'other', 'uncategorized', 'n/a', 'na', 'none', '-', 'unknown'}
         for sale in sales_data:
             items = json.loads(sale['items_json'])
             for item in items:
-                cat = item.get('category', 'Other')
+                cat = (item.get('category') or '').strip()
+
+                # If category is generic/missing, resolve from product_id first, then sku.
+                if cat.lower() in generic_categories:
+                    pid = item.get('product_id')
+                    resolved = None
+
+                    if pid is not None:
+                        resolved = product_category_by_id.get(pid)
+                        if resolved is None:
+                            try:
+                                resolved = product_category_by_id.get(int(pid))
+                            except (TypeError, ValueError):
+                                resolved = None
+
+                    if resolved is None:
+                        sku_key = (item.get('sku') or '').strip().lower()
+                        if sku_key:
+                            resolved = product_category_by_sku.get(sku_key)
+
+                    cat = resolved or 'Other'
+
                 if cat not in category_stats:
                     category_stats[cat] = {'revenue': 0, 'quantity': 0, 'cost': 0}
                 category_stats[cat]['revenue'] += item['quantity'] * item['price']

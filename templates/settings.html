@@ -133,6 +133,377 @@
             align-items: start;
         }
 
+        .panel-shop {
+            align-items: start;
+            row-gap: 0.7rem;
+        }
+
+        .panel-inventory {
+            align-items: start;
+            row-gap: 0.7rem;
+        }
+
+        .panel-notifications,
+        .panel-security,
+        .panel-backup {
+            align-items: start;
+            row-gap: 0.7rem;
+        }
+
+        .panel-shop .shop-section-head {
+            padding: 0.95rem 1.1rem;
+        }
+
+        .shop-settings-form {
+            grid-column: 1 / -1;
+            display: grid;
+            gap: 0.7rem;
+        }
+
+        .shop-section-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.95rem 1.05rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .shop-section-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.8rem;
+        }
+
+        .shop-settings-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.45fr) minmax(260px, 1fr);
+            gap: 0.8rem;
+            align-items: start;
+        }
+
+        .shop-input-stack {
+            display: grid;
+            gap: 0.1rem;
+        }
+
+        .shop-icon-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.4rem;
+        }
+
+        .icon-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0;
+        }
+
+        .icon-grid button.hidden-icon {
+            display: none;
+        }
+
+        .icon-more-btn {
+            border: 1px dashed #cbd5e1;
+            background: #f8fafc;
+            color: #475569;
+            border-radius: 8px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            padding: 0.45rem 0.62rem;
+            cursor: pointer;
+        }
+
+        .icon-more-btn:hover {
+            background: #f1f5f9;
+        }
+
+        .shop-preview-wrap {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.75rem;
+            background: #fbfdff;
+        }
+
+        .shop-preview-label {
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .shop-preview-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: white;
+            padding: 0.65rem 0.7rem;
+        }
+
+        .shop-preview-subline {
+            margin-top: 0.35rem;
+            color: #64748b;
+            font-size: 0.78rem;
+        }
+
+        .shop-actions {
+            position: sticky;
+            bottom: 0;
+            z-index: 5;
+            background: rgba(248, 250, 252, 0.96);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.6rem 0.85rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.55rem;
+            backdrop-filter: blur(3px);
+        }
+
+        .shop-actions .s-btn {
+            min-width: 118px;
+        }
+
+        .inventory-settings-form {
+            grid-column: 1 / -1;
+            display: grid;
+            gap: 0.7rem;
+        }
+
+        .inventory-section-head {
+            padding: 0.7rem 0.95rem;
+        }
+
+        .inventory-section-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.95rem 1.05rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.5fr);
+            gap: 0.8rem;
+            align-items: start;
+        }
+
+        .inventory-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.55rem;
+        }
+
+        .inventory-stat {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+            padding: 0.6rem 0.7rem;
+        }
+
+        .inventory-stat-value {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.1;
+            margin-bottom: 0.2rem;
+        }
+
+        .inventory-stat-label {
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+
+        .threshold-compact {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #fbfdff;
+            padding: 0.75rem 0.8rem;
+        }
+
+        .threshold-inline {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin: 0.35rem 0;
+        }
+
+        .threshold-inline input {
+            width: 84px;
+            text-align: center;
+        }
+
+        .threshold-unit {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #475569;
+        }
+
+        .monitoring-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #fbfdff;
+            padding: 0.72rem 0.78rem;
+            margin-bottom: 0.7rem;
+        }
+
+        .monitoring-row {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-weight: 700;
+            font-size: 0.86rem;
+            color: #0f172a;
+            margin-bottom: 0.35rem;
+        }
+
+        .monitoring-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+        }
+
+        .monitoring-dot.off {
+            background: #94a3b8;
+            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.15);
+        }
+
+        .monitoring-line {
+            font-size: 0.8rem;
+            color: #475569;
+            line-height: 1.45;
+        }
+
+        .schedule-label {
+            font-size: 0.77rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 0.45rem;
+        }
+
+        .schedule-chip-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .schedule-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #0f172a;
+            border-radius: 999px;
+            padding: 0.32rem 0.56rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .schedule-chip-time {
+            cursor: pointer;
+        }
+
+        .schedule-chip-remove {
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-size: 0.92rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .inventory-card-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.8rem;
+        }
+
+        .inventory-actions {
+            position: sticky;
+            bottom: 0;
+            z-index: 5;
+            background: rgba(248, 250, 252, 0.96);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.6rem 0.85rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.55rem;
+            backdrop-filter: blur(3px);
+        }
+
+        .inventory-actions .s-btn {
+            min-width: 118px;
+        }
+
+        .notifications-settings-form,
+        .security-settings-form {
+            grid-column: 1 / -1;
+            display: grid;
+            gap: 0.7rem;
+        }
+
+        .notifications-section-head,
+        .security-section-head,
+        .backup-section-head {
+            padding: 0.95rem 1.1rem;
+        }
+
+        .notifications-section-card,
+        .security-section-card,
+        .backup-section-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.95rem 1.05rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .notifications-actions,
+        .security-actions {
+            position: sticky;
+            bottom: 0;
+            z-index: 5;
+            background: rgba(248, 250, 252, 0.96);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.6rem 0.85rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.55rem;
+            backdrop-filter: blur(3px);
+        }
+
+        .notifications-actions .s-btn,
+        .security-actions .s-btn {
+            min-width: 118px;
+        }
+
+        .backup-grid {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: minmax(250px, 0.85fr) minmax(0, 1.5fr);
+            gap: 0.8rem;
+        }
+
         .settings-section-head {
             grid-column: 1 / -1;
             background: white;
@@ -217,10 +588,16 @@
         .s-banner-warn { background: #fefce8; border: 1px solid #fde047; color: #854d0e; }
 
         /* ===== Icon Picker ===== */
-        .icon-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
         .icon-grid button { width: 38px; height: 38px; font-size: 1.2rem; border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
         .icon-grid button.selected { border-color: #3b82f6; background: #eff6ff; transform: scale(1.08); }
         .icon-grid button:hover { border-color: #94a3b8; }
+
+        .icon-picker-hint {
+            font-size: 0.76rem;
+            color: #94a3b8;
+            margin-top: 0.45rem;
+            margin-bottom: 0.15rem;
+        }
 
         /* ===== Preview ===== */
         .shop-preview { display: inline-flex; align-items: center; gap: 0.5rem; background: #1e293b; color: white; padding: 0.45rem 0.8rem; border-radius: 8px; font-size: 0.88rem; }
@@ -251,6 +628,53 @@
             .s-card.span-8,
             .s-card.span-4 { grid-column: auto; }
             .s-card { border-radius: 12px; padding: 1.15rem 1rem 1.05rem; }
+            .panel-shop { row-gap: 0.6rem; }
+            .panel-shop .shop-section-head { padding: 0.8rem 0.95rem; }
+            .shop-section-card { padding: 0.85rem 0.9rem; }
+            .shop-settings-grid { grid-template-columns: 1fr; gap: 0.65rem; }
+            .shop-actions {
+                border-radius: 10px;
+                padding: 0.52rem 0.65rem;
+                gap: 0.45rem;
+            }
+            .shop-actions .s-btn {
+                min-width: 0;
+                flex: 1;
+                justify-content: center;
+            }
+            .inventory-section-head { padding: 0.8rem 0.95rem; }
+            .inventory-section-card { padding: 0.85rem 0.9rem; }
+            .inventory-grid { grid-template-columns: 1fr; gap: 0.65rem; }
+            .inventory-stats-grid { grid-template-columns: 1fr; gap: 0.45rem; }
+            .notifications-section-head,
+            .security-section-head,
+            .backup-section-head { padding: 0.8rem 0.95rem; }
+            .notifications-section-card,
+            .security-section-card,
+            .backup-section-card { padding: 0.85rem 0.9rem; }
+            .inventory-actions {
+                border-radius: 10px;
+                padding: 0.52rem 0.65rem;
+                gap: 0.45rem;
+            }
+            .inventory-actions .s-btn {
+                min-width: 0;
+                flex: 1;
+                justify-content: center;
+            }
+            .notifications-actions,
+            .security-actions {
+                border-radius: 10px;
+                padding: 0.52rem 0.65rem;
+                gap: 0.45rem;
+            }
+            .notifications-actions .s-btn,
+            .security-actions .s-btn {
+                min-width: 0;
+                flex: 1;
+                justify-content: center;
+            }
+            .backup-grid { grid-template-columns: 1fr; gap: 0.65rem; }
             .scheduler-row { flex-wrap: wrap; }
         }
     </style>
@@ -333,75 +757,56 @@
     <div class="settings-layout">
         <div class="settings-content">
             <div class="settings-workspace">
-            <section class="settings-shell">
-                <div class="settings-shell-row">
-                    <div>
-                        <div class="settings-shell-kicker">Control Center</div>
-                        <h1>Settings Workspace</h1>
-                        <p>Manage store identity, operations, alerts, security, and recovery from one consistent ERP control surface.</p>
-                    </div>
-                    <div class="settings-shell-meta">
-                        <div class="settings-shell-chip"><span>⚙️</span> <strong>5 Modules</strong></div>
-                        <div class="settings-shell-chip"><span>🔐</span> <strong>Admin Tools</strong></div>
-                        <div class="settings-shell-chip"><span>🧭</span> Use the Settings group in the sidebar</div>
-                    </div>
-                </div>
-            </section>
             <div id="message-area"></div>
 
             <!-- ========== SHOP PANEL ========== -->
-            <div class="settings-panel active" id="panel-shop">
-                <div class="settings-section-head">
-                    <div class="settings-section-eyebrow">🏪 Shop Setup</div>
-                <h2 class="settings-content-title">Shop</h2>
-                <p class="settings-content-desc">Manage your store identity, branding, and regional preferences.</p>
+            <div class="settings-panel active panel-shop" id="panel-shop">
+                <div class="settings-section-head shop-section-head">
+                    <h2 class="settings-content-title">⚙️ Shop Settings</h2>
+                    <p class="settings-content-desc">Manage branding, identity, and regional preferences in one workspace.</p>
                 </div>
 
-                <!-- Brand Name -->
-                <div class="s-card span-4">
-                    <div class="s-card-title">Brand Name</div>
-                    <div class="s-card-desc">Your business brand shown on the login page. Represents your overall business across all shops.</div>
-                    <form id="brand-name-form">
-                        <div class="form-group">
-                            <label>Brand Name</label>
-                            <input type="text" id="brand-name-input" required placeholder="e.g. Kharal Fashion, ABC Clothing" maxlength="100">
-                        </div>
-                        <button type="submit" class="s-btn s-btn-primary">Save</button>
-                    </form>
-                </div>
+                <form id="shop-settings-form" class="shop-settings-form">
+                    <section class="shop-section-card">
+                        <div class="shop-section-title">Brand Information</div>
+                        <div class="shop-settings-grid">
+                            <div class="shop-input-stack">
+                                <div class="form-group">
+                                    <label>Brand Name</label>
+                                    <input type="text" id="brand-name-input" required placeholder="e.g. Kharal Fashion, ABC Clothing" maxlength="100">
+                                </div>
+                                <div class="form-group">
+                                    <label>Shop Name</label>
+                                    <input type="text" id="shop-name-input" required placeholder="Enter your shop name" maxlength="100">
+                                </div>
+                                <div class="form-group">
+                                    <label>Shop Icon</label>
+                                    <div class="shop-icon-toolbar">
+                                        <div class="icon-grid" id="icon-picker"></div>
+                                        <button type="button" id="icon-more-btn" class="icon-more-btn" onclick="toggleMoreIcons()">+ More</button>
+                                    </div>
+                                    <div class="icon-picker-hint">Pick an icon for your shop display.</div>
+                                </div>
+                            </div>
 
-                <!-- Shop Name & Icon -->
-                <div class="s-card span-8">
-                    <div class="s-card-title">Shop Name & Icon</div>
-                    <div class="s-card-desc">Customize your shop name and icon. Appears throughout the system and on receipts.</div>
-                    <form id="shop-name-form">
-                        <div class="form-group">
-                            <label>Shop Icon</label>
-                            <div class="icon-grid" id="icon-picker"></div>
-                            <input type="hidden" id="shop-icon-input" value="🛒">
-                        </div>
-                        <div class="form-group">
-                            <label>Shop Name</label>
-                            <input type="text" id="shop-name-input" required placeholder="Enter your shop name" maxlength="100">
-                        </div>
-                        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem;">
-                            <span style="font-size:0.8rem;color:#94a3b8;">Preview:</span>
-                            <div class="shop-preview">
-                                <span class="preview-icon" id="icon-preview">🛒</span>
-                                <span class="preview-name" id="name-preview">Shop Name</span>
+                            <div class="shop-preview-wrap">
+                                <div class="shop-preview-label">Preview</div>
+                                <div class="shop-preview-card">
+                                    <div class="shop-preview">
+                                        <span class="preview-icon" id="icon-preview">🛒</span>
+                                        <span class="preview-name" id="name-preview">Shop Name</span>
+                                    </div>
+                                    <div class="shop-preview-subline" id="preview-subline">Main Shop</div>
+                                </div>
                             </div>
                         </div>
-                        <button type="submit" class="s-btn s-btn-primary">Save</button>
-                    </form>
-                </div>
+                        <input type="hidden" id="shop-icon-input" value="🛒">
+                    </section>
 
-                <!-- Currency -->
-                <div class="s-card span-12">
-                    <div class="s-card-title">Currency</div>
-                    <div class="s-card-desc">Choose the currency symbol displayed throughout the system.</div>
-                    <form id="currency-form">
-                        <div class="form-group">
-                            <label>Currency Symbol</label>
+                    <section class="shop-section-card">
+                        <div class="shop-section-title">Regional Settings</div>
+                        <div class="form-group" style="max-width: 360px;">
+                            <label>Currency</label>
                             <select id="currency-symbol" required>
                                 <option value="$">$ — Dollar (USD, CAD, AUD)</option>
                                 <option value="€">€ — Euro</option>
@@ -426,80 +831,105 @@
                                 <option value="custom">Custom Symbol...</option>
                             </select>
                         </div>
-                        <div class="form-group" id="custom-currency-group" style="display:none;">
+                        <div class="form-group" id="custom-currency-group" style="display:none;max-width:360px;">
                             <label>Custom Currency Symbol</label>
                             <input type="text" id="custom-currency" placeholder="Enter your currency symbol" maxlength="10">
                         </div>
-                        <button type="submit" class="s-btn s-btn-primary">Save</button>
-                    </form>
-                </div>
+                    </section>
+
+                    <div class="shop-actions">
+                        <button type="button" class="s-btn s-btn-secondary" id="shop-settings-cancel">Cancel</button>
+                        <button type="submit" class="s-btn s-btn-primary">Save Changes</button>
+                    </div>
+                </form>
             </div>
 
             <!-- ========== INVENTORY PANEL ========== -->
-            <div class="settings-panel" id="panel-inventory">
-                <div class="settings-section-head">
-                    <div class="settings-section-eyebrow">📦 Inventory Controls</div>
-                <h2 class="settings-content-title">Inventory</h2>
-                <p class="settings-content-desc">Configure stock monitoring thresholds and automatic alert schedules.</p>
+            <div class="settings-panel panel-inventory" id="panel-inventory">
+                <div class="settings-section-head inventory-section-head">
+                    <h2 class="settings-content-title">⚙️ Inventory Settings</h2>
+                    <p class="settings-content-desc">Manage low stock monitoring, schedule, and alerts in one workspace.</p>
                 </div>
 
-                <!-- Low Stock Threshold -->
-                <div class="s-card span-4">
-                    <div class="s-card-title">Low Stock Threshold</div>
-                    <div class="s-card-desc">Products with stock below this number will trigger low-stock alerts.</div>
-                    <form id="threshold-form">
-                        <div class="form-group">
-                            <label>Threshold Quantity</label>
-                            <input type="number" id="low-stock-threshold" required placeholder="5" min="0" style="max-width:160px;">
-                            <small>Alert when product stock falls below this number</small>
+                <form id="inventory-settings-form" class="inventory-settings-form">
+                    <section class="inventory-section-card">
+                        <div class="inventory-stats-grid">
+                            <div class="inventory-stat">
+                                <div class="inventory-stat-value" id="inventory-stat-products">--</div>
+                                <div class="inventory-stat-label">Products</div>
+                            </div>
+                            <div class="inventory-stat">
+                                <div class="inventory-stat-value" id="inventory-stat-low-stock">--</div>
+                                <div class="inventory-stat-label">Low Stock</div>
+                            </div>
+                            <div class="inventory-stat">
+                                <div class="inventory-stat-value" id="inventory-stat-alerts">--</div>
+                                <div class="inventory-stat-label">Alerts</div>
+                            </div>
                         </div>
-                        <button type="submit" class="s-btn s-btn-primary">Save Threshold</button>
-                    </form>
-                </div>
+                    </section>
 
-                <!-- Alert Schedule -->
-                <div class="s-card span-8">
-                    <div class="s-card-title">Automatic Alert Schedule</div>
-                    <div class="s-card-desc">Configure when automatic low-stock checks run. Times are in 24-hour format based on your selected timezone.</div>
+                    <section class="inventory-section-card">
+                        <div class="inventory-grid">
+                            <div>
+                                <div class="inventory-card-title">Low Stock Alert</div>
+                                <div class="threshold-compact">
+                                    <div class="threshold-inline">
+                                        <input type="number" id="low-stock-threshold" required placeholder="1" min="0">
+                                        <span class="threshold-unit">Units</span>
+                                    </div>
+                                    <small>Products at or below this quantity trigger alerts.</small>
+                                </div>
+                            </div>
 
-                    <div id="scheduler-status" class="s-banner s-banner-info">
-                        <span>🕐</span><span><strong>Automatic Email Alerts:</strong> Loading...</span>
-                    </div>
+                            <div>
+                                <div class="inventory-card-title">Monitoring</div>
+                                <div class="monitoring-card">
+                                    <div class="monitoring-row">
+                                        <span class="monitoring-dot" id="monitoring-dot"></span>
+                                        <span id="monitoring-title">Monitoring Active</span>
+                                    </div>
+                                    <div class="monitoring-line" id="monitoring-daily-line">Daily @ --</div>
+                                    <div class="monitoring-line" id="monitoring-next-line">Next: --</div>
+                                </div>
 
-                    <div style="margin-bottom: 1rem;">
-                        <label style="font-weight:600;font-size:0.88rem;margin-bottom:0.3rem;display:block;">Timezone</label>
-                        <select id="scheduler-timezone" style="padding:0.45rem 0.6rem;border:1px solid #e2e8f0;border-radius:8px;font-size:0.88rem;width:100%;max-width:320px;">
-                            <option value="UTC">Loading timezones...</option>
-                        </select>
-                        <div style="font-size:0.78rem;color:#6b7280;margin-top:0.25rem;">Alerts will fire at the scheduled times in this timezone, regardless of server location.</div>
-                    </div>
+                                <div style="margin-bottom: 0.8rem;">
+                                    <label style="font-weight:600;font-size:0.88rem;margin-bottom:0.3rem;display:block;">Timezone</label>
+                                    <select id="scheduler-timezone" style="padding:0.45rem 0.6rem;border:1px solid #e2e8f0;border-radius:8px;font-size:0.88rem;width:100%;max-width:320px;">
+                                        <option value="UTC">Loading timezones...</option>
+                                    </select>
+                                    <div style="font-size:0.78rem;color:#6b7280;margin-top:0.25rem;">Alerts use this timezone for schedule evaluation.</div>
+                                </div>
 
-                    <div id="scheduler-times-list"></div>
+                                <div class="schedule-label">Schedule</div>
+                                <div id="scheduler-times-list" class="schedule-chip-list"></div>
 
-                    <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
-                        <button type="button" class="s-btn s-btn-secondary" onclick="addSchedulerTime()">+ Add Time</button>
-                    </div>
+                                <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
+                                    <button type="button" class="s-btn s-btn-secondary" onclick="addSchedulerTime()">+ Add Schedule</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
 
-                    <div style="display:flex;gap:0.75rem;margin-top:1.25rem;">
-                        <button type="button" class="s-btn s-btn-primary" onclick="saveSchedulerTimes()">Save Schedule</button>
+                    <div class="inventory-actions">
+                        <button type="button" class="s-btn s-btn-secondary" id="inventory-settings-cancel">Cancel</button>
                         <button type="button" class="s-btn s-btn-danger" onclick="checkLowStock()">Check Low Stock Now</button>
+                        <button type="submit" class="s-btn s-btn-primary">Save Changes</button>
                     </div>
-                </div>
+                </form>
             </div>
 
             <!-- ========== NOTIFICATIONS PANEL ========== -->
-            <div class="settings-panel" id="panel-notifications">
-                <div class="settings-section-head">
-                    <div class="settings-section-eyebrow">🔔 Alerts & Delivery</div>
-                <h2 class="settings-content-title">Notifications</h2>
-                <p class="settings-content-desc">Configure how and where alert emails are delivered.</p>
+            <div class="settings-panel panel-notifications" id="panel-notifications">
+                <div class="settings-section-head notifications-section-head">
+                    <h2 class="settings-content-title">⚙️ Notifications Settings</h2>
+                    <p class="settings-content-desc">Configure alert delivery and SMTP settings in one workspace.</p>
                 </div>
 
-                <!-- Email / SMTP -->
-                <div class="s-card span-12">
-                    <div class="s-card-title">Email Configuration (SMTP)</div>
-                    <div class="s-card-desc">These settings are used to send low-stock alerts and system notifications.</div>
-                    <form id="email-settings-form">
+                <form id="email-settings-form" class="notifications-settings-form">
+                    <section class="notifications-section-card">
+                        <div class="s-card-title">Email Configuration (SMTP)</div>
+                        <div class="s-card-desc">These settings are used to send low-stock alerts and system notifications.</div>
                         <div class="form-group">
                             <label>SMTP Server</label>
                             <input type="text" id="smtp-server" required placeholder="e.g. smtp.gmail.com">
@@ -524,27 +954,27 @@
                             <input type="email" id="alert-email" required placeholder="admin@example.com, other@example.com" multiple>
                             <small>Comma-separated email addresses to receive alerts</small>
                         </div>
-                        <div style="display:flex;gap:0.75rem;">
-                            <button type="submit" class="s-btn s-btn-primary">Save Email Settings</button>
-                            <button type="button" class="s-btn s-btn-secondary" onclick="sendTestEmail()">Send Test Email</button>
-                        </div>
-                    </form>
-                </div>
+                    </section>
+
+                    <div class="notifications-actions">
+                        <button type="button" class="s-btn s-btn-secondary" id="notifications-settings-cancel">Cancel</button>
+                        <button type="button" class="s-btn s-btn-secondary" onclick="sendTestEmail()">Send Test Email</button>
+                        <button type="submit" class="s-btn s-btn-primary">Save Changes</button>
+                    </div>
+                </form>
             </div>
 
             <!-- ========== SECURITY PANEL ========== -->
-            <div class="settings-panel" id="panel-security">
-                <div class="settings-section-head">
-                    <div class="settings-section-eyebrow">🔒 Session & Access</div>
-                <h2 class="settings-content-title">Security</h2>
-                <p class="settings-content-desc">Control session behavior and access policies.</p>
+            <div class="settings-panel panel-security" id="panel-security">
+                <div class="settings-section-head security-section-head">
+                    <h2 class="settings-content-title">⚙️ Security Settings</h2>
+                    <p class="settings-content-desc">Control session behavior and access policies in one workspace.</p>
                 </div>
 
-                <!-- Session Timeout -->
-                <div class="s-card span-6">
-                    <div class="s-card-title">Session Timeout</div>
-                    <div class="s-card-desc">Automatically log out users after a period of inactivity.</div>
-                    <form id="session-timeout-form">
+                <form id="session-timeout-form" class="security-settings-form">
+                    <section class="security-section-card">
+                        <div class="s-card-title">Session Timeout</div>
+                        <div class="s-card-desc">Automatically log out users after a period of inactivity.</div>
                         <div class="form-group">
                             <label>Timeout Duration</label>
                             <select id="session-timeout-select" required>
@@ -564,37 +994,40 @@
                             <input type="number" id="custom-timeout" placeholder="Enter minutes (5-1440)" min="5" max="1440" style="max-width:180px;">
                             <small>Minimum: 5 minutes, Maximum: 24 hours</small>
                         </div>
-                        <button type="submit" class="s-btn s-btn-primary">Save</button>
-                    </form>
-                </div>
+                    </section>
+
+                    <div class="security-actions">
+                        <button type="button" class="s-btn s-btn-secondary" id="security-settings-cancel">Cancel</button>
+                        <button type="submit" class="s-btn s-btn-primary">Save Changes</button>
+                    </div>
+                </form>
             </div>
 
             <!-- ========== BACKUP & RESTORE PANEL ========== -->
-            <div class="settings-panel" id="panel-backup">
-                <div class="settings-section-head">
-                    <div class="settings-section-eyebrow">🗄️ Recovery Operations</div>
-                <h2 class="settings-content-title">Backup & Restore</h2>
-                <p class="settings-content-desc">Manage database backups and disaster recovery.</p>
+            <div class="settings-panel panel-backup" id="panel-backup">
+                <div class="settings-section-head backup-section-head">
+                    <h2 class="settings-content-title">⚙️ Backup & Restore Settings</h2>
+                    <p class="settings-content-desc">Manage backup creation and recovery operations in one workspace.</p>
                 </div>
 
-                <!-- Backup -->
-                <div class="s-card span-4">
-                    <div class="s-card-title">Create Backup</div>
-                    <div class="s-card-desc">Downloads a complete MySQL dump. Safe to run while the app is live.</div>
-                    <button class="s-btn s-btn-primary" onclick="downloadBackup()" id="backup-btn">⬇ Download Backup</button>
-                </div>
+                <div class="backup-grid">
+                    <section class="backup-section-card">
+                        <div class="s-card-title">Create Backup</div>
+                        <div class="s-card-desc">Download a complete SQL backup. Safe to run while the app is live.</div>
+                        <button class="s-btn s-btn-primary" onclick="downloadBackup()" id="backup-btn">⬇ Download Backup</button>
+                    </section>
 
-                <!-- Restore -->
-                <div class="s-card span-8">
-                    <div class="s-card-title">Restore from Backup</div>
-                    <div class="s-card-desc">Upload a <code>.sql</code> backup file. This will drop and recreate the database with the backup data.</div>
-                    <div class="s-banner s-banner-warn">
-                        <span>⚠️</span><span><strong>Destructive action.</strong> Restore will replace all data and cannot be undone. You will be logged out after restore completes.</span>
-                    </div>
-                    <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
-                        <input type="file" id="restore-file" accept=".sql" style="font-size:0.85rem;">
-                        <button class="s-btn s-btn-danger" onclick="confirmRestore()">🔄 Restore</button>
-                    </div>
+                    <section class="backup-section-card">
+                        <div class="s-card-title">Restore from Backup</div>
+                        <div class="s-card-desc">Upload a <code>.sql</code> backup file to replace your current database.</div>
+                        <div class="s-banner s-banner-warn">
+                            <span>⚠️</span><span><strong>Destructive action.</strong> Restore will replace all data and cannot be undone. You will be logged out after restore completes.</span>
+                        </div>
+                        <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+                            <input type="file" id="restore-file" accept=".sql" style="font-size:0.85rem;">
+                            <button class="s-btn s-btn-danger" onclick="confirmRestore()">🔄 Restore</button>
+                        </div>
+                    </section>
                 </div>
             </div>
 
@@ -768,42 +1201,59 @@
                 var response = await fetch('/api/settings/brand');
                 var data = await response.json();
                 document.getElementById('brand-name-input').value = data.brand_name || '';
+                updateShopPreview();
             } catch (error) { console.error('Error loading brand name:', error); }
         }
-        document.getElementById('brand-name-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            var brandName = document.getElementById('brand-name-input').value.trim();
-            if (!brandName) { showMessage('error', 'Brand name cannot be empty'); return; }
-            try {
-                var response = await fetch('/api/settings/brand', {
-                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ brand_name: brandName })
-                });
-                var data = await response.json();
-                if (data.success) { showMessage('success', 'Brand name updated!'); }
-                else { showMessage('error', data.error || 'Error saving brand name'); }
-            } catch (error) { showMessage('error', 'Error saving brand name'); }
-        });
 
         // ── SHOP: Shop Name & Icon ───────────────────────────────────────
         var SHOP_ICONS = ['🛒','🏪','👕','👗','🧥','👔','👠','👟','🎽','👜','💼','🛍️','🧢','👒','🕶️','💎','⌚','🎀','🧵','✂️','🏬','🏠','☕','🍕','🍔','🎂','🌸','🎨','📦','💰','⭐','🔥','💡','🎯','🚀','💫','🏆','❤️','🌈','✨'];
+        var ICON_COLLAPSED_COUNT = 8;
+        var showAllIcons = false;
+
+        function updateShopPreview() {
+            var shopName = (document.getElementById('shop-name-input').value || '').trim();
+            var brandName = (document.getElementById('brand-name-input').value || '').trim();
+            document.getElementById('name-preview').textContent = shopName || 'Shop Name';
+            document.getElementById('preview-subline').textContent = brandName || 'Main Shop';
+        }
 
         function initIconPicker() {
             var picker = document.getElementById('icon-picker');
             var currentIcon = document.getElementById('shop-icon-input').value;
-            picker.innerHTML = SHOP_ICONS.map(function(icon) {
-                return '<button type="button" class="' + (icon === currentIcon ? 'selected' : '') + '" onclick="selectShopIcon(this,\'' + icon + '\')">' + icon + '</button>';
+            var currentIndex = SHOP_ICONS.indexOf(currentIcon);
+            if (currentIndex >= ICON_COLLAPSED_COUNT) showAllIcons = true;
+
+            picker.innerHTML = SHOP_ICONS.map(function(icon, index) {
+                var classes = [];
+                if (icon === currentIcon) classes.push('selected');
+                if (!showAllIcons && index >= ICON_COLLAPSED_COUNT && icon !== currentIcon) classes.push('hidden-icon');
+                return '<button type="button" class="' + classes.join(' ') + '" onclick="selectShopIcon(this,\'' + icon + '\')">' + icon + '</button>';
             }).join('');
+
+            var moreBtn = document.getElementById('icon-more-btn');
+            if (moreBtn) {
+                if (showAllIcons || SHOP_ICONS.length <= ICON_COLLAPSED_COUNT) {
+                    moreBtn.style.display = 'none';
+                } else {
+                    moreBtn.style.display = 'inline-flex';
+                }
+            }
         }
+
+        function toggleMoreIcons() {
+            showAllIcons = true;
+            initIconPicker();
+        }
+
         function selectShopIcon(btn, icon) {
             document.querySelectorAll('#icon-picker button').forEach(function(b) { b.classList.remove('selected'); });
             btn.classList.add('selected');
             document.getElementById('shop-icon-input').value = icon;
             document.getElementById('icon-preview').textContent = icon;
+            initIconPicker();
         }
-        document.getElementById('shop-name-input').addEventListener('input', function() {
-            document.getElementById('name-preview').textContent = this.value || 'Shop Name';
-        });
+        document.getElementById('shop-name-input').addEventListener('input', updateShopPreview);
+        document.getElementById('brand-name-input').addEventListener('input', updateShopPreview);
 
         async function loadShopName() {
             try {
@@ -815,27 +1265,69 @@
                     document.getElementById('shop-icon-input').value = data.shop_icon;
                     document.getElementById('icon-preview').textContent = data.shop_icon;
                 }
+                showAllIcons = false;
                 initIconPicker();
+                updateShopPreview();
             } catch (error) { console.error('Error loading shop name:', error); initIconPicker(); }
         }
-        document.getElementById('shop-name-form').addEventListener('submit', async function(e) {
+
+        document.getElementById('shop-settings-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            var brandName = document.getElementById('brand-name-input').value.trim();
             var shopName = document.getElementById('shop-name-input').value.trim();
             var shopIcon = document.getElementById('shop-icon-input').value;
+            var currencySelect = document.getElementById('currency-symbol');
+            var currency = currencySelect.value === 'custom' ? document.getElementById('custom-currency').value.trim() : currencySelect.value;
+
+            if (!brandName) { showMessage('error', 'Brand name cannot be empty'); return; }
             if (!shopName) { showMessage('error', 'Please enter a shop name'); return; }
+            if (!currency) { showMessage('error', 'Please select or enter a currency symbol'); return; }
+
             try {
-                var response = await fetch('/api/settings/shop-name', {
+                var brandResponse = await fetch('/api/settings/brand', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ brand_name: brandName })
+                });
+                var brandResult = await brandResponse.json();
+                if (!brandResponse.ok || brandResult.success === false) {
+                    showMessage('error', brandResult.error || 'Error saving brand name');
+                    return;
+                }
+
+                var shopResponse = await fetch('/api/settings/shop-name', {
                     method: 'PUT', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ shop_name: shopName, shop_icon: shopIcon })
                 });
-                var result = await response.json();
-                if (response.ok) {
-                    document.getElementById('shop-name-title').textContent = shopName;
-                    var brandIcon = document.querySelector('.navbar-brand-icon');
-                    if (brandIcon) brandIcon.textContent = shopIcon;
-                    showMessage('success', 'Shop name updated!');
-                } else { showMessage('error', result.error || 'Error updating shop name'); }
-            } catch (error) { showMessage('error', 'Error updating shop name'); }
+                var shopResult = await shopResponse.json();
+                if (!shopResponse.ok) {
+                    showMessage('error', shopResult.error || 'Error updating shop name');
+                    return;
+                }
+
+                var currencyResponse = await fetch('/api/settings/currency', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currency: currency })
+                });
+                var currencyResult = await currencyResponse.json();
+                if (!currencyResponse.ok) {
+                    showMessage('error', currencyResult.error || 'Error updating currency');
+                    return;
+                }
+
+                document.getElementById('shop-name-title').textContent = shopName;
+                var brandIcon = document.querySelector('.navbar-brand-icon');
+                if (brandIcon) brandIcon.textContent = shopIcon;
+                currencySymbol = currency;
+                showMessage('success', 'Shop settings updated successfully!');
+            } catch (error) { showMessage('error', 'Error updating shop settings'); }
+        });
+
+        document.getElementById('shop-settings-cancel').addEventListener('click', function() {
+            loadBrandName();
+            loadShopName();
+            loadCurrency();
+            showMessage('success', 'Changes reverted');
         });
 
         // ── SHOP: Currency ───────────────────────────────────────────────
@@ -861,21 +1353,6 @@
                 }
             } catch (error) { console.error('Error loading currency:', error); }
         }
-        document.getElementById('currency-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            var currencySelect = document.getElementById('currency-symbol');
-            var currency = currencySelect.value === 'custom' ? document.getElementById('custom-currency').value.trim() : currencySelect.value;
-            if (!currency) { showMessage('error', 'Please select or enter a currency symbol'); return; }
-            try {
-                var response = await fetch('/api/settings/currency', {
-                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ currency: currency })
-                });
-                var result = await response.json();
-                if (response.ok) { showMessage('success', 'Currency updated!'); currencySymbol = currency; }
-                else { showMessage('error', result.error || 'Error updating currency'); }
-            } catch (error) { showMessage('error', 'Error updating currency'); }
-        });
 
         // ── SECURITY: Session Timeout ────────────────────────────────────
         document.getElementById('session-timeout-select').addEventListener('change', function() {
@@ -919,6 +1396,10 @@
                 if (response.ok) { showMessage('success', 'Session timeout updated!'); }
                 else { showMessage('error', result.error || 'Error updating timeout'); }
             } catch (error) { showMessage('error', 'Error updating session timeout'); }
+        });
+        document.getElementById('security-settings-cancel').addEventListener('click', function() {
+            loadSessionTimeout();
+            showMessage('success', 'Changes reverted');
         });
 
         // ── NOTIFICATIONS: Email ─────────────────────────────────────────
@@ -966,6 +1447,10 @@
                 else { showMessage('error', result.error || 'Error saving email settings'); }
             } catch (error) { showMessage('error', 'Error saving email settings'); }
         });
+        document.getElementById('notifications-settings-cancel').addEventListener('click', function() {
+            loadEmailSettings();
+            showMessage('success', 'Changes reverted');
+        });
 
         async function sendTestEmail() {
             if (!confirm('Send a test email to verify configuration?')) return;
@@ -979,8 +1464,7 @@
         }
 
         // ── INVENTORY: Threshold ─────────────────────────────────────────
-        document.getElementById('threshold-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
+        async function saveInventoryThreshold(showSuccessMessage) {
             var threshold = document.getElementById('low-stock-threshold').value;
             try {
                 var currentResponse = await fetch('/api/settings/email');
@@ -996,10 +1480,19 @@
                     })
                 });
                 var result = await response.json();
-                if (response.ok) { showMessage('success', 'Low stock threshold updated!'); }
-                else { showMessage('error', result.error || 'Error saving threshold'); }
-            } catch (error) { showMessage('error', 'Error saving threshold'); }
-        });
+                if (!response.ok) {
+                    showMessage('error', result.error || 'Error saving threshold');
+                    return false;
+                }
+                if (showSuccessMessage) {
+                    showMessage('success', 'Inventory settings updated!');
+                }
+                return true;
+            } catch (error) {
+                showMessage('error', 'Error saving threshold');
+                return false;
+            }
+        }
 
         async function checkLowStock() {
             if (!confirm('Check for low stock items and send alert email?')) return;
@@ -1047,13 +1540,28 @@
         function renderSchedulerTimes() {
             var container = document.getElementById('scheduler-times-list');
             container.innerHTML = '';
+
+            function toDisplayTime(value) {
+                var parts = String(value || '').split(':');
+                if (parts.length < 2) return value;
+                var hh = parseInt(parts[0], 10);
+                var mm = parts[1];
+                if (isNaN(hh)) return value;
+                var suffix = hh >= 12 ? 'PM' : 'AM';
+                var h12 = hh % 12;
+                if (h12 === 0) h12 = 12;
+                return String(h12).padStart(2, '0') + ':' + mm + ' ' + suffix;
+            }
+
             schedulerTimes.forEach(function(time, index) {
                 var row = document.createElement('div');
-                row.className = 'scheduler-row';
-                row.innerHTML = '<input type="time" value="' + time + '" onchange="updateSchedulerTime(' + index + ', this.value)">' +
-                    '<button type="button" class="s-btn s-btn-danger" onclick="removeSchedulerTime(' + index + ')" style="padding:0.35rem 0.6rem;font-size:0.78rem;">Remove</button>';
+                row.className = 'schedule-chip';
+                row.innerHTML = '<span class="schedule-chip-time" onclick="editSchedulerTime(' + index + ')" title="Edit time">' + toDisplayTime(time) + '</span>' +
+                    '<button type="button" class="schedule-chip-remove" onclick="removeSchedulerTime(' + index + ')" title="Remove">×</button>';
                 container.appendChild(row);
             });
+
+            updateMonitoringCard();
         }
         function addSchedulerTime() { schedulerTimes.push('12:00'); renderSchedulerTimes(); }
         function removeSchedulerTime(index) {
@@ -1062,7 +1570,51 @@
         }
         function updateSchedulerTime(index, value) { schedulerTimes[index] = value; }
 
-        async function saveSchedulerTimes() {
+        function editSchedulerTime(index) {
+            var current = schedulerTimes[index] || '12:00';
+            var next = prompt('Enter time in HH:MM (24-hour)', current);
+            if (!next) return;
+            var trimmed = next.trim();
+            if (!/^\d{2}:\d{2}$/.test(trimmed)) {
+                showToast('Use HH:MM format, e.g. 09:45', 'warning');
+                return;
+            }
+            updateSchedulerTime(index, trimmed);
+            renderSchedulerTimes();
+        }
+
+        function updateMonitoringCard() {
+            var dot = document.getElementById('monitoring-dot');
+            var title = document.getElementById('monitoring-title');
+            var daily = document.getElementById('monitoring-daily-line');
+
+            if (!dot || !title || !daily) return;
+
+            if (schedulerTimes.length > 0) {
+                dot.classList.remove('off');
+                title.textContent = 'Monitoring Active';
+                daily.textContent = 'Daily @ ' + formatSchedulerTime(schedulerTimes[0]);
+            } else {
+                dot.classList.add('off');
+                title.textContent = 'Monitoring Inactive';
+                daily.textContent = 'Daily @ --';
+            }
+        }
+
+        function formatSchedulerTime(value) {
+            var parts = String(value || '').split(':');
+            if (parts.length < 2) return value;
+            var hh = parseInt(parts[0], 10);
+            var mm = parts[1];
+            if (isNaN(hh)) return value;
+            var suffix = hh >= 12 ? 'PM' : 'AM';
+            var h12 = hh % 12;
+            if (h12 === 0) h12 = 12;
+            return String(h12).padStart(2, '0') + ':' + mm + ' ' + suffix;
+        }
+
+        async function saveSchedulerTimes(showSuccessMessage) {
+            if (showSuccessMessage === undefined) showSuccessMessage = true;
             var formattedTimes = schedulerTimes.map(function(time) {
                 if (time.match(/^\d{2}:\d{2}$/)) return time;
                 var parts = time.split(':');
@@ -1076,29 +1628,93 @@
                     body: JSON.stringify({ times: formattedTimes, timezone: selectedTimezone })
                 });
                 var result = await response.json();
-                if (response.ok) { showMessage('success', 'Schedule updated!'); schedulerTimes = result.times; schedulerTimezone = result.timezone; renderSchedulerTimes(); loadSchedulerStatus(); }
-                else { showMessage('error', result.error || 'Error saving schedule'); }
-            } catch (error) { showMessage('error', 'Error saving schedule'); }
+                if (!response.ok) {
+                    showMessage('error', result.error || 'Error saving schedule');
+                    return false;
+                }
+                schedulerTimes = result.times;
+                schedulerTimezone = result.timezone;
+                renderSchedulerTimes();
+                loadSchedulerStatus();
+                if (showSuccessMessage) {
+                    showMessage('success', 'Inventory settings updated!');
+                }
+                return true;
+            } catch (error) {
+                showMessage('error', 'Error saving schedule');
+                return false;
+            }
         }
+
+        document.getElementById('inventory-settings-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var thresholdSaved = await saveInventoryThreshold(false);
+            if (!thresholdSaved) return;
+            var scheduleSaved = await saveSchedulerTimes(false);
+            if (!scheduleSaved) return;
+            showMessage('success', 'Inventory settings updated!');
+        });
+
+        document.getElementById('inventory-settings-cancel').addEventListener('click', function() {
+            loadEmailSettings();
+            loadSchedulerTimes();
+            loadSchedulerStatus();
+            showMessage('success', 'Changes reverted');
+        });
 
         async function loadSchedulerStatus() {
             try {
                 var response = await fetch('/api/scheduler/status');
                 var data = await response.json();
-                var statusDiv = document.getElementById('scheduler-status');
+                var dot = document.getElementById('monitoring-dot');
+                var title = document.getElementById('monitoring-title');
+                var daily = document.getElementById('monitoring-daily-line');
+                var next = document.getElementById('monitoring-next-line');
+                var alertsStat = document.getElementById('inventory-stat-alerts');
+
                 if (data.scheduler_running && data.jobs.length > 0) {
                     var times = data.jobs.map(function(job) { return job.name.split(' - ')[1]; }).join(', ');
-                    var nextRuns = data.jobs.map(function(job) {
+                    var nextRun = data.jobs.map(function(job) {
                         return new Date(job.next_run).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                    }).join(', ');
-                    statusDiv.className = 's-banner s-banner-info';
-                    statusDiv.innerHTML = '<span>✅</span><span><strong>Alerts Enabled</strong> — Checks at: <strong>' + times + '</strong> daily<br>Next: ' + nextRuns + '</span>';
+                    })[0];
+                    if (dot) dot.classList.remove('off');
+                    if (title) title.textContent = 'Monitoring Active';
+                    if (daily) daily.textContent = 'Daily @ ' + formatSchedulerTime(times.split(',')[0].trim());
+                    if (next) next.textContent = 'Next: ' + nextRun;
+                    if (alertsStat) alertsStat.textContent = 'Enabled';
                 } else {
-                    statusDiv.className = 's-banner s-banner-warn';
-                    statusDiv.innerHTML = '<span>⚠️</span><span><strong>Scheduler Not Running</strong> — Automatic alerts are disabled</span>';
+                    if (dot) dot.classList.add('off');
+                    if (title) title.textContent = 'Monitoring Inactive';
+                    if (daily) daily.textContent = 'Daily @ --';
+                    if (next) next.textContent = 'Next: --';
+                    if (alertsStat) alertsStat.textContent = 'Disabled';
                 }
             } catch (error) {
-                document.getElementById('scheduler-status').innerHTML = '<span>❌</span><span><strong>Error loading status</strong></span>';
+                var title = document.getElementById('monitoring-title');
+                var next = document.getElementById('monitoring-next-line');
+                var alertsStat = document.getElementById('inventory-stat-alerts');
+                if (title) title.textContent = 'Monitoring Unknown';
+                if (next) next.textContent = 'Next: --';
+                if (alertsStat) alertsStat.textContent = '--';
+            }
+        }
+
+        async function loadInventoryStats() {
+            try {
+                var productsResp = await fetch('/api/products');
+                var products = await productsResp.json();
+                var productsCount = Array.isArray(products) ? products.length : 0;
+                document.getElementById('inventory-stat-products').textContent = String(productsCount);
+            } catch (e) {
+                document.getElementById('inventory-stat-products').textContent = '--';
+            }
+
+            try {
+                var statsResp = await fetch('/api/dashboard-stats');
+                var stats = await statsResp.json();
+                document.getElementById('inventory-stat-low-stock').textContent = String(stats.low_stock_items != null ? stats.low_stock_items : '--');
+            } catch (e) {
+                document.getElementById('inventory-stat-low-stock').textContent = '--';
             }
         }
 
@@ -1180,6 +1796,7 @@
         loadEmailSettings();
         loadSchedulerTimes();
         loadSchedulerStatus();
+        loadInventoryStats();
         activatePanelFromHash();
         window.addEventListener('hashchange', activatePanelFromHash);
     </script>

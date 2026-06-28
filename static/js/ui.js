@@ -185,8 +185,13 @@ function initSidebarAccordions() {
     function isLinkActive(link) {
         const current = getCurrentLocation();
         const target = getLinkTarget(link);
+        const defaultHashByPath = {
+            '/settings': '#shop',
+            '/reports': '#overview'
+        };
+        const normalizedCurrentHash = current.hash || (defaultHashByPath[current.path] || '');
         return target.itemHash
-            ? (target.itemPath === current.path && (target.itemHash === current.hash || (!current.hash && target.itemHash === '#shop')))
+            ? (target.itemPath === current.path && target.itemHash === normalizedCurrentHash)
             : (target.itemPath === current.path && !current.hash);
     }
 
@@ -265,6 +270,40 @@ function initSidebarAccordions() {
                     const link = document.createElement('a');
                     link.href = '/settings#' + key;
                     link.className = 'sidebar-item admin-only';
+                    link.innerHTML = '<span class="sidebar-label">' + text + '</span>';
+                    kept.push(link);
+                });
+            }
+
+            groupLinks = kept;
+        }
+
+        if (label.toLowerCase() === 'analytics') {
+            const kept = [];
+            links.forEach((link) => {
+                const href = link.getAttribute('href') || '';
+                const base = href.split('?')[0].split('#')[0];
+                if (base === '/reports' && !href.includes('#')) {
+                    link.remove();
+                    return;
+                }
+                kept.push(link);
+            });
+
+            const hasHashSubtabs = kept.some((link) => (link.getAttribute('href') || '').startsWith('/reports#'));
+            if (!hasHashSubtabs) {
+                const reportSubtabs = [
+                    ['overview', 'Overview', ''],
+                    ['sales', 'Sales', ''],
+                    ['inventory', 'Inventory', ''],
+                    ['customers', 'Customers', ''],
+                    ['finance', 'Finance', 'admin-only']
+                ];
+
+                reportSubtabs.forEach(([key, text, extraClass]) => {
+                    const link = document.createElement('a');
+                    link.href = '/reports#' + key;
+                    link.className = ('sidebar-item ' + extraClass).trim();
                     link.innerHTML = '<span class="sidebar-label">' + text + '</span>';
                     kept.push(link);
                 });

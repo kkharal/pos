@@ -19,15 +19,7 @@
     </script>
     <style>
         /* ===== Analytics Layout ===== */
-        .analytics-layout { display: grid; grid-template-columns: 240px 1fr; gap: 0; min-height: calc(100vh - 80px); }
-        .analytics-nav { background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 1.5rem 0; }
-        .analytics-nav-title { font-size: 1.2rem; font-weight: 700; color: #1e293b; padding: 0 1.25rem 1.25rem; border-bottom: 1px solid #e2e8f0; margin-bottom: 0.5rem; }
-        .analytics-nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 1.25rem; cursor: pointer; color: #475569; font-size: 0.88rem; font-weight: 500; transition: all 0.15s; border-left: 3px solid transparent; }
-        .analytics-nav-item:hover { background: #f1f5f9; color: #1e293b; }
-        .analytics-nav-item.active { background: white; color: #3b82f6; border-left-color: #3b82f6; font-weight: 600; }
-        .analytics-nav-item .nav-icon { font-size: 1rem; width: 22px; text-align: center; }
-        .analytics-nav-item .nav-label { flex: 1; }
-        .analytics-nav-item .nav-arrow { color: #94a3b8; font-size: 0.7rem; }
+        .analytics-layout { min-height: calc(100vh - 80px); }
 
         .analytics-content { padding: 1.75rem 2rem; overflow-y: auto; }
         .analytics-panel { display: none; }
@@ -39,16 +31,6 @@
         html[data-report-panel="customers"] #panel-customers,
         html[data-report-panel="finance"] #panel-finance { display: block; }
 
-        html[data-report-panel="overview"] .analytics-nav-item[data-panel="overview"],
-        html[data-report-panel="sales"] .analytics-nav-item[data-panel="sales"],
-        html[data-report-panel="inventory"] .analytics-nav-item[data-panel="inventory"],
-        html[data-report-panel="customers"] .analytics-nav-item[data-panel="customers"],
-        html[data-report-panel="finance"] .analytics-nav-item[data-panel="finance"] {
-            background: white;
-            color: #3b82f6;
-            border-left-color: #3b82f6;
-            font-weight: 600;
-        }
 
         /* ===== Section Header ===== */
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
@@ -88,12 +70,121 @@
         .kpi-trend.up { background: #dcfce7; color: #166534; }
         .kpi-trend.down { background: #fee2e2; color: #991b1b; }
 
+        /* Sales + Overview KPI compact alignment */
+        #panel-sales .kpi-grid,
+        #panel-overview .kpi-grid,
+        #panel-inventory .kpi-grid,
+        #panel-finance .finance-pnl-kpis,
+        #panel-finance .finance-cashflow-kpis {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        #panel-finance .finance-pnl-kpis {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        #panel-sales .kpi-card,
+        #panel-overview .kpi-card,
+        #panel-inventory .kpi-card,
+        #panel-finance .kpi-card {
+            padding: 0.9rem 1rem;
+            min-height: 108px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #panel-sales .kpi-label,
+        #panel-overview .kpi-label,
+        #panel-inventory .kpi-label,
+        #panel-finance .kpi-label {
+            font-size: 0.69rem;
+            margin-bottom: 0.25rem;
+        }
+
+        #panel-sales .kpi-value,
+        #panel-overview .kpi-value,
+        #panel-inventory .kpi-value,
+        #panel-finance .kpi-value {
+            font-size: 1.18rem;
+            line-height: 1.2;
+            max-width: 100%;
+            min-width: 0;
+            display: block;
+        }
+
+        #panel-sales .kpi-trend,
+        #panel-overview .kpi-trend,
+        #panel-inventory .kpi-trend,
+        #panel-finance .kpi-trend {
+            margin-top: auto;
+            align-self: flex-start;
+        }
+
         /* ===== Chart Cards ===== */
         .chart-grid { display: grid; gap: 1.25rem; margin-bottom: 1.75rem; }
         .chart-grid-2 { grid-template-columns: 2fr 1fr; }
         .chart-grid-equal { grid-template-columns: 1fr 1fr; }
         .chart-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; }
         .chart-card-title { font-size: 0.88rem; font-weight: 600; color: #1e293b; margin-bottom: 1rem; }
+
+        /* Sales panel chart compact alignment */
+        #panel-sales .chart-grid {
+            gap: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        #panel-sales .chart-grid-2,
+        #panel-sales .chart-grid-equal {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        #panel-sales .chart-card {
+            padding: 0.95rem 1rem;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #panel-finance .chart-grid {
+            gap: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        #panel-finance .chart-grid-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        #panel-finance .chart-card {
+            padding: 0.95rem 1rem;
+            min-height: 300px;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #panel-sales .chart-card-title {
+            margin-bottom: 0.65rem;
+            font-size: 0.84rem;
+        }
+
+        #panel-finance .chart-card-title {
+            margin-bottom: 0.65rem;
+            font-size: 0.84rem;
+        }
+
+        #panel-sales .chart-card canvas {
+            width: 100% !important;
+            height: 220px !important;
+            max-height: 220px;
+        }
+
+        #panel-finance .chart-card canvas {
+            width: 100% !important;
+            height: 220px !important;
+            max-height: 220px;
+        }
 
         /* ===== Tables ===== */
         .data-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
@@ -108,6 +199,7 @@
         .data-table .text-center { text-align: center; }
         .data-table .font-bold { font-weight: 600; }
         .data-table .total-row { background: #f8fafc; font-weight: 600; border-top: 2px solid #e2e8f0; }
+        .table-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
         /* ===== Compact Product List (Overview) ===== */
         .product-list-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid #f1f5f9; }
@@ -130,13 +222,92 @@
 
         /* ===== Responsive ===== */
         @media (max-width: 768px) {
-            .analytics-layout { grid-template-columns: 1fr; }
-            .analytics-nav { border-right: none; border-bottom: 1px solid #e2e8f0; padding: 0.75rem 0; }
-            .analytics-nav-title { display: none; }
-            .analytics-nav-item { padding: 0.5rem 1rem; }
             .analytics-content { padding: 1.25rem 1rem; }
             .chart-grid-2, .chart-grid-equal { grid-template-columns: 1fr; }
             .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .table-scroll .data-table { min-width: 640px; }
+
+            #panel-sales .kpi-grid,
+            #panel-overview .kpi-grid,
+            #panel-inventory .kpi-grid,
+            #panel-finance .finance-pnl-kpis,
+            #panel-finance .finance-cashflow-kpis {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            #panel-sales .kpi-value,
+            #panel-overview .kpi-value,
+            #panel-inventory .kpi-value,
+            #panel-finance .kpi-value {
+                font-size: 1.02rem;
+            }
+
+            #panel-finance .chart-grid-2 {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            #panel-sales .chart-grid-2,
+            #panel-sales .chart-grid-equal {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            #panel-finance .chart-card {
+                min-height: 0;
+                padding: 0.9rem;
+            }
+
+            #panel-sales .chart-card {
+                min-height: 0;
+                padding: 0.9rem;
+            }
+
+            #panel-finance .chart-card canvas {
+                width: 100% !important;
+                height: 190px !important;
+                max-height: 190px;
+            }
+
+            #panel-sales .chart-card canvas {
+                width: 100% !important;
+                height: 190px !important;
+                max-height: 190px;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1100px) {
+            #panel-sales .kpi-grid,
+            #panel-overview .kpi-grid,
+            #panel-inventory .kpi-grid,
+            #panel-finance .finance-pnl-kpis,
+            #panel-finance .finance-cashflow-kpis {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            #panel-sales .chart-grid-2,
+            #panel-sales .chart-grid-equal {
+                grid-template-columns: 1fr;
+            }
+
+            #panel-finance .chart-grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            #panel-sales .chart-card,
+            #panel-finance .chart-card {
+                min-height: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #panel-sales .kpi-grid,
+            #panel-overview .kpi-grid,
+            #panel-inventory .kpi-grid,
+            #panel-finance .finance-pnl-kpis,
+            #panel-finance .finance-cashflow-kpis {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -211,36 +382,6 @@
         </header>
 
     <div class="analytics-layout">
-        <!-- ===== Left Navigation ===== -->
-        <nav class="analytics-nav">
-            <div class="analytics-nav-title">Analytics</div>
-            <div class="analytics-nav-item active" data-panel="overview" onclick="switchPanel('overview')">
-                <span class="nav-icon">📈</span>
-                <span class="nav-label">Overview</span>
-                <span class="nav-arrow">›</span>
-            </div>
-            <div class="analytics-nav-item" data-panel="sales" onclick="switchPanel('sales')">
-                <span class="nav-icon">📊</span>
-                <span class="nav-label">Sales</span>
-                <span class="nav-arrow">›</span>
-            </div>
-            <div class="analytics-nav-item" data-panel="inventory" onclick="switchPanel('inventory')">
-                <span class="nav-icon">📦</span>
-                <span class="nav-label">Inventory</span>
-                <span class="nav-arrow">›</span>
-            </div>
-            <div class="analytics-nav-item" data-panel="customers" onclick="switchPanel('customers')">
-                <span class="nav-icon">👥</span>
-                <span class="nav-label">Customers</span>
-                <span class="nav-arrow">›</span>
-            </div>
-            <div class="analytics-nav-item admin-only" data-panel="finance" onclick="switchPanel('finance')">
-                <span class="nav-icon">💰</span>
-                <span class="nav-label">Finance</span>
-                <span class="nav-arrow">›</span>
-            </div>
-        </nav>
-
         <!-- ===== Right Content ===== -->
         <div class="analytics-content">
 
@@ -357,10 +498,12 @@
                     <div class="data-card-header">
                         <div class="data-card-title">Top Selling Products</div>
                     </div>
-                    <table class="data-table">
-                        <thead><tr><th>#</th><th>Product</th><th>SKU</th><th class="text-right">Qty Sold</th><th class="text-right">Revenue</th><th class="text-right admin-only">Gross Profit</th></tr></thead>
-                        <tbody id="sales-top-products-body"><tr><td colspan="6" class="text-center">No data</td></tr></tbody>
-                    </table>
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead><tr><th>#</th><th>Product</th><th>SKU</th><th class="text-right">Qty Sold</th><th class="text-right">Revenue</th><th class="text-right admin-only">Gross Profit</th></tr></thead>
+                            <tbody id="sales-top-products-body"><tr><td colspan="6" class="text-center">No data</td></tr></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- Daily Breakdown -->
@@ -368,10 +511,12 @@
                     <div class="data-card-header">
                         <div class="data-card-title">Daily Breakdown</div>
                     </div>
-                    <table class="data-table">
-                        <thead><tr><th>Date</th><th class="text-right">Transactions</th><th class="text-right">Net Sales</th><th class="text-right admin-only">Gross Profit</th><th class="text-right admin-only">Gross Margin</th></tr></thead>
-                        <tbody id="sales-daily-body"><tr><td colspan="5" class="text-center">No data</td></tr></tbody>
-                    </table>
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead><tr><th>Date</th><th class="text-right">Transactions</th><th class="text-right">Net Sales</th><th class="text-right admin-only">Gross Profit</th><th class="text-right admin-only">Gross Margin</th></tr></thead>
+                            <tbody id="sales-daily-body"><tr><td colspan="5" class="text-center">No data</td></tr></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -421,10 +566,12 @@
                     <div class="data-card-header">
                         <div class="data-card-title" style="color:#dc2626;">⚠ Low Stock Alerts</div>
                     </div>
-                    <table class="data-table">
-                        <thead><tr><th>Product</th><th>SKU</th><th>Category</th><th class="text-right">Stock</th></tr></thead>
-                        <tbody id="inv-low-stock-body"><tr><td colspan="4" class="text-center">No low stock items</td></tr></tbody>
-                    </table>
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead><tr><th>Product</th><th>SKU</th><th>Category</th><th class="text-right">Stock</th></tr></thead>
+                            <tbody id="inv-low-stock-body"><tr><td colspan="4" class="text-center">No low stock items</td></tr></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- Stock Movements -->
@@ -508,7 +655,7 @@
                 </div>
 
                 <!-- P&L Flow -->
-                <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));">
+                <div class="kpi-grid finance-pnl-kpis">
                     <div class="kpi-card"><div class="kpi-label">Net Sales</div><div class="kpi-value blue" id="fin-revenue">—</div></div>
                     <div class="kpi-card"><div class="kpi-label">COGS</div><div class="kpi-value orange" id="fin-cogs">—</div></div>
                     <div class="kpi-card"><div class="kpi-label">Gross Profit</div><div class="kpi-value green" id="fin-gross">—</div></div>
@@ -530,7 +677,7 @@
                 <!-- Cash Flow Summary -->
                 <div class="data-card">
                     <div class="data-card-title" style="margin-bottom:1rem;">Cash Flow</div>
-                    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); margin-bottom:0;">
+                    <div class="kpi-grid finance-cashflow-kpis" style="margin-bottom:0;">
                         <div class="kpi-card" style="border-left:3px solid #16a34a;"><div class="kpi-label">Net Cash In</div><div class="kpi-value green" id="fin-cash-in">—</div></div>
                         <div class="kpi-card" style="border-left:3px solid #ea580c;"><div class="kpi-label">Credit Given</div><div class="kpi-value orange" id="fin-credit">—</div></div>
                         <div class="kpi-card" style="border-left:3px solid #dc2626;"><div class="kpi-label">Outstanding</div><div class="kpi-value red" id="fin-outstanding">—</div></div>
@@ -577,7 +724,12 @@
     var chartColors = ['#3b82f6','#16a34a','#ea580c','#dc2626','#7c3aed','#0891b2','#ca8a04','#1e293b','#d946ef','#059669'];
 
     // ── Panel Navigation ─────────────────────────────────────────────
-    function switchPanel(name) {
+    function switchPanel(name, options) {
+        options = options || {};
+        var updateHash = options.updateHash !== false;
+        var validPanels = ['overview', 'sales', 'inventory', 'customers', 'finance'];
+        if (validPanels.indexOf(name) === -1) name = 'overview';
+
         var storageKey = 'reports.activePanel';
         document.documentElement.setAttribute('data-report-panel', name);
         document.querySelectorAll('.analytics-nav-item').forEach(function(item) { item.classList.remove('active'); });
@@ -587,6 +739,14 @@
         var panel = document.getElementById('panel-' + name);
         if (panel) panel.classList.add('active');
         try { localStorage.setItem(storageKey, name); } catch (e) {}
+
+        if (updateHash) {
+            var nextHash = '#' + name;
+            if (window.location.hash !== nextHash) {
+                window.location.hash = nextHash;
+            }
+        }
+
         // Load data for the panel
         if (name === 'sales') loadSalesPanel();
         else if (name === 'inventory') loadInventoryPanel();
@@ -595,18 +755,41 @@
         else loadOverview();
     }
 
+    function getPanelFromHash() {
+        var key = (window.location.hash || '').replace('#', '').toLowerCase();
+        var allowed = ['overview', 'sales', 'inventory', 'customers', 'finance'];
+        if (allowed.indexOf(key) === -1) return null;
+        return key;
+    }
+
     function restoreActivePanel() {
         var defaultPanel = 'overview';
-        var savedPanel = defaultPanel;
-        try { savedPanel = localStorage.getItem('reports.activePanel') || defaultPanel; } catch (e) {}
+        var panelFromHash = getPanelFromHash();
+        var savedPanel = panelFromHash || defaultPanel;
+        if (!panelFromHash) {
+            try { savedPanel = localStorage.getItem('reports.activePanel') || defaultPanel; } catch (e) {}
+        }
 
-        var savedNav = document.querySelector('.analytics-nav-item[data-panel="' + savedPanel + '"]');
-        if (!savedNav || savedNav.style.display === 'none') {
+        var savedPanelEl = document.getElementById('panel-' + savedPanel);
+        if (!savedPanelEl || (savedPanel === 'finance' && !isAdmin)) {
             savedPanel = defaultPanel;
         }
 
-        switchPanel(savedPanel);
+        switchPanel(savedPanel, { updateHash: !!panelFromHash });
     }
+
+    window.addEventListener('hashchange', function() {
+        var panelFromHash = getPanelFromHash();
+        if (!panelFromHash) return;
+
+        var panelEl = document.getElementById('panel-' + panelFromHash);
+        if (!panelEl || (panelFromHash === 'finance' && !isAdmin)) {
+            switchPanel('overview', { updateHash: true });
+            return;
+        }
+
+        switchPanel(panelFromHash, { updateHash: false });
+    });
 
     // ── Date Helpers ─────────────────────────────────────────────────
     function getToday() { return new Date().toISOString().split('T')[0]; }
@@ -661,6 +844,64 @@
     // ── Chart Helpers ─────────────────────────────────────────────────
     function destroyChart(key) { if (charts[key]) { charts[key].destroy(); charts[key] = null; } }
 
+    function fitKpiValuesForPanel(panelSelector, desktopMaxRem, mobileMaxRem) {
+        var values = document.querySelectorAll(panelSelector + ' .kpi-value');
+        if (!values.length) return;
+
+        var maxSize = window.innerWidth <= 768 ? mobileMaxRem : desktopMaxRem;
+        var minSize = 0.72;
+
+        values.forEach(function(el) {
+            el.style.whiteSpace = 'nowrap';
+            el.style.overflowWrap = 'normal';
+            el.style.wordBreak = 'normal';
+
+            var size = maxSize;
+            el.style.fontSize = size + 'rem';
+
+            while (el.scrollWidth > el.clientWidth && size > minSize) {
+                size = Math.max(minSize, size - 0.04);
+                el.style.fontSize = size + 'rem';
+            }
+
+            if (el.scrollWidth > el.clientWidth) {
+                el.style.whiteSpace = 'normal';
+                el.style.overflowWrap = 'anywhere';
+                el.style.wordBreak = 'break-word';
+                el.style.lineHeight = '1.15';
+            } else {
+                el.style.lineHeight = '1.2';
+            }
+        });
+    }
+
+    function fitOverviewKpiValues() {
+        fitKpiValuesForPanel('#panel-overview', 1.4, 1.02);
+    }
+
+    function fitFinanceKpiValues() {
+        fitKpiValuesForPanel('#panel-finance', 1.1, 0.96);
+    }
+
+    function fitInventoryKpiValues() {
+        fitKpiValuesForPanel('#panel-inventory', 1.2, 0.98);
+    }
+
+    function fitSalesKpiValues() {
+        fitKpiValuesForPanel('#panel-sales', 1.18, 1.02);
+    }
+
+    var salesKpiResizeTimer = null;
+    window.addEventListener('resize', function() {
+        if (salesKpiResizeTimer) clearTimeout(salesKpiResizeTimer);
+        salesKpiResizeTimer = setTimeout(function() {
+            fitSalesKpiValues();
+            fitOverviewKpiValues();
+            fitInventoryKpiValues();
+            fitFinanceKpiValues();
+        }, 120);
+    });
+
     function renderTrendBadge(elId, cur, prev) {
         var el = document.getElementById(elId);
         if (!el) return;
@@ -670,6 +911,22 @@
         if (pct > 0.5) el.innerHTML = '<span class="kpi-trend up">▲ ' + absPct + '%</span>';
         else if (pct < -0.5) el.innerHTML = '<span class="kpi-trend down">▼ ' + absPct + '%</span>';
         else el.innerHTML = '';
+    }
+
+    function formatCompactCurrency(value) {
+        var n = Number(value) || 0;
+        var abs = Math.abs(n);
+        if (abs >= 1000000) return currencySymbol + (n / 1000000).toFixed(1) + 'M';
+        if (abs >= 1000) return currencySymbol + (n / 1000).toFixed(1) + 'K';
+        return currencySymbol + n.toFixed(0);
+    }
+
+    function formatUltraCompactCurrency(value) {
+        var n = Number(value) || 0;
+        var abs = Math.abs(n);
+        if (abs >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+        if (abs >= 1000) return (n / 1000).toFixed(1) + 'K';
+        return n.toFixed(0);
     }
 
     // ── User Info ────────────────────────────────────────────────────
@@ -747,7 +1004,38 @@
             var labels = data.daily_sales.map(function(d) { return new Date(d.sale_date).toLocaleDateString(undefined, {month:'short', day:'numeric'}); });
             var datasets = [{ label: 'Net Sales', data: data.daily_sales.map(function(d) { return d.daily_sales || 0; }), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', fill: true, tension: 0.3, borderWidth: 2 }];
             if (isAdmin) datasets.push({ label: 'Profit', data: data.daily_sales.map(function(d) { return d.daily_profit || 0; }), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,106,0.08)', fill: true, tension: 0.3, borderWidth: 2 });
-            charts.ovTrend = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: datasets }, options: { responsive: true, plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 11 } } } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v) { return currencySymbol + v; } } } } } });
+            var ovMobile = window.innerWidth <= 768;
+            charts.ovTrend = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: datasets }, options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: ovMobile ? 1.6 : 2.2,
+                layout: { padding: { left: ovMobile ? 14 : 0, right: ovMobile ? 4 : 0 } },
+                plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: ovMobile ? 10 : 11 } } } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        afterFit: function(scale) {
+                            if (ovMobile) scale.width = Math.max(scale.width, 56);
+                        },
+                        ticks: {
+                            maxTicksLimit: ovMobile ? 5 : 7,
+                            padding: ovMobile ? 2 : 4,
+                            font: { size: ovMobile ? 9 : 11 },
+                            callback: function(v) {
+                                return ovMobile ? formatUltraCompactCurrency(v) : currencySymbol + v;
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: ovMobile ? 5 : 8,
+                            maxRotation: 0,
+                            font: { size: ovMobile ? 9 : 11 }
+                        }
+                    }
+                }
+            } });
 
             // Top products
             var topEl = document.getElementById('overview-top-products');
@@ -768,6 +1056,8 @@
                 var pColors = { 'Cash': '#16a34a', 'Card': '#3b82f6', 'Transfer': '#7c3aed' };
                 charts.ovPayment = new Chart(pctx, { type: 'doughnut', data: { labels: pLabels, datasets: [{ data: pData, backgroundColor: pLabels.map(function(l) { return pColors[l] || '#94a3b8'; }), borderWidth: 2 }] }, options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } } });
             }
+
+            requestAnimationFrame(fitOverviewKpiValues);
         } catch (e) { console.error('Overview error:', e); }
 
         // Load expenses for overview
@@ -814,7 +1104,37 @@
             var labels = data.daily_sales.map(function(d) { return new Date(d.sale_date).toLocaleDateString(undefined, {month:'short', day:'numeric'}); });
             var ds = [{ label: 'Net Sales', data: data.daily_sales.map(function(d) { return d.daily_sales || 0; }), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', fill: true, tension: 0.3, borderWidth: 2 }];
             if (isAdmin) ds.push({ label: 'Profit', data: data.daily_sales.map(function(d) { return d.daily_profit || 0; }), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,106,0.08)', fill: true, tension: 0.3, borderWidth: 2 });
-            charts.salesTrend = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: ds }, options: { responsive: true, plugins: { legend: { position: 'top', labels: { boxWidth: 10 } } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v) { return currencySymbol + v; } } } } } });
+            var salesMobile = window.innerWidth <= 768;
+            charts.salesTrend = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: ds }, options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { left: salesMobile ? 14 : 0, right: salesMobile ? 4 : 0 } },
+                plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: salesMobile ? 10 : 11 } } } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        afterFit: function(scale) {
+                            if (salesMobile) scale.width = Math.max(scale.width, 56);
+                        },
+                        ticks: {
+                            maxTicksLimit: salesMobile ? 5 : 7,
+                            padding: salesMobile ? 2 : 4,
+                            font: { size: salesMobile ? 9 : 11 },
+                            callback: function(v) {
+                                return salesMobile ? formatUltraCompactCurrency(v) : currencySymbol + v;
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: salesMobile ? 5 : 8,
+                            maxRotation: 0,
+                            font: { size: salesMobile ? 9 : 11 }
+                        }
+                    }
+                }
+            } });
 
             // Payment chart
             destroyChart('salesPayment');
@@ -866,6 +1186,8 @@
                 }).join('');
             } else { dbBody.innerHTML = '<tr><td colspan="5" class="text-center">No sales</td></tr>'; }
 
+            requestAnimationFrame(fitSalesKpiValues);
+
         } catch (e) { console.error('Sales panel error:', e); showToast('Error loading sales data', 'error'); }
     }
 
@@ -885,6 +1207,7 @@
             document.getElementById('inv-total-stock').textContent = data.summary.total_stock_quantity;
             document.getElementById('inv-low-stock').textContent = data.summary.low_stock_items;
             if (isAdmin) document.getElementById('inv-stock-value').textContent = currencySymbol + (data.summary.total_stock_value || 0).toFixed(2);
+            requestAnimationFrame(fitInventoryKpiValues);
 
             // Top Sellers (from top_movements with most removed = sold)
             var topSellersEl = document.getElementById('inv-top-sellers');
@@ -991,12 +1314,41 @@
                 if (labelKey === 'month') return d.month;
                 return new Date(d.date).toLocaleDateString(undefined, {month:'short', day:'numeric'});
             });
+            var isMobileChart = window.innerWidth <= 768;
             charts.finTrend = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [
                 { label: 'Net Sales', data: series.map(function(d) { return d.revenue; }), borderColor: '#3b82f6', fill: false, tension: 0.3, borderWidth: 2 },
                 { label: 'Gross Profit', data: series.map(function(d) { return d.gross_profit; }), borderColor: '#16a34a', fill: false, tension: 0.3, borderWidth: 2 },
                 { label: 'Expenses', data: series.map(function(d) { return d.expenses; }), borderColor: '#dc2626', fill: false, tension: 0.3, borderWidth: 1, borderDash: [5,5] },
                 { label: 'Net Profit', data: series.map(function(d) { return d.net_profit; }), borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.08)', fill: true, tension: 0.3, borderWidth: 2 }
-            ] }, options: { responsive: true, plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 11 } } } }, scales: { y: { ticks: { callback: function(v) { return currencySymbol + v; } } } } } });
+            ] }, options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { left: isMobileChart ? 14 : 0, right: isMobileChart ? 4 : 0 } },
+                plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 11 } } } },
+                scales: {
+                    y: {
+                        afterFit: function(scale) {
+                            if (isMobileChart) scale.width = Math.max(scale.width, 56);
+                        },
+                        ticks: {
+                            maxTicksLimit: isMobileChart ? 5 : 7,
+                            padding: isMobileChart ? 2 : 4,
+                            font: { size: isMobileChart ? 9 : 11 },
+                            callback: function(v) {
+                                return isMobileChart ? formatUltraCompactCurrency(v) : currencySymbol + v;
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: isMobileChart ? 5 : 8,
+                            maxRotation: 0,
+                            font: { size: isMobileChart ? 9 : 11 }
+                        }
+                    }
+                }
+            } });
 
             // Expense pie chart
             destroyChart('finExpense');
@@ -1014,6 +1366,8 @@
                 }).join('');
             } else { expBody.innerHTML = '<tr><td colspan="3" class="text-center" style="color:#16a34a;">No expenses</td></tr>'; }
 
+            requestAnimationFrame(fitFinanceKpiValues);
+
         } catch (e) { console.error('Finance P&L error:', e); }
 
         // Load Cash Flow
@@ -1026,6 +1380,7 @@
                 document.getElementById('fin-credit').textContent = currencySymbol + cf.credit_given.toFixed(2);
                 document.getElementById('fin-outstanding').textContent = currencySymbol + cf.total_outstanding.toFixed(2);
                 document.getElementById('fin-overdue').textContent = currencySymbol + cf.overdue_amount.toFixed(2);
+                requestAnimationFrame(fitFinanceKpiValues);
             }
         } catch (e) { console.error('Finance cashflow error:', e); }
     }
