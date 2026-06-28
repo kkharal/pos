@@ -12,7 +12,8 @@
         .products-main.drawer-open { margin-right: 0; }
         .products-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
         .products-header h1 { font-size: 1.5rem; font-weight: 700; color: #1a202c; margin: 0; }
-        .header-actions { display: flex; gap: 0.5rem; align-items: center; }
+        .header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; max-width: 100%; }
+        .header-actions .btn { white-space: nowrap; }
         .summary-row { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
         .summary-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; }
         .summary-card .num { font-weight: 700; font-size: 1.1rem; }
@@ -263,6 +264,19 @@
         /* ── Card layout  < 768 px ──────────────────────────────────────── */
         @media (max-width: 767px) {
             .products-main { padding: 1rem; }
+            .products-header { align-items: flex-start; }
+            .header-actions {
+                width: 100%;
+                justify-content: flex-start;
+                gap: 0.4rem;
+            }
+            .header-actions .btn {
+                font-size: 0.74rem !important;
+                padding: 0.34rem 0.52rem !important;
+            }
+            #add-blueprint-btn {
+                max-width: 100%;
+            }
             .products-main.drawer-open { margin-right: 0; }
             .product-drawer { width: 100%; }
             .product-list { gap: 0.65rem; }
