@@ -103,6 +103,20 @@ function closeSidebar() {
     if (overlay) overlay.classList.remove('active');
 }
 
+function bindMobileSidebarLinkClose() {
+    const nav = document.querySelector('#sidebar .sidebar-nav');
+    if (!nav || nav.dataset.mobileLinkCloseReady === '1') return;
+    nav.dataset.mobileLinkCloseReady = '1';
+
+    nav.addEventListener('click', function(e) {
+        const link = e.target.closest('a[href]');
+        if (!link) return;
+        if (window.innerWidth <= 900) {
+            closeSidebar();
+        }
+    });
+}
+
 function initSidebarAccordions() {
     const nav = document.querySelector('#sidebar .sidebar-nav');
     if (!nav || nav.dataset.accordionReady === '1') return;
@@ -145,7 +159,37 @@ function initSidebarAccordions() {
         li.style.display = isHidden ? 'none' : '';
     }
 
-    const currentPath = normalizePath(window.location.pathname);
+    function getCurrentLocation() {
+        return {
+            path: normalizePath(window.location.pathname),
+            hash: (window.location.hash || '').toLowerCase()
+        };
+    }
+
+    function getLinkTarget(link) {
+        const href = link.getAttribute('href') || '';
+        let itemPath = normalizePath(href);
+        let itemHash = '';
+        try {
+            const parsed = new URL(href, window.location.origin);
+            itemPath = normalizePath(parsed.pathname);
+            itemHash = (parsed.hash || '').toLowerCase();
+        } catch (e) {
+            const hashIndex = href.indexOf('#');
+            if (hashIndex >= 0) itemHash = href.slice(hashIndex).toLowerCase();
+        }
+
+        return { itemPath, itemHash };
+    }
+
+    function isLinkActive(link) {
+        const current = getCurrentLocation();
+        const target = getLinkTarget(link);
+        return target.itemHash
+            ? (target.itemPath === current.path && (target.itemHash === current.hash || (!current.hash && target.itemHash === '#shop')))
+            : (target.itemPath === current.path && !current.hash);
+    }
+
     const allNodes = Array.from(nav.children);
     const grouped = [];
 
@@ -194,11 +238,45 @@ function initSidebarAccordions() {
         const list = document.createElement('ul');
         list.className = 'sidebar-group-list';
 
+        let groupLinks = links;
+        if (label.toLowerCase() === 'settings') {
+            const kept = [];
+            links.forEach((link) => {
+                const href = link.getAttribute('href') || '';
+                const base = href.split('?')[0].split('#')[0];
+                if (base === '/settings' && !href.includes('#')) {
+                    link.remove();
+                    return;
+                }
+                kept.push(link);
+            });
+
+            const hasHashSubtabs = kept.some((link) => (link.getAttribute('href') || '').startsWith('/settings#'));
+            if (!hasHashSubtabs) {
+                const settingsSubtabs = [
+                    ['shop', 'Shop'],
+                    ['inventory', 'Inventory'],
+                    ['notifications', 'Notifications'],
+                    ['security', 'Security'],
+                    ['backup', 'Backup & Restore']
+                ];
+
+                settingsSubtabs.forEach(([key, text]) => {
+                    const link = document.createElement('a');
+                    link.href = '/settings#' + key;
+                    link.className = 'sidebar-item admin-only';
+                    link.innerHTML = '<span class="sidebar-label">' + text + '</span>';
+                    kept.push(link);
+                });
+            }
+
+            groupLinks = kept;
+        }
+
         let hasActiveChild = false;
-        links.forEach((link) => {
+        groupLinks.forEach((link) => {
             link.classList.add('sidebar-group-child');
-            const itemPath = normalizePath(link.getAttribute('href') || '');
-            if (itemPath === currentPath || link.classList.contains('active')) {
+            if (isLinkActive(link) || link.classList.contains('active')) {
                 link.classList.add('active');
                 hasActiveChild = true;
             }
@@ -220,7 +298,7 @@ function initSidebarAccordions() {
         nav.insertBefore(group, title);
         title.remove();
 
-        grouped.push({ group, trigger, panel, hasActiveChild, groupKey, groupLabel: label.toLowerCase() });
+        grouped.push({ group, trigger, panel, hasActiveChild, groupKey, groupLabel: label.toLowerCase(), links: groupLinks });
     }
 
     const financeIndex = grouped.findIndex((item) => item.groupLabel === 'finance');
@@ -240,6 +318,26 @@ function initSidebarAccordions() {
         item.trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
         item.panel.style.maxHeight = open ? item.panel.scrollHeight + 'px' : '0px';
         if (save) saveState(item.groupKey, open);
+    }
+
+    function refreshSidebarActiveStates() {
+        nav.querySelectorAll('.sidebar-item').forEach((link) => {
+            link.classList.remove('active');
+        });
+
+        nav.querySelectorAll('.sidebar-item:not(.sidebar-group-child)').forEach((link) => {
+            if (isLinkActive(link)) link.classList.add('active');
+        });
+
+        grouped.forEach((item) => {
+            const hasActiveLink = item.links.some((link) => {
+                const active = isLinkActive(link);
+                if (active) link.classList.add('active');
+                return active;
+            });
+            item.hasActiveChild = hasActiveLink;
+            item.group.classList.toggle('has-active', hasActiveLink);
+        });
     }
 
     grouped.forEach((item) => {
@@ -270,6 +368,9 @@ function initSidebarAccordions() {
             }
         });
     });
+
+    window.addEventListener('hashchange', refreshSidebarActiveStates);
+    refreshSidebarActiveStates();
 }
 
 // Restore sidebar state on page load
@@ -287,6 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     initSidebarAccordions();
+    bindMobileSidebarLinkClose();
 });
 
 // Close any active modal when clicking the backdrop (outside modal-content)

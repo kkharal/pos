@@ -10,41 +10,198 @@
     <script src="/static/js/ui.js"></script>
     <style>
         /* ===== Settings Layout ===== */
-        .settings-layout { display: grid; grid-template-columns: 260px 1fr; gap: 0; min-height: calc(100vh - 80px); }
-        .settings-nav { background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 1.5rem 0; }
-        .settings-nav-title { font-size: 1.3rem; font-weight: 700; color: #1e293b; padding: 0 1.25rem 1.25rem; border-bottom: 1px solid #e2e8f0; margin-bottom: 0.5rem; }
-        .settings-nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.25rem; cursor: pointer; color: #475569; font-size: 0.9rem; font-weight: 500; transition: all 0.15s; border-left: 3px solid transparent; }
-        .settings-nav-item:hover { background: #f1f5f9; color: #1e293b; }
-        .settings-nav-item.active { background: white; color: #3b82f6; border-left-color: #3b82f6; font-weight: 600; }
-        .settings-nav-item .nav-icon { font-size: 1.1rem; width: 24px; text-align: center; }
-        .settings-nav-item .nav-label { flex: 1; }
-        .settings-nav-item .nav-arrow { color: #94a3b8; font-size: 0.7rem; }
+        .settings-layout {
+            min-height: calc(100vh - 80px);
+            width: 100% !important;
+            max-width: none !important;
+            background: #f8fafc;
+        }
 
-        .settings-content { padding: 2rem 2.5rem; max-width: 720px; }
-        .settings-content-title { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 0.35rem; }
-        .settings-content-desc { color: #64748b; font-size: 0.88rem; margin-bottom: 2rem; }
+        .settings-content {
+            padding: 1.5rem 2rem 2rem;
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+        }
 
-        .settings-panel { display: none; }
-        .settings-panel.active { display: block; }
+        .settings-workspace {
+            width: min(1380px, 100%);
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .settings-shell {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.35rem 1.5rem;
+            color: #1e293b;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+        }
+
+        .settings-shell-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .settings-shell-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            border-radius: 999px;
+            background: #eff6ff;
+            padding: 0.32rem 0.68rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #2563eb;
+            margin-bottom: 0.85rem;
+        }
+
+        .settings-shell h1 {
+            margin: 0;
+            font-size: 1.85rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .settings-shell p {
+            margin: 0.45rem 0 0;
+            max-width: 760px;
+            font-size: 0.93rem;
+            line-height: 1.6;
+            color: #64748b;
+        }
+
+        .settings-shell-meta {
+            display: flex;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .settings-shell-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.55rem 0.8rem;
+            border-radius: 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            font-size: 0.78rem;
+            color: #64748b;
+        }
+
+        .settings-shell-chip strong {
+            color: #1e293b;
+            font-size: 0.82rem;
+        }
+
+        .settings-content-title {
+            font-size: 1.55rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+            letter-spacing: -0.03em;
+        }
+
+        .settings-content-desc {
+            color: #64748b;
+            font-size: 0.92rem;
+            line-height: 1.65;
+            margin: 0.45rem 0 0;
+            max-width: 820px;
+        }
+
+        .settings-panel {
+            display: none;
+            width: 100% !important;
+            max-width: none !important;
+        }
+
+        .settings-panel.active {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .settings-section-head {
+            grid-column: 1 / -1;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 1.15rem 1.3rem;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+        }
+
+        .settings-section-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.42rem;
+            padding: 0.35rem 0.7rem;
+            border-radius: 999px;
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.8rem;
+        }
 
         /* ===== Settings Cards ===== */
-        .s-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }
-        .s-card-title { font-size: 0.95rem; font-weight: 600; color: #1e293b; margin-bottom: 0.35rem; }
-        .s-card-desc { font-size: 0.82rem; color: #64748b; margin-bottom: 1.25rem; }
-        .s-card hr { border: none; border-top: 1px solid #f1f5f9; margin: 1.5rem 0; }
+        .s-card {
+            grid-column: span 6;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.35rem 1.35rem 1.25rem;
+            width: 100%;
+            max-width: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .s-card.span-12 { grid-column: 1 / -1; }
+        .s-card.span-8 { grid-column: span 8; }
+        .s-card.span-4 { grid-column: span 4; }
+
+        .s-card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.35rem;
+            letter-spacing: -0.01em;
+        }
+
+        .s-card-desc {
+            font-size: 0.83rem;
+            color: #64748b;
+            margin-bottom: 1.15rem;
+            line-height: 1.6;
+        }
+
+        .s-card hr { border: none; border-top: 1px solid #edf2f7; margin: 1.35rem 0; }
 
         /* ===== Form Overrides ===== */
         .settings-content .form-group { margin-bottom: 1.1rem; }
-        .settings-content .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; }
+        .settings-content .form-group label { display: block; font-size: 0.77rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #475569; margin-bottom: 0.42rem; }
         .settings-content .form-group input,
-        .settings-content .form-group select { width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.88rem; background: white; box-sizing: border-box; height: 38px; }
+        .settings-content .form-group select { width: 100%; padding: 0.7rem 0.85rem; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.9rem; background: white; box-sizing: border-box; height: 44px; color: #0f172a; }
         .settings-content .form-group input:focus,
-        .settings-content .form-group select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.08); }
+        .settings-content .form-group select:focus { outline: none; border-color: #3b82f6; background: white; box-shadow: 0 0 0 3px rgba(59,130,246,0.08); }
         .settings-content .form-group small { display: block; margin-top: 0.3rem; font-size: 0.78rem; color: #94a3b8; }
         .settings-content .form-group select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; padding-right: 2rem; }
 
         /* ===== Buttons ===== */
-        .s-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+        .s-btn { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.7rem 1.05rem; border-radius: 10px; font-size: 0.84rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
         .s-btn-primary { background: #3b82f6; color: white; }
         .s-btn-primary:hover { background: #2563eb; }
         .s-btn-secondary { background: white; color: #475569; border: 1px solid #e2e8f0; }
@@ -55,7 +212,7 @@
         .s-btn-success:hover { background: #dcfce7; }
 
         /* ===== Info/Warning Banners ===== */
-        .s-banner { display: flex; align-items: flex-start; gap: 0.6rem; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.84rem; line-height: 1.5; }
+        .s-banner { display: flex; align-items: flex-start; gap: 0.7rem; border-radius: 10px; padding: 0.95rem 1rem; margin-bottom: 1.25rem; font-size: 0.84rem; line-height: 1.6; }
         .s-banner-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
         .s-banner-warn { background: #fefce8; border: 1px solid #fde047; color: #854d0e; }
 
@@ -66,21 +223,35 @@
         .icon-grid button:hover { border-color: #94a3b8; }
 
         /* ===== Preview ===== */
-        .shop-preview { display: inline-flex; align-items: center; gap: 0.5rem; background: #1e293b; color: white; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.88rem; }
+        .shop-preview { display: inline-flex; align-items: center; gap: 0.5rem; background: #1e293b; color: white; padding: 0.45rem 0.8rem; border-radius: 8px; font-size: 0.88rem; }
         .shop-preview .preview-icon { font-size: 1.1rem; }
         .shop-preview .preview-name { font-weight: 600; }
 
         /* ===== Scheduler ===== */
-        .scheduler-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.6rem; }
-        .scheduler-row input[type="time"] { padding: 0.45rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.88rem; height: 36px; }
+        .scheduler-row { display: flex; gap: 0.65rem; align-items: center; margin-bottom: 0.7rem; padding: 0.68rem 0.8rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; }
+        .scheduler-row input[type="time"] { padding: 0.45rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.88rem; height: 40px; background: white; }
 
         /* ===== Responsive ===== */
+        @media (max-width: 1100px) {
+            .settings-panel.active { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+            .s-card,
+            .s-card.span-8,
+            .s-card.span-4 { grid-column: span 3; }
+            .s-card.span-12 { grid-column: 1 / -1; }
+        }
+
         @media (max-width: 768px) {
-            .settings-layout { grid-template-columns: 1fr; }
-            .settings-nav { border-right: none; border-bottom: 1px solid #e2e8f0; padding: 1rem 0 0.5rem; }
-            .settings-nav-title { padding: 0 1rem 0.75rem; font-size: 1.1rem; }
-            .settings-nav-item { padding: 0.55rem 1rem; }
-            .settings-content { padding: 1.5rem 1rem; }
+            .settings-content { padding: 1rem 0.9rem 1.4rem; }
+            .settings-shell { border-radius: 14px; padding: 1.05rem 1rem; }
+            .settings-shell h1 { font-size: 1.5rem; }
+            .settings-panel.active { grid-template-columns: 1fr; gap: 0.85rem; }
+            .settings-section-head,
+            .s-card,
+            .s-card.span-12,
+            .s-card.span-8,
+            .s-card.span-4 { grid-column: auto; }
+            .s-card { border-radius: 12px; padding: 1.15rem 1rem 1.05rem; }
+            .scheduler-row { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -119,6 +290,11 @@
             <div class="sidebar-divider admin-only"></div>
             <div class="sidebar-section-title admin-only">⚙️ Settings</div>
             <a href="/settings" class="sidebar-item admin-only active"><span class="sidebar-label">Settings</span></a>
+            <a href="/settings#shop" class="sidebar-item admin-only"><span class="sidebar-label">Shop</span></a>
+            <a href="/settings#inventory" class="sidebar-item admin-only"><span class="sidebar-label">Inventory</span></a>
+            <a href="/settings#notifications" class="sidebar-item admin-only"><span class="sidebar-label">Notifications</span></a>
+            <a href="/settings#security" class="sidebar-item admin-only"><span class="sidebar-label">Security</span></a>
+            <a href="/settings#backup" class="sidebar-item admin-only"><span class="sidebar-label">Backup & Restore</span></a>
             <a href="/shops" class="sidebar-item super-admin-only" style="display:none;"><span class="sidebar-icon">🏪</span><span class="sidebar-label">Shops</span></a>
         </div>
     </aside>
@@ -155,47 +331,34 @@
         </header>
 
     <div class="settings-layout">
-        <!-- ===== Left Navigation ===== -->
-        <nav class="settings-nav">
-            <div class="settings-nav-title">Settings</div>
-            <div class="settings-nav-item active" onclick="switchPanel('shop')">
-                <span class="nav-icon">🏪</span>
-                <span class="nav-label">Shop</span>
-                <span class="nav-arrow">›</span>
-            </div>
-            <div class="settings-nav-item" onclick="switchPanel('inventory')">
-                <span class="nav-icon">📦</span>
-                <span class="nav-label">Inventory</span>
-                <span class="nav-arrow">›</span>
-            </div>
-            <div class="settings-nav-item" onclick="switchPanel('notifications')">
-                <span class="nav-icon">🔔</span>
-                <span class="nav-label">Notifications</span>
-                <span class="nav-arrow">›</span>
-            </div>
-            <div class="settings-nav-item" onclick="switchPanel('security')">
-                <span class="nav-icon">🔒</span>
-                <span class="nav-label">Security</span>
-                <span class="nav-arrow">›</span>
-            </div>
-            <div class="settings-nav-item admin-only" onclick="switchPanel('backup')">
-                <span class="nav-icon">🗄️</span>
-                <span class="nav-label">Backup & Restore</span>
-                <span class="nav-arrow">›</span>
-            </div>
-        </nav>
-
-        <!-- ===== Right Content ===== -->
         <div class="settings-content">
+            <div class="settings-workspace">
+            <section class="settings-shell">
+                <div class="settings-shell-row">
+                    <div>
+                        <div class="settings-shell-kicker">Control Center</div>
+                        <h1>Settings Workspace</h1>
+                        <p>Manage store identity, operations, alerts, security, and recovery from one consistent ERP control surface.</p>
+                    </div>
+                    <div class="settings-shell-meta">
+                        <div class="settings-shell-chip"><span>⚙️</span> <strong>5 Modules</strong></div>
+                        <div class="settings-shell-chip"><span>🔐</span> <strong>Admin Tools</strong></div>
+                        <div class="settings-shell-chip"><span>🧭</span> Use the Settings group in the sidebar</div>
+                    </div>
+                </div>
+            </section>
             <div id="message-area"></div>
 
             <!-- ========== SHOP PANEL ========== -->
             <div class="settings-panel active" id="panel-shop">
+                <div class="settings-section-head">
+                    <div class="settings-section-eyebrow">🏪 Shop Setup</div>
                 <h2 class="settings-content-title">Shop</h2>
                 <p class="settings-content-desc">Manage your store identity, branding, and regional preferences.</p>
+                </div>
 
                 <!-- Brand Name -->
-                <div class="s-card">
+                <div class="s-card span-4">
                     <div class="s-card-title">Brand Name</div>
                     <div class="s-card-desc">Your business brand shown on the login page. Represents your overall business across all shops.</div>
                     <form id="brand-name-form">
@@ -208,7 +371,7 @@
                 </div>
 
                 <!-- Shop Name & Icon -->
-                <div class="s-card">
+                <div class="s-card span-8">
                     <div class="s-card-title">Shop Name & Icon</div>
                     <div class="s-card-desc">Customize your shop name and icon. Appears throughout the system and on receipts.</div>
                     <form id="shop-name-form">
@@ -233,7 +396,7 @@
                 </div>
 
                 <!-- Currency -->
-                <div class="s-card">
+                <div class="s-card span-12">
                     <div class="s-card-title">Currency</div>
                     <div class="s-card-desc">Choose the currency symbol displayed throughout the system.</div>
                     <form id="currency-form">
@@ -274,11 +437,14 @@
 
             <!-- ========== INVENTORY PANEL ========== -->
             <div class="settings-panel" id="panel-inventory">
+                <div class="settings-section-head">
+                    <div class="settings-section-eyebrow">📦 Inventory Controls</div>
                 <h2 class="settings-content-title">Inventory</h2>
                 <p class="settings-content-desc">Configure stock monitoring thresholds and automatic alert schedules.</p>
+                </div>
 
                 <!-- Low Stock Threshold -->
-                <div class="s-card">
+                <div class="s-card span-4">
                     <div class="s-card-title">Low Stock Threshold</div>
                     <div class="s-card-desc">Products with stock below this number will trigger low-stock alerts.</div>
                     <form id="threshold-form">
@@ -292,7 +458,7 @@
                 </div>
 
                 <!-- Alert Schedule -->
-                <div class="s-card">
+                <div class="s-card span-8">
                     <div class="s-card-title">Automatic Alert Schedule</div>
                     <div class="s-card-desc">Configure when automatic low-stock checks run. Times are in 24-hour format based on your selected timezone.</div>
 
@@ -323,11 +489,14 @@
 
             <!-- ========== NOTIFICATIONS PANEL ========== -->
             <div class="settings-panel" id="panel-notifications">
+                <div class="settings-section-head">
+                    <div class="settings-section-eyebrow">🔔 Alerts & Delivery</div>
                 <h2 class="settings-content-title">Notifications</h2>
                 <p class="settings-content-desc">Configure how and where alert emails are delivered.</p>
+                </div>
 
                 <!-- Email / SMTP -->
-                <div class="s-card">
+                <div class="s-card span-12">
                     <div class="s-card-title">Email Configuration (SMTP)</div>
                     <div class="s-card-desc">These settings are used to send low-stock alerts and system notifications.</div>
                     <form id="email-settings-form">
@@ -365,11 +534,14 @@
 
             <!-- ========== SECURITY PANEL ========== -->
             <div class="settings-panel" id="panel-security">
+                <div class="settings-section-head">
+                    <div class="settings-section-eyebrow">🔒 Session & Access</div>
                 <h2 class="settings-content-title">Security</h2>
                 <p class="settings-content-desc">Control session behavior and access policies.</p>
+                </div>
 
                 <!-- Session Timeout -->
-                <div class="s-card">
+                <div class="s-card span-6">
                     <div class="s-card-title">Session Timeout</div>
                     <div class="s-card-desc">Automatically log out users after a period of inactivity.</div>
                     <form id="session-timeout-form">
@@ -399,18 +571,21 @@
 
             <!-- ========== BACKUP & RESTORE PANEL ========== -->
             <div class="settings-panel" id="panel-backup">
+                <div class="settings-section-head">
+                    <div class="settings-section-eyebrow">🗄️ Recovery Operations</div>
                 <h2 class="settings-content-title">Backup & Restore</h2>
                 <p class="settings-content-desc">Manage database backups and disaster recovery.</p>
+                </div>
 
                 <!-- Backup -->
-                <div class="s-card">
+                <div class="s-card span-4">
                     <div class="s-card-title">Create Backup</div>
                     <div class="s-card-desc">Downloads a complete MySQL dump. Safe to run while the app is live.</div>
                     <button class="s-btn s-btn-primary" onclick="downloadBackup()" id="backup-btn">⬇ Download Backup</button>
                 </div>
 
                 <!-- Restore -->
-                <div class="s-card">
+                <div class="s-card span-8">
                     <div class="s-card-title">Restore from Backup</div>
                     <div class="s-card-desc">Upload a <code>.sql</code> backup file. This will drop and recreate the database with the backup data.</div>
                     <div class="s-banner s-banner-warn">
@@ -424,6 +599,7 @@
             </div>
 
         </div><!-- /settings-content -->
+        </div><!-- /settings-workspace -->
     </div><!-- /settings-layout -->
 
     <!-- Restore Confirmation Modal -->
@@ -474,12 +650,24 @@
 
     <script>
         // ── Panel Navigation ─────────────────────────────────────────────
-        function switchPanel(name) {
-            document.querySelectorAll('.settings-nav-item').forEach(function(item) { item.classList.remove('active'); });
-            event.currentTarget.classList.add('active');
+        function switchPanel(name, updateHash) {
+            if (updateHash === undefined) updateHash = true;
             document.querySelectorAll('.settings-panel').forEach(function(p) { p.classList.remove('active'); });
             var panel = document.getElementById('panel-' + name);
             if (panel) panel.classList.add('active');
+            if (updateHash) {
+                var hash = '#' + name;
+                if (window.location.hash !== hash) {
+                    window.location.hash = hash;
+                }
+            }
+        }
+
+        function activatePanelFromHash() {
+            var key = (window.location.hash || '#shop').replace('#', '').toLowerCase();
+            var allowed = ['shop', 'inventory', 'notifications', 'security', 'backup'];
+            if (allowed.indexOf(key) === -1) key = 'shop';
+            switchPanel(key, false);
         }
 
         // ── User Info ────────────────────────────────────────────────────
@@ -992,6 +1180,8 @@
         loadEmailSettings();
         loadSchedulerTimes();
         loadSchedulerStatus();
+        activatePanelFromHash();
+        window.addEventListener('hashchange', activatePanelFromHash);
     </script>
     <script src="/static/js/session.js"></script>
     </div><!-- /main-wrapper -->

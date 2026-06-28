@@ -7,6 +7,15 @@
     bar.id = 'top-progress';
     document.body.prepend(bar);
 
+    function resetBar() {
+        bar.classList.remove('active');
+        bar.classList.add('done');
+        setTimeout(function() {
+            bar.classList.remove('done');
+            bar.style.width = '0';
+        }, 600);
+    }
+
     // Show progress bar on link clicks (page navigation)
     document.addEventListener('click', function(e) {
         var link = e.target.closest('a[href]');
@@ -17,6 +26,17 @@
             link.target === '_blank' || link.hasAttribute('download')) return;
         // Skip if modifier key held (opening in new tab)
         if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+
+        try {
+            var targetUrl = new URL(href, window.location.origin);
+            var currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+            var targetPath = targetUrl.pathname.replace(/\/$/, '') || '/';
+            if (targetPath === currentPath && targetUrl.hash) {
+                resetBar();
+                return;
+            }
+        } catch (error) {}
+
         bar.classList.remove('done');
         bar.style.width = '';
         bar.classList.add('active');
@@ -24,9 +44,11 @@
 
     // Complete bar when page is fully loaded (for back/forward nav)
     window.addEventListener('pageshow', function() {
-        bar.classList.remove('active');
-        bar.classList.add('done');
-        setTimeout(function() { bar.classList.remove('done'); bar.style.width = '0'; }, 600);
+        resetBar();
+    });
+
+    window.addEventListener('hashchange', function() {
+        resetBar();
     });
 })();
 

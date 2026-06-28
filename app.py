@@ -3743,12 +3743,8 @@ def get_dashboard_stats():
         LIMIT 5
     ''', flt_params_s).fetchall()
 
-    # Average transaction value
-    avg_transaction = conn.execute(f'''
-        SELECT COALESCE(AVG(total_amount), 0) as avg_val
-        FROM sales s
-        WHERE DATE(sale_date) >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) {flt_sql_s}
-    ''', flt_params_s).fetchone()['avg_val']
+    # Average order value for today to match the daily dashboard KPIs.
+    avg_transaction = (today_total_net / today_count) if today_count else 0
 
     # Cash flow stats (admin only)
     cash_flow = {}

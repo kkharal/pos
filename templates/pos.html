@@ -2797,9 +2797,58 @@
 
         function printReceipt() {
             var receiptContent = document.getElementById('printable-receipt').innerHTML;
-            var printWindow = window.open('', '_blank', 'width=400,height=600');
-            printWindow.document.write('<!DOCTYPE html><html><head><title>Receipt</title><style>body{font-family:"Courier New",monospace;padding:20px;margin:0;}@media print{body{padding:0;}}</style></head><body>' + receiptContent + '<scr' + 'ipt>window.onload=function(){window.print();}</scr' + 'ipt></body></html>');
-            printWindow.document.close();
+            var printHtml = '<!DOCTYPE html><html><head><title>Receipt</title><style>body{font-family:"Courier New",monospace;padding:20px;margin:0;}@media print{body{padding:0;}}</style></head><body>' + receiptContent + '</body></html>';
+
+            try {
+                var frame = document.createElement('iframe');
+                frame.style.position = 'fixed';
+                frame.style.right = '0';
+                frame.style.bottom = '0';
+                frame.style.width = '0';
+                frame.style.height = '0';
+                frame.style.border = '0';
+                frame.setAttribute('aria-hidden', 'true');
+                document.body.appendChild(frame);
+
+                var frameDoc = frame.contentWindow.document;
+                frameDoc.open();
+                frameDoc.write(printHtml);
+                frameDoc.close();
+
+                frame.onload = function() {
+                    setTimeout(function() {
+                        try {
+                            frame.contentWindow.focus();
+                            frame.contentWindow.print();
+                        } finally {
+                            setTimeout(function() {
+                                if (frame.parentNode) frame.parentNode.removeChild(frame);
+                            }, 1000);
+                        }
+                    }, 150);
+                };
+
+                // Some browsers may not fire iframe onload reliably after document.write.
+                setTimeout(function() {
+                    if (!frame.parentNode) return;
+                    try {
+                        frame.contentWindow.focus();
+                        frame.contentWindow.print();
+                    } finally {
+                        setTimeout(function() {
+                            if (frame.parentNode) frame.parentNode.removeChild(frame);
+                        }, 1000);
+                    }
+                }, 350);
+            } catch (error) {
+                var printWindow = window.open('', '_blank', 'width=400,height=600');
+                if (!printWindow) {
+                    showToast('Printing was blocked by the browser. Use the browser menu to print this receipt.', 'warning');
+                    return;
+                }
+                printWindow.document.write(printHtml + '<scr' + 'ipt>window.onload=function(){window.print();}</scr' + 'ipt>');
+                printWindow.document.close();
+            }
         }
 
         // Keyboard shortcuts
