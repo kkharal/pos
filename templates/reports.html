@@ -230,16 +230,39 @@
             #panel-sales .kpi-grid,
             #panel-overview .kpi-grid,
             #panel-inventory .kpi-grid,
+            #panel-customers .kpi-grid,
             #panel-finance .finance-pnl-kpis,
             #panel-finance .finance-cashflow-kpis {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.75rem;
+                margin-bottom: 0.85rem;
+            }
+
+            #panel-sales .kpi-card,
+            #panel-overview .kpi-card,
+            #panel-inventory .kpi-card,
+            #panel-customers .kpi-card,
+            #panel-finance .kpi-card {
+                min-height: 88px;
+                padding: 0.75rem;
+                border-radius: 16px;
             }
 
             #panel-sales .kpi-value,
             #panel-overview .kpi-value,
             #panel-inventory .kpi-value,
+            #panel-customers .kpi-value,
             #panel-finance .kpi-value {
                 font-size: 1.02rem;
+            }
+
+            #panel-sales .kpi-label,
+            #panel-overview .kpi-label,
+            #panel-inventory .kpi-label,
+            #panel-customers .kpi-label,
+            #panel-finance .kpi-label {
+                font-size: 0.66rem;
+                margin-bottom: 0.2rem;
             }
 
             #panel-finance .chart-grid-2 {
@@ -300,15 +323,7 @@
             }
         }
 
-        @media (max-width: 480px) {
-            #panel-sales .kpi-grid,
-            #panel-overview .kpi-grid,
-            #panel-inventory .kpi-grid,
-            #panel-finance .finance-pnl-kpis,
-            #panel-finance .finance-cashflow-kpis {
-                grid-template-columns: 1fr;
-            }
-        }
+
     </style>
 </head>
 <body class="has-sidebar">

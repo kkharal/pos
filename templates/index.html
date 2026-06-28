@@ -36,24 +36,23 @@
         .alert-banner .alert-close:hover { opacity: 1; }
 
         /* ===== KPI Grid ===== */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.75rem; }
-        .kpi-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.1rem 1.25rem; transition: box-shadow 0.15s; }
-        .kpi-card.link { cursor: pointer; text-decoration: none; color: inherit; display: block; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+        .kpi-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.9rem 1rem; min-height: 108px; display: flex; flex-direction: column; transition: box-shadow 0.15s; }
+        .kpi-card.link { cursor: pointer; text-decoration: none; color: inherit; display: flex; flex-direction: column; }
         .kpi-card.link:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .kpi-label { font-size: 0.72rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.35rem; }
-        .kpi-value { font-size: 1.4rem; font-weight: 700; color: #1e293b; }
+        .kpi-label { font-size: 0.69rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.25rem; }
+        .kpi-value { font-size: 1.18rem; font-weight: 700; color: #1e293b; line-height: 1.2; max-width: 100%; min-width: 0; display: block; }
         .kpi-value.green { color: #16a34a; }
         .kpi-value.blue { color: #2563eb; }
         .kpi-value.orange { color: #ea580c; }
         .kpi-value.red { color: #dc2626; }
         .kpi-value.purple { color: #7c3aed; }
-        .kpi-change { font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem; }
+        .kpi-change { font-size: 0.72rem; font-weight: 600; margin-top: auto; align-self: flex-start; }
         .kpi-change.up { color: #16a34a; }
         .kpi-change.down { color: #dc2626; }
 
         /* ===== Content Grid ===== */
-        .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
-        @media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
+        .dash-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
 
         /* ===== Cards ===== */
         .dash-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; }
@@ -66,8 +65,21 @@
         .top-product-rank.gold { background: #fef3c7; color: #92400e; }
         .top-product-rank.silver { background: #f1f5f9; color: #475569; }
         .top-product-rank.bronze { background: #ffedd5; color: #9a3412; }
-        .top-product-name { flex: 1; font-size: 0.84rem; font-weight: 500; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .top-product-name { flex: 1; min-width: 0; font-size: 0.84rem; font-weight: 500; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .top-product-stat { font-size: 0.82rem; font-weight: 600; color: #475569; white-space: nowrap; }
+
+        .card-toggle-wrap { margin-top: 0.45rem; display: flex; justify-content: flex-end; }
+        .card-toggle-btn {
+            border: 1px solid #dbeafe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 999px;
+            padding: 0.24rem 0.62rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .card-toggle-btn:hover { background: #dbeafe; }
 
         /* ===== Activity Feed ===== */
         .activity-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid #f1f5f9; }
@@ -81,9 +93,54 @@
         .activity-amount { font-size: 0.85rem; font-weight: 600; color: #16a34a; white-space: nowrap; }
 
         /* ===== Responsive ===== */
+        @media (max-width: 1100px) {
+            .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+
         @media (max-width: 768px) {
             .dash-layout { padding: 1rem; }
-            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .kpi-grid { gap: 0.75rem; margin-bottom: 0.85rem; }
+            .kpi-card { min-height: 88px; padding: 0.75rem; border-radius: 16px; }
+            .kpi-value { font-size: 1.02rem; }
+            .kpi-change { font-size: 0.66rem; }
+
+            .dash-grid { gap: 0.75rem; margin-bottom: 0.85rem; }
+            .dash-card { padding: 0.75rem; border-radius: 16px; }
+            .dash-card-title { font-size: 0.8rem; margin-bottom: 0.55rem; }
+
+            #sales-trend-card,
+            #top-products-card {
+                padding: 0.75rem;
+                border-radius: 16px;
+            }
+
+            #sales-trend-card .dash-card-title,
+            #top-products-card .dash-card-title {
+                font-size: 0.8rem;
+                margin-bottom: 0.55rem;
+            }
+
+            #salesTrendChart {
+                height: 172px !important;
+                max-height: 172px !important;
+            }
+
+            #best-sellers-list {
+                max-height: 96px;
+                overflow-y: auto;
+                padding-right: 0.15rem;
+            }
+
+            .top-product { padding: 0.22rem 0; gap: 0.45rem; }
+            .top-product-rank { width: 20px; height: 20px; font-size: 0.66rem; }
+            .top-product-name { font-size: 0.76rem; }
+            .top-product-stat { font-size: 0.7rem; }
+
+            .card-toggle-btn {
+                font-size: 0.68rem;
+                padding: 0.22rem 0.56rem;
+            }
         }
     </style>
 </head>
@@ -166,10 +223,10 @@
 
             <!-- Quick Actions -->
             <div class="quick-actions">
-                <a href="/pos" class="quick-action primary">🛒 New Sale</a>
+                <a href="/pos" class="quick-action primary">New Sale</a>
                 <a href="/products" class="quick-action secondary admin-only">+ Add Product</a>
-                <a href="/reports" class="quick-action secondary">📊 Reports</a>
-                <a href="/sales" class="quick-action secondary">📋 Orders</a>
+                <a href="/reports" class="quick-action secondary">Reports</a>
+                <a href="/sales" class="quick-action secondary">Orders</a>
             </div>
 
             <!-- Alert Banner -->
@@ -218,13 +275,13 @@
             <!-- Main Content Grid: Chart + Top Products -->
             <div class="dash-grid">
                 <!-- Sales Trend -->
-                <div class="dash-card">
+                <div class="dash-card" id="sales-trend-card">
                     <div class="dash-card-title">Sales Trend (7 days)</div>
                     <canvas id="salesTrendChart" style="max-height: 220px;"></canvas>
                 </div>
 
                 <!-- Top Products -->
-                <div class="dash-card">
+                <div class="dash-card" id="top-products-card">
                     <div class="dash-card-title">Top Products (7 days)</div>
                     <div id="best-sellers-list">
                         <div class="skeleton skeleton-text" style="width:90%"></div>
@@ -232,6 +289,9 @@
                         <div class="skeleton skeleton-text" style="width:60%"></div>
                         <div class="skeleton skeleton-text" style="width:80%"></div>
                         <div class="skeleton skeleton-text" style="width:50%"></div>
+                    </div>
+                    <div class="card-toggle-wrap">
+                        <button type="button" id="top-products-toggle" class="card-toggle-btn" style="display:none;" onclick="toggleTopProductsView()">View All</button>
                     </div>
                 </div>
             </div>
@@ -244,6 +304,9 @@
                     <div class="skeleton skeleton-table-row"></div>
                     <div class="skeleton skeleton-table-row"></div>
                     <div class="skeleton skeleton-table-row"></div>
+                </div>
+                <div class="card-toggle-wrap">
+                    <button type="button" id="recent-activity-toggle" class="card-toggle-btn" style="display:none;" onclick="toggleRecentActivityView()">View More</button>
                 </div>
             </div>
 
@@ -280,6 +343,52 @@
     <script>
         var currencySymbol = '$';
         var salesChart = null;
+        var topProductsData = [];
+        var topProductsExpanded = false;
+        var recentActivityData = [];
+        var recentActivityExpanded = false;
+
+        function formatUltraCompactCurrency(value) {
+            var n = Number(value) || 0;
+            var abs = Math.abs(n);
+            if (abs >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (abs >= 1000) return (n / 1000).toFixed(1) + 'K';
+            return n.toFixed(0);
+        }
+
+        function fitHomeKpiValues() {
+            var values = document.querySelectorAll('.kpi-grid .kpi-value');
+            if (!values.length) return;
+
+            var maxSize = window.innerWidth <= 768 ? 1.02 : 1.18;
+            var minSize = 0.58;
+
+            values.forEach(function(el) {
+                el.style.whiteSpace = 'nowrap';
+                el.style.overflowWrap = 'normal';
+                el.style.wordBreak = 'normal';
+
+                var size = maxSize;
+                el.style.fontSize = size + 'rem';
+
+                while (el.scrollWidth > el.clientWidth && size > minSize) {
+                    size = Math.max(minSize, size - 0.04);
+                    el.style.fontSize = size + 'rem';
+                }
+
+                if (el.scrollWidth > el.clientWidth) el.style.letterSpacing = '-0.01em';
+                else el.style.letterSpacing = '0';
+                el.style.lineHeight = '1.2';
+            });
+        }
+
+        var homeKpiResizeTimer = null;
+        window.addEventListener('resize', function() {
+            if (homeKpiResizeTimer) clearTimeout(homeKpiResizeTimer);
+            homeKpiResizeTimer = setTimeout(function() {
+                fitHomeKpiValues();
+            }, 120);
+        });
 
         // ── Greeting ──────────────────────────────────────────────
         function setGreeting() {
@@ -337,6 +446,8 @@
                 // Recent activity (sales + stock combined)
                 updateRecentActivity(stats.recent_sales);
 
+                requestAnimationFrame(fitHomeKpiValues);
+
             } catch (error) {
                 console.error('Error loading dashboard:', error);
             }
@@ -351,8 +462,11 @@
             var arrow = diff >= 0 ? '↑' : '↓';
             var cls = diff >= 0 ? 'up' : 'down';
             var val = isCurrency ? currencySymbol + Math.abs(diff).toFixed(2) : Math.abs(diff);
+            var isMobile = window.innerWidth <= 768;
             el.className = 'kpi-change ' + cls;
-            el.textContent = arrow + ' ' + val + ' (' + Math.abs(pct) + '%) vs yesterday';
+            el.textContent = isMobile
+                ? (arrow + ' ' + val + ' (' + Math.abs(pct) + '%)')
+                : (arrow + ' ' + val + ' (' + Math.abs(pct) + '%) vs yesterday');
         }
 
         // ── Sales Trend Chart ─────────────────────────────────────
@@ -361,6 +475,7 @@
             var gradient = ctx.createLinearGradient(0, 0, 0, 200);
             gradient.addColorStop(0, 'rgba(59, 130, 246, 0.15)');
             gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+            var homeMobile = window.innerWidth <= 768;
 
             var last7Days = [];
             var salesData = [];
@@ -393,15 +508,17 @@
                         pointBackgroundColor: '#3b82f6',
                         pointBorderColor: 'white',
                         pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
+                        pointRadius: homeMobile ? 2 : 4,
+                        pointHoverRadius: homeMobile ? 3 : 6,
                         fill: true,
-                        borderWidth: 2.5,
+                        borderWidth: homeMobile ? 2 : 2.5,
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: !homeMobile,
+                    aspectRatio: homeMobile ? undefined : 2.2,
+                    layout: { padding: { left: homeMobile ? 14 : 0, right: homeMobile ? 4 : 0 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -418,18 +535,31 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: { color: '#f1f5f9' },
+                            afterFit: function(scale) {
+                                if (homeMobile) scale.width = Math.max(scale.width, 56);
+                            },
+                            grid: { color: homeMobile ? '#f8fafc' : '#f1f5f9' },
                             border: { display: false },
                             ticks: {
-                                font: { size: 11 },
+                                maxTicksLimit: homeMobile ? 4 : 7,
+                                padding: homeMobile ? 2 : 4,
+                                font: { size: homeMobile ? 9 : 11 },
                                 color: '#94a3b8',
-                                callback: function(v) { return currencySymbol + v; }
+                                callback: function(v) {
+                                    return homeMobile ? formatUltraCompactCurrency(v) : currencySymbol + v;
+                                }
                             }
                         },
                         x: {
                             grid: { display: false },
                             border: { display: false },
-                            ticks: { font: { size: 11 }, color: '#94a3b8' }
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: homeMobile ? 4 : 8,
+                                maxRotation: 0,
+                                font: { size: homeMobile ? 9 : 11 },
+                                color: '#94a3b8'
+                            }
                         }
                     }
                 }
@@ -439,31 +569,58 @@
         // ── Best Sellers ──────────────────────────────────────────
         function updateBestSellers(bestSellers) {
             var container = document.getElementById('best-sellers-list');
+            var toggleBtn = document.getElementById('top-products-toggle');
+            topProductsData = bestSellers || [];
             if (!bestSellers || bestSellers.length === 0) {
                 container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:2rem 0; font-size:0.85rem;">No sales data yet</p>';
+                toggleBtn.style.display = 'none';
                 return;
             }
 
+            var isMobile = window.innerWidth <= 768;
             var rankClasses = ['gold', 'silver', 'bronze'];
-            container.innerHTML = bestSellers.slice(0, 8).map(function(product, i) {
+            var collapsedCount = isMobile ? 3 : 8;
+            var maxItems = isMobile && !topProductsExpanded ? collapsedCount : (isMobile ? topProductsData.length : 8);
+
+            container.innerHTML = bestSellers.slice(0, maxItems).map(function(product, i) {
                 var rankCls = i < 3 ? rankClasses[i] : '';
+                var compactStat = isMobile ? (product.total_sold + 'x') : (product.total_sold + ' sold');
                 return '<div class="top-product">' +
                     '<div class="top-product-rank ' + rankCls + '">' + (i + 1) + '</div>' +
                     '<div class="top-product-name">' + product.name + '</div>' +
-                    '<div class="top-product-stat">' + product.total_sold + ' sold</div>' +
+                    '<div class="top-product-stat">' + compactStat + '</div>' +
                 '</div>';
             }).join('');
+
+            if (isMobile && topProductsData.length > collapsedCount) {
+                toggleBtn.style.display = 'inline-flex';
+                toggleBtn.textContent = topProductsExpanded ? 'Show Less' : 'View All';
+            } else {
+                toggleBtn.style.display = 'none';
+            }
+        }
+
+        function toggleTopProductsView() {
+            topProductsExpanded = !topProductsExpanded;
+            updateBestSellers(topProductsData);
         }
 
         // ── Recent Activity ───────────────────────────────────────
         function updateRecentActivity(recentSales) {
             var container = document.getElementById('recent-activity');
+            var toggleBtn = document.getElementById('recent-activity-toggle');
+            recentActivityData = recentSales || [];
             if (!recentSales || recentSales.length === 0) {
                 container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:1.5rem 0; font-size:0.85rem;">No recent activity</p>';
+                toggleBtn.style.display = 'none';
                 return;
             }
 
-            container.innerHTML = recentSales.slice(0, 8).map(function(sale) {
+            var isMobile = window.innerWidth <= 768;
+            var collapsedCount = isMobile ? 4 : 8;
+            var maxItems = isMobile && !recentActivityExpanded ? collapsedCount : (isMobile ? recentActivityData.length : 8);
+
+            container.innerHTML = recentSales.slice(0, maxItems).map(function(sale) {
                 var date = parseUTC(sale.sale_date);
                 var timeAgo = getTimeAgo(date);
                 var pm = (sale.payment_method || 'cash');
@@ -476,6 +633,18 @@
                     '<div class="activity-amount">' + currencySymbol + sale.total_amount.toFixed(2) + '</div>' +
                 '</div>';
             }).join('');
+
+            if (isMobile && recentActivityData.length > collapsedCount) {
+                toggleBtn.style.display = 'inline-flex';
+                toggleBtn.textContent = recentActivityExpanded ? 'Show Less' : 'View More';
+            } else {
+                toggleBtn.style.display = 'none';
+            }
+        }
+
+        function toggleRecentActivityView() {
+            recentActivityExpanded = !recentActivityExpanded;
+            updateRecentActivity(recentActivityData);
         }
 
         function getTimeAgo(date) {
