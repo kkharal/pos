@@ -3641,18 +3641,30 @@ def get_dashboard_stats():
         WHERE DATE(sr.return_date) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) {flt_sql_sr}
     ''', flt_params_sr).fetchone()
 
-    # Total sales count today
+    # Transaction counts should exclude sales that have been fully refunded.
     today_count = conn.execute(f'''
         SELECT COUNT(*) as count
         FROM sales s
-        WHERE DATE(sale_date) = CURDATE() {flt_sql_s}
+        LEFT JOIN (
+            SELECT sale_id, COALESCE(SUM(refund_amount), 0) as total_refunded
+            FROM sale_returns
+            GROUP BY sale_id
+        ) sr ON sr.sale_id = s.id
+        WHERE DATE(s.sale_date) = CURDATE() {flt_sql_s}
+          AND COALESCE(sr.total_refunded, 0) < COALESCE(s.total_amount, 0)
     ''', flt_params_s).fetchone()['count']
 
     # Yesterday's count
     yesterday_count = conn.execute(f'''
         SELECT COUNT(*) as count
         FROM sales s
-        WHERE DATE(sale_date) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) {flt_sql_s}
+        LEFT JOIN (
+            SELECT sale_id, COALESCE(SUM(refund_amount), 0) as total_refunded
+            FROM sale_returns
+            GROUP BY sale_id
+        ) sr ON sr.sale_id = s.id
+        WHERE DATE(s.sale_date) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) {flt_sql_s}
+          AND COALESCE(sr.total_refunded, 0) < COALESCE(s.total_amount, 0)
     ''', flt_params_s).fetchone()['count']
 
     # Last 7 days sales trend
