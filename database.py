@@ -215,7 +215,29 @@ def init_db():
             password VARCHAR(255) NOT NULL,
             role VARCHAR(50) NOT NULL,
             full_name VARCHAR(255),
+            portal_access_count INT NOT NULL DEFAULT 0,
+            last_portal_access_at DATETIME NULL,
+            last_access_ip VARCHAR(255) NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """
+    )
+
+    # ── 2b. Portal access log ───────────────────────────────────────────────
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_access_log (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            username VARCHAR(255) NOT NULL,
+            role VARCHAR(50) NOT NULL,
+            shop_id INT NULL,
+            access_ip VARCHAR(255) NULL,
+            user_agent VARCHAR(600) NULL,
+            access_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user_access_user_time (user_id, access_at),
+            INDEX idx_user_access_time (access_at),
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """
     )
@@ -667,6 +689,31 @@ def init_db():
         cursor.execute("ALTER TABLE users ADD COLUMN last_login DATETIME NULL")
     if not _column_exists(cursor, "users", "last_activity"):
         cursor.execute("ALTER TABLE users ADD COLUMN last_activity DATETIME NULL")
+    if not _column_exists(cursor, "users", "portal_access_count"):
+        cursor.execute("ALTER TABLE users ADD COLUMN portal_access_count INT NOT NULL DEFAULT 0")
+    if not _column_exists(cursor, "users", "last_portal_access_at"):
+        cursor.execute("ALTER TABLE users ADD COLUMN last_portal_access_at DATETIME NULL")
+    if not _column_exists(cursor, "users", "last_access_ip"):
+        cursor.execute("ALTER TABLE users ADD COLUMN last_access_ip VARCHAR(255) NULL")
+
+    # Portal access log table (for existing installs)
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_access_log (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            username VARCHAR(255) NOT NULL,
+            role VARCHAR(50) NOT NULL,
+            shop_id INT NULL,
+            access_ip VARCHAR(255) NULL,
+            user_agent VARCHAR(600) NULL,
+            access_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user_access_user_time (user_id, access_at),
+            INDEX idx_user_access_time (access_at),
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """
+    )
 
     # Settings: migrate from single global key to per-shop key
     if not _column_exists(cursor, "settings", "shop_id"):

@@ -253,6 +253,10 @@ function initSidebarAccordions() {
                     link.remove();
                     return;
                 }
+                if (base === '/shops') {
+                    link.remove();
+                    return;
+                }
                 kept.push(link);
             });
 

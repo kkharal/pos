@@ -12,6 +12,12 @@
         .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
         .page-header h1 { font-size: 1.4rem; color: #1e293b; margin: 0; font-weight: 700; }
 
+        .admin-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        .admin-tab-btn { border: 1px solid #e2e8f0; background: white; color: #334155; border-radius: 999px; padding: 0.35rem 0.85rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+        .admin-tab-btn.active { background: #0f172a; color: #ffffff; border-color: #0f172a; }
+        .tab-panel { display: block; }
+        .tab-panel.hidden { display: none; }
+
         /* ===== KPI row ===== */
         .user-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
         .user-kpi { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem 1.25rem; }
@@ -79,6 +85,28 @@
         .user-empty { text-align: center; padding: 3rem 2rem; grid-column: 1 / -1; }
         .user-empty .empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.5rem; }
         .user-empty p { color: #94a3b8; margin: 0; font-size: 0.9rem; }
+
+        .access-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.85rem; margin-bottom: 1rem; }
+        .access-kpi { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.8rem 0.95rem; }
+        .access-kpi .value { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
+        .access-kpi .label { font-size: 0.75rem; color: #64748b; margin-top: 0.15rem; }
+        .access-toolbar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem; flex-wrap: wrap; }
+        .access-toolbar select { height: 34px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.25rem 0.5rem; background: white; }
+        .access-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.7rem; }
+        .access-table-wrap { overflow: auto; max-height: 420px; }
+        .access-table { width: 100%; border-collapse: collapse; min-width: 860px; font-size: 0.82rem; }
+        .access-table th, .access-table td { border-bottom: 1px solid #f1f5f9; padding: 0.48rem 0.42rem; text-align: left; }
+        .access-table th { font-size: 0.72rem; text-transform: uppercase; color: #64748b; letter-spacing: 0.03em; }
+        .access-events { margin-top: 0.85rem; }
+        .access-events-list { max-height: 240px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; }
+        .access-event-item { display: grid; grid-template-columns: 1fr auto auto; gap: 0.6rem; padding: 0.55rem 0.65rem; border-bottom: 1px solid #f1f5f9; font-size: 0.8rem; }
+        .access-event-item:last-child { border-bottom: none; }
+        .muted { color: #64748b; }
+
+        @media (max-width: 767px) {
+            .access-event-item { grid-template-columns: 1fr; gap: 0.2rem; }
+            .admin-tab-btn { font-size: 0.76rem; padding: 0.3rem 0.6rem; }
+        }
     </style>
 </head>
 <body class="has-sidebar">
@@ -158,27 +186,82 @@
             <button class="btn btn-primary" onclick="openAddUserModal()">+ Add User</button>
         </div>
 
-        <!-- KPI Cards -->
-        <div class="user-kpis">
-            <div class="user-kpi"><div class="kpi-value" id="kpi-total">0</div><div class="kpi-label">Total Users</div></div>
-            <div class="user-kpi"><div class="kpi-value" id="kpi-admins">0</div><div class="kpi-label">Admins</div></div>
-            <div class="user-kpi"><div class="kpi-value" id="kpi-staff">0</div><div class="kpi-label">Staff</div></div>
-            <div class="user-kpi"><div class="kpi-value" id="kpi-active">0</div><div class="kpi-label">Active (24h)</div></div>
+        <div class="admin-tabs super-admin-only" id="admin-tabs" style="display:none;">
+            <button class="admin-tab-btn active" id="tab-btn-users" onclick="switchAdminTab('users')">User Management</button>
+            <button class="admin-tab-btn" id="tab-btn-access" onclick="switchAdminTab('access')">Portal Access</button>
         </div>
 
-        <!-- Toolbar -->
-        <div class="user-toolbar">
-            <input type="text" id="user-search" placeholder="Search users..." oninput="renderUsers()">
-            <div class="user-filter-pills">
-                <button class="user-pill active" onclick="setFilter('all')">All</button>
-                <button class="user-pill" onclick="setFilter('admin')">Admins</button>
-                <button class="user-pill" onclick="setFilter('user')">Staff</button>
+        <div id="tab-users-panel" class="tab-panel">
+            <!-- KPI Cards -->
+            <div class="user-kpis">
+                <div class="user-kpi"><div class="kpi-value" id="kpi-total">0</div><div class="kpi-label">Total Users</div></div>
+                <div class="user-kpi"><div class="kpi-value" id="kpi-admins">0</div><div class="kpi-label">Admins</div></div>
+                <div class="user-kpi"><div class="kpi-value" id="kpi-staff">0</div><div class="kpi-label">Staff</div></div>
+                <div class="user-kpi"><div class="kpi-value" id="kpi-active">0</div><div class="kpi-label">Active (24h)</div></div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="user-toolbar">
+                <input type="text" id="user-search" placeholder="Search users..." oninput="renderUsers()">
+                <div class="user-filter-pills">
+                    <button class="user-pill active" onclick="setFilter('all')">All</button>
+                    <button class="user-pill" onclick="setFilter('admin')">Admins</button>
+                    <button class="user-pill" onclick="setFilter('user')">Staff</button>
+                </div>
+            </div>
+
+            <!-- User Cards -->
+            <div class="user-grid" id="user-grid">
+                <div class="user-empty"><div class="empty-icon">👤</div><p>Loading...</p></div>
             </div>
         </div>
 
-        <!-- User Cards -->
-        <div class="user-grid" id="user-grid">
-            <div class="user-empty"><div class="empty-icon">👤</div><p>Loading...</p></div>
+        <div id="tab-access-panel" class="tab-panel hidden super-admin-only" style="display:none;">
+            <div class="access-toolbar">
+                <select id="access-days" onchange="loadAccessStats()">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                    <option value="365">Last 365 days</option>
+                </select>
+                <button class="btn btn-secondary" onclick="loadAccessStats()" style="height:34px;padding:0 0.7rem;">Refresh</button>
+                <span class="muted" id="access-last-updated"></span>
+            </div>
+
+            <div class="access-kpis">
+                <div class="access-kpi"><div class="value" id="access-kpi-events">0</div><div class="label">Access Events</div></div>
+                <div class="access-kpi"><div class="value" id="access-kpi-users">0</div><div class="label">Users Accessed</div></div>
+                <div class="access-kpi"><div class="value" id="access-kpi-24h">0</div><div class="label">Last 24h Events</div></div>
+                <div class="access-kpi"><div class="value" id="access-kpi-range">30</div><div class="label">Range (Days)</div></div>
+            </div>
+
+            <div class="access-card">
+                <div class="access-table-wrap">
+                    <table class="access-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Shop</th>
+                                <th>Total Access</th>
+                                <th>In Range</th>
+                                <th>Last Login</th>
+                                <th>Last IP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="access-table-body">
+                            <tr><td colspan="7" class="muted">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="access-events">
+                <div style="font-size:0.78rem;font-weight:600;text-transform:uppercase;color:#64748b;margin-bottom:0.35rem;">Recent Portal Access</div>
+                <div class="access-events-list" id="access-events-list">
+                    <div class="access-event-item"><div class="muted">Loading...</div><div></div><div></div></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -328,6 +411,9 @@
         var activeShopId = null;
         var currentFilter = 'all';
         var isSuperAdmin = false;
+        var accessUsers = [];
+        var accessEvents = [];
+        var accessLoaded = false;
 
         // ── Role helpers ──
         function roleColor(role) {
@@ -413,6 +499,109 @@
                 renderKPIs();
                 renderUsers();
             } catch(e) { console.error(e); }
+        }
+
+        function switchAdminTab(tabName) {
+            var usersPanel = document.getElementById('tab-users-panel');
+            var accessPanel = document.getElementById('tab-access-panel');
+            var btnUsers = document.getElementById('tab-btn-users');
+            var btnAccess = document.getElementById('tab-btn-access');
+
+            if (tabName === 'access' && isSuperAdmin) {
+                usersPanel.classList.add('hidden');
+                accessPanel.classList.remove('hidden');
+                accessPanel.style.display = '';
+                btnUsers.classList.remove('active');
+                btnAccess.classList.add('active');
+                if (!accessLoaded) {
+                    loadAccessStats();
+                }
+                return;
+            }
+
+            usersPanel.classList.remove('hidden');
+            accessPanel.classList.add('hidden');
+            accessPanel.style.display = 'none';
+            btnUsers.classList.add('active');
+            btnAccess.classList.remove('active');
+        }
+
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '—';
+            var d = parseUTC(dateStr);
+            if (isNaN(d.getTime())) return '—';
+            return d.toLocaleString(undefined, {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        async function loadAccessStats() {
+            if (!isSuperAdmin) return;
+            var days = parseInt(document.getElementById('access-days').value, 10) || 30;
+            try {
+                var resp = await fetch('/api/users/access-stats?days=' + days);
+                var data = await resp.json();
+                if (!resp.ok) {
+                    showToast(data.error || 'Failed to load access stats', 'error');
+                    return;
+                }
+                accessUsers = data.users || [];
+                accessEvents = data.recent_events || [];
+                accessLoaded = true;
+                renderAccessStats(data.summary || {}, data.days || days);
+            } catch (e) {
+                console.error(e);
+                showToast('Failed to load access stats', 'error');
+            }
+        }
+
+        function renderAccessStats(summary, days) {
+            document.getElementById('access-kpi-events').textContent = summary.total_access_events || 0;
+            document.getElementById('access-kpi-users').textContent = summary.active_users || 0;
+            document.getElementById('access-kpi-24h').textContent = summary.last_24h_events || 0;
+            document.getElementById('access-kpi-range').textContent = days;
+            document.getElementById('access-last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+            var tbody = document.getElementById('access-table-body');
+            if (!accessUsers.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="muted">No access data found.</td></tr>';
+            } else {
+                tbody.innerHTML = accessUsers.map(function(u) {
+                    var displayName = escHtml(u.full_name || u.username || 'Unknown');
+                    var role = escHtml(roleLabel(u.role));
+                    var shop = escHtml(u.shop_name || 'All shops');
+                    var total = u.portal_access_count || 0;
+                    var recent = u.recent_access_count || 0;
+                    var lastLogin = formatDateTime(u.last_login || u.last_portal_access_at);
+                    var ip = escHtml(u.last_access_ip || '—');
+                    return '<tr>' +
+                        '<td>' + displayName + '<div class="muted" style="font-size:0.72rem;">@' + escHtml(u.username || '') + '</div></td>' +
+                        '<td>' + role + '</td>' +
+                        '<td>' + shop + '</td>' +
+                        '<td>' + total + '</td>' +
+                        '<td>' + recent + '</td>' +
+                        '<td>' + lastLogin + '</td>' +
+                        '<td>' + ip + '</td>' +
+                        '</tr>';
+                }).join('');
+            }
+
+            var eventList = document.getElementById('access-events-list');
+            if (!accessEvents.length) {
+                eventList.innerHTML = '<div class="access-event-item"><div class="muted">No recent events.</div><div></div><div></div></div>';
+            } else {
+                eventList.innerHTML = accessEvents.map(function(ev) {
+                    var who = escHtml(ev.full_name || ev.username || 'Unknown') + ' <span class="muted">@' + escHtml(ev.username || '') + '</span>';
+                    var when = formatDateTime(ev.access_at);
+                    var where = escHtml(ev.shop_name || 'All shops');
+                    var ip = escHtml(ev.access_ip || '—');
+                    return '<div class="access-event-item">' +
+                        '<div>' + who + '<div class="muted" style="font-size:0.72rem;">' + where + '</div></div>' +
+                        '<div>' + when + '</div>' +
+                        '<div class="muted">IP: ' + ip + '</div>' +
+                    '</div>';
+                }).join('');
+            }
         }
 
         function renderKPIs() {

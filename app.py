@@ -3,7 +3,7 @@ from flask_cors import CORS
 import json
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 from database import init_db, get_db_connection, hash_password
 from io import BytesIO
@@ -1001,7 +1001,29 @@ def login():
     user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
 
     if user and user['password'] == hash_password(password):
-        conn.execute('UPDATE users SET last_login = NOW(), last_activity = NOW() WHERE id = ?', (user['id'],))
+        forwarded_for = request.headers.get('X-Forwarded-For', '')
+        access_ip = (forwarded_for.split(',')[0].strip() if forwarded_for else None) or request.headers.get('X-Real-IP') or request.remote_addr
+        user_agent = (request.headers.get('User-Agent') or '')[:500]
+
+        conn.execute(
+            '''
+            UPDATE users
+            SET last_login = NOW(),
+                last_activity = NOW(),
+                portal_access_count = COALESCE(portal_access_count, 0) + 1,
+                last_portal_access_at = NOW(),
+                last_access_ip = ?
+            WHERE id = ?
+            ''',
+            (access_ip, user['id'])
+        )
+        conn.execute(
+            '''
+            INSERT INTO user_access_log (user_id, username, role, shop_id, access_ip, user_agent)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ''',
+            (user['id'], user['username'], user['role'], user['shop_id'], access_ip, user_agent)
+        )
         conn.commit()
         session['user_id'] = user['id']
         session['username'] = user['username']
@@ -2434,6 +2456,99 @@ def get_users():
                     u['assigned_shops'] = shop_map.get(u['id'], [])
 
     return jsonify(result)
+
+
+@app.route('/api/users/access-stats', methods=['GET'])
+@login_required
+@super_admin_required
+def get_user_access_stats():
+    try:
+        days = int(request.args.get('days', 30))
+    except Exception:
+        days = 30
+    if days < 1:
+        days = 1
+    if days > 365:
+        days = 365
+
+    cutoff = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+    conn = get_db_connection()
+
+    users = conn.execute(
+        '''
+        SELECT
+            u.id,
+            u.username,
+            u.full_name,
+            u.role,
+            u.shop_id,
+            s.name AS shop_name,
+            COALESCE(u.portal_access_count, 0) AS portal_access_count,
+            u.last_login,
+            u.last_portal_access_at,
+            u.last_access_ip,
+            COALESCE(SUM(CASE WHEN l.access_at >= ? THEN 1 ELSE 0 END), 0) AS recent_access_count
+        FROM users u
+        LEFT JOIN shops s ON s.id = u.shop_id
+        LEFT JOIN user_access_log l ON l.user_id = u.id
+        GROUP BY
+            u.id,
+            u.username,
+            u.full_name,
+            u.role,
+            u.shop_id,
+            s.name,
+            u.portal_access_count,
+            u.last_login,
+            u.last_portal_access_at,
+            u.last_access_ip
+        ORDER BY portal_access_count DESC, u.last_login DESC
+        ''',
+        (cutoff,)
+    ).fetchall()
+
+    summary = conn.execute(
+        '''
+        SELECT
+            COUNT(*) AS total_access_events,
+            COUNT(DISTINCT user_id) AS active_users,
+            SUM(CASE WHEN access_at >= DATE_SUB(NOW(), INTERVAL 1 DAY) THEN 1 ELSE 0 END) AS last_24h_events
+        FROM user_access_log
+        WHERE access_at >= ?
+        ''',
+        (cutoff,)
+    ).fetchone()
+
+    recent_events = conn.execute(
+        '''
+        SELECT
+            l.user_id,
+            u.username,
+            u.full_name,
+            u.role,
+            s.name AS shop_name,
+            l.access_ip,
+            l.access_at
+        FROM user_access_log l
+        JOIN users u ON u.id = l.user_id
+        LEFT JOIN shops s ON s.id = u.shop_id
+        ORDER BY l.access_at DESC
+        LIMIT 100
+        '''
+    ).fetchall()
+
+    conn.close()
+
+    return jsonify({
+        'days': days,
+        'summary': dict(summary) if summary else {
+            'total_access_events': 0,
+            'active_users': 0,
+            'last_24h_events': 0,
+        },
+        'users': [dict(row) for row in users],
+        'recent_events': [dict(row) for row in recent_events],
+    })
 
 @app.route('/api/users', methods=['POST'])
 @login_required
