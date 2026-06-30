@@ -235,7 +235,7 @@ function initSidebarAccordions() {
             '<span class="sidebar-group-icon" aria-hidden="true">' + icon + '</span>' +
             '<span class="sidebar-group-toggle-label">' + label + '</span>' +
             '</span>' +
-            '<span class="sidebar-group-chevron" aria-hidden="true">▸</span>';
+            '<span class="sidebar-group-chevron" aria-hidden="true">›</span>';
 
         const panel = document.createElement('div');
         panel.className = 'sidebar-group-panel';
@@ -349,7 +349,22 @@ function initSidebarAccordions() {
     if (financeIndex !== -1 && administrationIndex !== -1 && financeIndex !== administrationIndex - 1) {
         const administrationItem = grouped[administrationIndex];
         const financeItem = grouped[financeIndex];
+
+        // Capture the divider immediately before Administration (will be orphaned after the move)
+        const dividerBeforeAdmin = administrationItem.group.previousElementSibling;
+        const hasDividerBefore = dividerBeforeAdmin && dividerBeforeAdmin.classList.contains('sidebar-divider');
+
+        // Move Administration group to after Finance
         nav.insertBefore(administrationItem.group, financeItem.group.nextSibling);
+
+        // Move its divider along with it (inserts a separator before Administration in its new spot)
+        if (hasDividerBefore) {
+            nav.insertBefore(dividerBeforeAdmin, administrationItem.group);
+        } else {
+            const sep = document.createElement('div');
+            sep.className = 'sidebar-divider admin-only';
+            nav.insertBefore(sep, administrationItem.group);
+        }
 
         grouped.splice(administrationIndex, 1);
         const newFinanceIndex = grouped.findIndex((item) => item.groupLabel === 'finance');
