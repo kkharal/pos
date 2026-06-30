@@ -448,6 +448,13 @@
             color: #94a3b8;
         }
 
+        .activity-user {
+            margin: 2px 0 0 0;
+            font-size: 0.74rem;
+            color: #64748b;
+            font-weight: 700;
+        }
+
         .activity-amount {
             font-weight: 800;
             font-size: 0.94rem;
@@ -548,7 +555,7 @@
         .ledger-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 980px;
+            min-width: 1080px;
         }
 
         .ledger-table th,
@@ -595,6 +602,49 @@
             padding: 22px;
             color: var(--finance-muted);
             font-size: 0.9rem;
+        }
+
+        .audit-card {
+            background: var(--finance-surface);
+            border: 1px solid var(--finance-border);
+            border-radius: var(--radius);
+            box-shadow: var(--finance-shadow);
+            padding: var(--space-2);
+            margin-bottom: var(--space-2);
+        }
+
+        .audit-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .audit-item {
+            border: 1px solid var(--finance-border);
+            border-radius: 10px;
+            background: var(--finance-surface-soft);
+            padding: 10px;
+        }
+
+        .audit-item-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+
+        .audit-title {
+            margin: 0;
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: var(--finance-text);
+        }
+
+        .audit-meta {
+            margin: 0;
+            font-size: 0.76rem;
+            color: var(--finance-muted);
         }
 
         .modal-overlay {
@@ -859,6 +909,15 @@
                 </div>
             </section>
 
+            <section class="audit-card">
+                <div class="section-head">
+                    <h2>Audit Trail</h2>
+                </div>
+                <div class="audit-list" id="audit-list">
+                    <div class="empty-state">No audit entries yet.</div>
+                </div>
+            </section>
+
             <section class="owner-funds-card">
                 <div class="section-head">
                     <h2>Owner Funds</h2>
@@ -919,12 +978,13 @@
                                     <th>Transaction Type</th>
                                     <th>Reference</th>
                                     <th>Notes</th>
+                                    <th>Updated By</th>
                                     <th>Amount</th>
                                     <th>Running Balance</th>
                                 </tr>
                             </thead>
                             <tbody id="ledger-body">
-                                <tr><td colspan="6" class="empty-state">Loading ledger data...</td></tr>
+                                <tr><td colspan="7" class="empty-state">Loading ledger data...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -955,6 +1015,7 @@
     <script>
         var currencySymbol = '$';
         var financeRows = [];
+        var financeAuditRows = [];
         var previousRowsCount = 0;
         var currentMovementType = 'investment';
         var ledgerExpanded = false;
@@ -1043,6 +1104,10 @@
             if (t === 'owner_withdrawal') return 'Owner Draw';
             if (tx.notes) return tx.notes;
             return shortRef(tx.reference);
+        }
+
+        function actorName(entry) {
+            return entry.actor_name || entry.full_name || entry.username || 'System';
         }
 
         function iconForType(tx) {
@@ -1197,6 +1262,7 @@
                     '<div class="activity-main">' +
                         '<p class="activity-title">' + activityTitle(tx) + '</p>' +
                         '<p class="activity-sub">' + activitySubline(tx) + '</p>' +
+                        '<p class="activity-user">By: ' + actorName(tx) + '</p>' +
                         '<p class="activity-meta">' + effectiveDateTimeLabel(tx) + '</p>' +
                     '</div>' +
                     '<div class="activity-amount ' + direction + '">' + sign + money(tx.amount) + '</div>' +
@@ -1321,7 +1387,7 @@
         function renderLedger(rows) {
             var body = document.getElementById('ledger-body');
             if (!rows.length) {
-                body.innerHTML = '<tr><td colspan="6" class="empty-state">No ledger entries for the selected filters.</td></tr>';
+                body.innerHTML = '<tr><td colspan="7" class="empty-state">No ledger entries for the selected filters.</td></tr>';
                 return;
             }
 
@@ -1338,9 +1404,41 @@
                     '<td><span class="pill ' + direction + '">' + typeLabel(tx.transaction_type) + '</span></td>' +
                     '<td>' + (tx.reference || '-') + '</td>' +
                     '<td>' + (tx.notes || '-') + '</td>' +
+                    '<td>' + actorName(tx) + '</td>' +
                     '<td class="amount-cell ' + direction + '">' + sign + money(tx.amount) + '</td>' +
                     '<td class="running-cell ' + runningClass + '">' + money(running) + '</td>' +
                 '</tr>';
+            }).join('');
+        }
+
+        function auditLabel(actionType) {
+            var m = {
+                finance_transaction_created: 'Finance Transaction Created',
+                opening_balance_updated: 'Opening Balance Updated'
+            };
+            return m[actionType] || typeLabel(actionType);
+        }
+
+        function renderAuditTrail(rows) {
+            var wrap = document.getElementById('audit-list');
+            if (!rows || !rows.length) {
+                wrap.innerHTML = '<div class="empty-state">No audit entries yet.</div>';
+                return;
+            }
+
+            wrap.innerHTML = rows.slice(0, 20).map(function(item) {
+                var direction = String(item.direction || '').toUpperCase();
+                var amountText = item.amount != null
+                    ? ((direction === 'OUT' ? '-' : '+') + money(item.amount))
+                    : '-';
+                return '<article class="audit-item">' +
+                    '<div class="audit-item-top">' +
+                        '<p class="audit-title">' + auditLabel(item.action_type || '') + '</p>' +
+                        '<span class="pill ' + (direction === 'OUT' ? 'out' : 'in') + '">' + amountText + '</span>' +
+                    '</div>' +
+                    '<p class="audit-meta">By: ' + actorName(item) + ' · ' + formatDateTime(item.created_at) + '</p>' +
+                    '<p class="audit-meta">Ref: ' + (item.reference || '-') + ' · ' + (item.notes || '-') + '</p>' +
+                '</article>';
             }).join('');
         }
 
@@ -1501,11 +1599,20 @@
             return res.json();
         }
 
+        async function fetchAudit(range) {
+            var query = buildQuery(range);
+            var suffix = query ? '?' + query + '&limit=120' : '?limit=120';
+            var res = await fetch('/api/finance/audit' + suffix);
+            if (!res.ok) throw new Error('Failed to load audit');
+            return res.json();
+        }
+
         async function loadFinanceDashboard() {
             var range = getDateRange();
             try {
                 var summaryPayload = await fetchSummary(range);
                 var txPayload = await fetchTransactions(range);
+                var auditPayload = await fetchAudit(range);
                 var summary = summaryPayload.summary || {
                     opening_balance: 0,
                     money_in: 0,
@@ -1515,6 +1622,7 @@
 
                 window.currentOpeningBalance = Number(summary.opening_balance || 0);
                 financeRows = txPayload.transactions || [];
+                financeAuditRows = auditPayload.audit || [];
 
                 updateHero(summary);
 
@@ -1534,6 +1642,7 @@
                 renderOwnerFunds(financeRows);
                 renderBalanceBreakdown(summary, financeRows);
                 renderCashFlow(financeRows);
+                renderAuditTrail(financeAuditRows);
                 populateTypeFilter(financeRows);
                 applyLedgerFilters();
             } catch (e) {
@@ -1580,7 +1689,6 @@
                     body: JSON.stringify({
                         movement_type: currentMovementType,
                         amount: amount,
-                        transaction_date: transactionDate,
                         reference: reference,
                         notes: notes
                     })

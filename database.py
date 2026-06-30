@@ -560,7 +560,30 @@ def init_db():
         """
     )
 
-    # ── 20. Scheduled alert send log (idempotency guard) ─────────────────────
+    # ── 20. Finance audit trail ─────────────────────────────────────────────
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS finance_audit_log (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            shop_id INT NULL,
+            action_type VARCHAR(80) NOT NULL,
+            entity_type VARCHAR(80) NOT NULL,
+            entity_id INT NULL,
+            amount DECIMAL(12,2) NULL,
+            direction VARCHAR(8) NULL,
+            reference VARCHAR(255) NULL,
+            notes TEXT,
+            details_json LONGTEXT,
+            created_by INT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_fin_audit_shop_time (shop_id, created_at),
+            INDEX idx_fin_audit_action (action_type),
+            FOREIGN KEY (created_by) REFERENCES users (id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """
+    )
+
+    # ── 21. Scheduled alert send log (idempotency guard) ─────────────────────
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS alert_send_log (
@@ -711,6 +734,29 @@ def init_db():
             INDEX idx_user_access_user_time (user_id, access_at),
             INDEX idx_user_access_time (access_at),
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """
+    )
+
+    # Finance audit log table (for existing installs)
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS finance_audit_log (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            shop_id INT NULL,
+            action_type VARCHAR(80) NOT NULL,
+            entity_type VARCHAR(80) NOT NULL,
+            entity_id INT NULL,
+            amount DECIMAL(12,2) NULL,
+            direction VARCHAR(8) NULL,
+            reference VARCHAR(255) NULL,
+            notes TEXT,
+            details_json LONGTEXT,
+            created_by INT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_fin_audit_shop_time (shop_id, created_at),
+            INDEX idx_fin_audit_action (action_type),
+            FOREIGN KEY (created_by) REFERENCES users (id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """
     )

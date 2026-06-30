@@ -807,6 +807,67 @@ def _record_finance_transaction(
         ),
     )
 
+    audit_payload = {
+        'shop_id': shop_id,
+        'direction': direction,
+        'amount': amount_value,
+        'transaction_type': (transaction_type or '').strip(),
+        'source_table': (source_table or '').strip() or None,
+        'source_id': source_id,
+        'reference': (reference or '').strip() or None,
+        'notes': (notes or '').strip() or None,
+    }
+    _record_finance_audit(
+        cursor,
+        shop_id=shop_id,
+        action_type='finance_transaction_created',
+        entity_type='finance_transaction',
+        entity_id=cursor.lastrowid or None,
+        amount=amount_value,
+        direction=direction,
+        reference=(reference or '').strip() or None,
+        notes=(notes or '').strip() or None,
+        details=audit_payload,
+        created_by=created_by,
+    )
+
+
+def _record_finance_audit(
+    cursor,
+    *,
+    shop_id,
+    action_type,
+    entity_type,
+    entity_id=None,
+    amount=None,
+    direction=None,
+    reference=None,
+    notes=None,
+    details=None,
+    created_by=None,
+):
+    """Write an audit row for finance actions without affecting balances."""
+    cursor.execute(
+        '''
+            INSERT INTO finance_audit_log
+                (shop_id, action_type, entity_type, entity_id, amount, direction, reference, notes, details_json, created_by)
+            VALUES
+                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+        (
+            shop_id,
+            (action_type or '').strip() or 'finance_action',
+            (entity_type or '').strip() or 'finance',
+            entity_id,
+            round(_as_float(amount), 2) if amount is not None else None,
+            (direction or '').upper().strip() or None,
+            (reference or '').strip() or None,
+            (notes or '').strip() or None,
+            json.dumps(details or {}, default=str),
+            created_by,
+        ),
+    )
+
 
 def _get_available_funds(cursor, date_from=None, date_to=None):
     flt_sql, flt_params = shop_filter('ft')
@@ -7253,6 +7314,12 @@ def manage_finance_opening_balance():
         return jsonify({'success': False, 'error': 'Select a specific shop before setting opening balance'}), 400
 
     try:
+        existing = cursor.execute(
+            "SELECT value FROM settings WHERE `key` = 'finance_opening_balance' AND shop_id = ?",
+            (shop_id,),
+        ).fetchone()
+        previous_amount = _as_float(existing['value'] if existing else 0)
+
         cursor.execute(
             '''
                 INSERT INTO settings (`key`, value, shop_id)
@@ -7261,6 +7328,26 @@ def manage_finance_opening_balance():
             ''',
             (str(amount), shop_id),
         )
+
+        delta = round(amount - previous_amount, 2)
+        _record_finance_audit(
+            cursor,
+            shop_id=shop_id,
+            action_type='opening_balance_updated',
+            entity_type='settings',
+            entity_id=shop_id,
+            amount=amount,
+            direction='IN' if delta >= 0 else 'OUT',
+            reference='finance_opening_balance',
+            notes='Opening balance updated',
+            details={
+                'previous_opening_balance': previous_amount,
+                'new_opening_balance': amount,
+                'delta': delta,
+            },
+            created_by=session.get('user_id'),
+        )
+
         conn.commit()
         return jsonify({'success': True, 'opening_balance': amount})
     except Exception as e:
@@ -7309,7 +7396,8 @@ def list_finance_transactions():
 
         rows = cursor.execute(
             f'''
-                SELECT ft.*, u.username, u.full_name
+                SELECT ft.*, u.username, u.full_name,
+                       COALESCE(NULLIF(u.full_name, ''), u.username, 'System') as actor_name
                 FROM finance_transactions ft
                 LEFT JOIN users u ON u.id = ft.created_by
                 WHERE 1=1 {flt_sql} {where_sql}
@@ -7325,6 +7413,48 @@ def list_finance_transactions():
             'total': total,
             'transactions': [dict(row) for row in rows],
         })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    finally:
+        conn.close()
+
+
+@app.route('/api/finance/audit', methods=['GET'])
+@login_required
+@admin_required
+def list_finance_audit():
+    limit = min(300, max(1, int(request.args.get('limit', 80) or 80)))
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        flt_sql, flt_params = shop_filter('fa')
+        where_sql = ''
+        params = list(flt_params)
+
+        if start_date:
+            where_sql += ' AND fa.created_at >= ?'
+            params.append(f'{start_date} 00:00:00')
+        if end_date:
+            where_sql += ' AND fa.created_at <= ?'
+            params.append(f'{end_date} 23:59:59')
+
+        rows = cursor.execute(
+            f'''
+                SELECT fa.*, u.username, u.full_name,
+                       COALESCE(NULLIF(u.full_name, ''), u.username, 'System') as actor_name
+                FROM finance_audit_log fa
+                LEFT JOIN users u ON u.id = fa.created_by
+                WHERE 1=1 {flt_sql} {where_sql}
+                ORDER BY fa.created_at DESC, fa.id DESC
+                LIMIT ?
+            ''',
+            params + [limit],
+        ).fetchall()
+
+        return jsonify({'audit': [dict(row) for row in rows]})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
     finally:
