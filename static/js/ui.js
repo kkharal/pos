@@ -118,6 +118,18 @@ function bindMobileSidebarLinkClose() {
 }
 
 function initSidebarAccordions() {
+    // Inline SVG icon set — monochrome outline, 24×24 viewBox, Tabler/Feather style
+    var NAV_ICONS = {
+        home:           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11L12 3l9 8v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9Z"/><path d="M9 21v-6h6v6"/></svg>',
+        sales:          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5Z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>',
+        products:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h7l5 6-5 6H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/><circle cx="8.5" cy="12" r="1" fill="currentColor"/></svg>',
+        customers:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M3 21v-1a6 6 0 0 1 12 0v1"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-1a4 4 0 0 0-4-4"/></svg>',
+        analytics:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="13" width="4" height="8" rx="1"/><rect x="10" y="8" width="4" height="13" rx="1"/><rect x="17" y="4" width="4" height="17" rx="1"/><path d="M3 21h18"/></svg>',
+        finance:        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/><path d="M3 11h18"/><circle cx="17.5" cy="15" r="1.5" fill="currentColor"/></svg>',
+        administration: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L4 6v5c0 4.8 3.6 8.7 8 10 4.4-1.3 8-5.2 8-10V6Z"/><rect x="9" y="11" width="6" height="5" rx="1"/><path d="M10 11V9a2 2 0 1 0 4 0v2"/></svg>',
+        settings:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>',
+    };
+
     const nav = document.querySelector('#sidebar .sidebar-nav');
     if (!nav || nav.dataset.accordionReady === '1') return;
     nav.dataset.accordionReady = '1';
@@ -125,6 +137,8 @@ function initSidebarAccordions() {
     const homeLink = nav.querySelector('.sidebar-item[href="/"]');
     if (homeLink) {
         homeLink.classList.add('sidebar-single-tab');
+        var homeIconEl = homeLink.querySelector('.sidebar-icon');
+        if (homeIconEl && NAV_ICONS.home) homeIconEl.innerHTML = NAV_ICONS.home;
         const next = homeLink.nextElementSibling;
         if (next && next.classList && next.classList.contains('sidebar-divider')) {
             next.classList.add('sidebar-divider-after-single-tab');
@@ -230,9 +244,10 @@ function initSidebarAccordions() {
         trigger.type = 'button';
         trigger.className = 'sidebar-group-toggle';
         trigger.setAttribute('aria-expanded', 'false');
+        var svgIcon = NAV_ICONS[label.toLowerCase()];
         trigger.innerHTML =
             '<span class="sidebar-group-toggle-title">' +
-            '<span class="sidebar-group-icon" aria-hidden="true">' + icon + '</span>' +
+            '<span class="sidebar-group-icon" aria-hidden="true">' + (svgIcon || icon) + '</span>' +
             '<span class="sidebar-group-toggle-label">' + label + '</span>' +
             '</span>' +
             '<span class="sidebar-group-chevron" aria-hidden="true">›</span>';
@@ -399,9 +414,9 @@ function initSidebarAccordions() {
     }
 
     grouped.forEach((item) => {
-        const hasPersisted = Object.prototype.hasOwnProperty.call(stored, item.groupKey);
-        const persisted = hasPersisted ? !!stored[item.groupKey] : false;
-        const startOpen = hasPersisted ? persisted : item.hasActiveChild;
+        // Only auto-open the group that contains the current page.
+        // Ignore localStorage so navigating away always collapses unrelated groups.
+        const startOpen = item.hasActiveChild;
         if (item.hasActiveChild) item.group.classList.add('has-active');
         setOpen(item, startOpen, false);
 

@@ -778,31 +778,31 @@
             </div>
         </div>
         <div class="sidebar-nav">
-            <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span><span class="sidebar-label">Home</span></a>
+            <a href="/" class="sidebar-item"><span class="sidebar-icon"></span><span class="sidebar-label">Home</span></a>
             <div class="sidebar-divider"></div>
-            <div class="sidebar-section-title">🛒 Sales</div>
+            <div class="sidebar-section-title">Sales</div>
             <a href="/pos" class="sidebar-item"><span class="sidebar-label">Point of Sale</span></a>
             <a href="/sales" class="sidebar-item"><span class="sidebar-label">Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">📦 Products</div>
+            <div class="sidebar-section-title admin-only">Products</div>
             <a href="/products" class="sidebar-item admin-only"><span class="sidebar-label">Inventory</span></a>
             <a href="/suppliers" class="sidebar-item admin-only"><span class="sidebar-label">Suppliers</span></a>
             <a href="/purchase-orders" class="sidebar-item admin-only"><span class="sidebar-label">Purchase Orders</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">👥 Customers</div>
+            <div class="sidebar-section-title admin-only">Customers</div>
             <a href="/customers" class="sidebar-item admin-only"><span class="sidebar-label">Customers</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">👤 Administration</div>
+            <div class="sidebar-section-title admin-only">Administration</div>
             <a href="/users" class="sidebar-item admin-only"><span class="sidebar-label">Users</span></a>
             <div class="sidebar-divider"></div>
-            <div class="sidebar-section-title">📈 Analytics</div>
+            <div class="sidebar-section-title">Analytics</div>
             <a href="/reports" class="sidebar-item"><span class="sidebar-label">Reports</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">💳 Finance</div>
+            <div class="sidebar-section-title admin-only">Finance</div>
             <a href="/finance" class="sidebar-item admin-only active"><span class="sidebar-label">Finance</span></a>
             <a href="/expenses" class="sidebar-item admin-only"><span class="sidebar-label">Expenses</span></a>
             <div class="sidebar-divider admin-only"></div>
-            <div class="sidebar-section-title admin-only">⚙️ Settings</div>
+            <div class="sidebar-section-title admin-only">Settings</div>
             <a href="/settings" class="sidebar-item admin-only"><span class="sidebar-label">Settings</span></a>
         </div>
     </aside>
@@ -813,10 +813,22 @@
             <button class="topbar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
             <div class="topbar-spacer"></div>
             <div class="user-profile-container">
-                <div class="user-profile">
-                    <div class="user-profile-icon" id="user-icon">A</div>
+                <div class="user-profile" id="user-profile-toggle">
+                    <div class="user-profile-icon" id="user-icon">{{ session.get('full_name', 'A')[0] | upper }}</div>
                     <div class="user-profile-info">
-                        <span class="user-profile-name" id="user-name">Admin</span>
+                        <span class="user-profile-name" id="user-name">{{ session.get('full_name', '') }}</span>
+                    </div>
+                    <span class="user-profile-arrow">&#9660;</span>
+                </div>
+                <div class="user-dropdown" id="user-dropdown">
+                    <div class="dropdown-header">
+                        <div class="dropdown-role">
+                            Role: <span class="role-badge admin" id="role-badge">Administrator</span>
+                        </div>
+                    </div>
+                    <div class="dropdown-menu">
+                        <a href="#" onclick="openChangePasswordModal(); return false;" class="dropdown-item">Change Password</a>
+                        <a href="/logout" class="dropdown-item">Logout</a>
                     </div>
                 </div>
             </div>
@@ -1012,6 +1024,34 @@
         </div>
     </div>
 
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Change Password</h2>
+                <button class="close-btn" onclick="closeChangePasswordModal()">&times;</button>
+            </div>
+            <form id="change-password-form">
+                <div class="form-group">
+                    <label>Current Password *</label>
+                    <input type="password" id="current-password" required placeholder="Enter current password">
+                </div>
+                <div class="form-group">
+                    <label>New Password *</label>
+                    <input type="password" id="new-password" required placeholder="Minimum 6 characters" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password *</label>
+                    <input type="password" id="confirm-password" required placeholder="Re-enter new password" minlength="6">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary">Change Password</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         var currencySymbol = '$';
         var financeRows = [];
@@ -1031,8 +1071,8 @@
 
         function formatDateTime(value) {
             if (!value) return '-';
-            var date = new Date(value);
-            if (isNaN(date.getTime())) return value;
+            var date = parseUTC(value);
+            if (!date || isNaN(date.getTime())) return value;
             return date.toLocaleString([], {
                 day: '2-digit',
                 month: 'short',
@@ -1751,6 +1791,50 @@
             setLedgerExpanded(false);
             await loadUserInfo();
             await loadFinanceDashboard();
+        });
+
+        // User dropdown
+        document.getElementById('user-profile-toggle').addEventListener('click', function(e) {
+            e.stopPropagation();
+            this.classList.toggle('active');
+            document.getElementById('user-dropdown').classList.toggle('active');
+        });
+        document.addEventListener('click', function(e) {
+            var dropdown = document.getElementById('user-dropdown');
+            var toggle = document.getElementById('user-profile-toggle');
+            if (!toggle.contains(e.target) && !dropdown.contains(e.target)) {
+                toggle.classList.remove('active');
+                dropdown.classList.remove('active');
+            }
+        });
+
+        // Change password
+        function openChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.add('active');
+            document.getElementById('user-dropdown').classList.remove('active');
+            document.getElementById('user-profile-toggle').classList.remove('active');
+        }
+        function closeChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.remove('active');
+            document.getElementById('change-password-form').reset();
+        }
+        document.getElementById('change-password-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var currentPassword = document.getElementById('current-password').value;
+            var newPassword = document.getElementById('new-password').value;
+            var confirmPassword = document.getElementById('confirm-password').value;
+            if (newPassword !== confirmPassword) { showToast('New passwords do not match!', 'warning'); return; }
+            if (newPassword.length < 6) { showToast('New password must be at least 6 characters!', 'warning'); return; }
+            try {
+                var response = await fetch('/api/change-password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
+                });
+                var result = await response.json();
+                if (response.ok) { showToast('Password changed successfully!', 'success'); closeChangePasswordModal(); }
+                else { showToast(result.error || 'Error changing password', 'error'); }
+            } catch (error) { showToast('Error changing password', 'error'); }
         });
     </script>
 </body>

@@ -1507,6 +1507,18 @@ body.has-sidebar {
     flex-shrink: 0;
     width: 20px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Inline SVG icons inside sidebar icon slots */
+.sidebar-icon svg,
+.sidebar-group-icon svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+    flex-shrink: 0;
 }
 
 .sidebar-label {
