@@ -1472,9 +1472,7 @@ body.has-sidebar {
 .sidebar.collapsed .sidebar-section-title { opacity: 0; }
 
 .sidebar-divider {
-    height: 1px;
-    background: var(--border);
-    margin: 0.4rem 0.75rem;
+    display: none;
 }
 
 .sidebar-item {
@@ -1567,8 +1565,8 @@ body.has-sidebar {
     align-items: center;
     gap: 0.6rem;
     padding: 0 0.875rem;
-    height: 52px;
-    min-height: 52px;
+    height: 44px;
+    min-height: 44px;
     font-size: 0.9rem;
     font-weight: 500;
     letter-spacing: 0;
@@ -1734,8 +1732,8 @@ body.has-sidebar {
     border: none;
     box-shadow: none;
     background: transparent;
-    height: 52px;
-    min-height: 52px;
+    height: 44px;
+    min-height: 44px;
     padding: 0 0.875rem;
     gap: 0.6rem;
     color: #374151;
