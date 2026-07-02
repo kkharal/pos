@@ -1514,7 +1514,7 @@
 
         function renderBalanceBreakdown(summary, rows) {
             var opening = Number(summary.opening_balance || 0);
-            var current = Number(summary.available_funds || 0);
+            var current = Number(summary.period_available_funds || 0);
             var ownerInvest = 0;
             var ownerWithdraw = 0;
             var expenses = 0;

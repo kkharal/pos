@@ -7252,7 +7252,14 @@ def get_finance_summary():
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        summary = _get_available_funds(cursor, date_from=start_date, date_to=end_date)
+        # Keep period-scoped totals for analytics, but expose absolute cash-on-hand
+        # so "Current Cash Balance" is stable regardless of selected date range.
+        period_summary = _get_available_funds(cursor, date_from=start_date, date_to=end_date)
+        absolute_summary = _get_available_funds(cursor)
+
+        summary = dict(period_summary)
+        summary['period_available_funds'] = period_summary['available_funds']
+        summary['available_funds'] = absolute_summary['available_funds']
 
         flt_sql, flt_params = shop_filter('ft')
         range_sql = ''
