@@ -36,6 +36,22 @@ CORS(app, origins=os.environ.get('ALLOWED_ORIGINS', 'http://localhost:5000').spl
 ASSET_VERSION = os.environ.get('ASSET_VERSION') or datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
 
+def normalize_category_label(value):
+    """Normalize common category variants to a single display label."""
+    if value is None:
+        return ''
+
+    text = str(value).strip()
+    if not text:
+        return ''
+
+    normalized = re.sub(r'[-_\s]+', ' ', text).strip().lower()
+    if normalized in {'co ord set', 'co ord sets', 'co ord', 'coord set', 'coord sets', 'co ord set'}:
+        return 'Co-ord Sets'
+
+    return text
+
+
 @app.context_processor
 def inject_asset_version():
     return {'asset_version': ASSET_VERSION}
@@ -3072,7 +3088,7 @@ def get_sales_report():
         product_category_by_id = {}
         product_category_by_sku = {}
         for row in product_rows:
-            cat_val = (row['category'] or '').strip()
+            cat_val = normalize_category_label(row['category'])
             if cat_val:
                 product_category_by_id[row['id']] = cat_val
                 sku_val = (row['sku'] or '').strip().lower()
@@ -3084,10 +3100,10 @@ def get_sales_report():
         for sale in sales_data:
             items = json.loads(sale['items_json'])
             for item in items:
-                cat = (item.get('category') or '').strip()
+                cat = normalize_category_label(item.get('category'))
 
                 # If category is generic/missing, resolve from product_id first, then sku.
-                if cat.lower() in generic_categories:
+                if not cat or cat.lower() in generic_categories:
                     pid = item.get('product_id')
                     resolved = None
 
@@ -3104,7 +3120,7 @@ def get_sales_report():
                         if sku_key:
                             resolved = product_category_by_sku.get(sku_key)
 
-                    cat = resolved or 'Other'
+                    cat = normalize_category_label(resolved or 'Other')
 
                 if cat not in category_stats:
                     category_stats[cat] = {'revenue': 0, 'quantity': 0, 'cost': 0}
