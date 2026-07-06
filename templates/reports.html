@@ -861,6 +861,31 @@
     // ── Chart Helpers ─────────────────────────────────────────────────
     function destroyChart(key) { if (charts[key]) { charts[key].destroy(); charts[key] = null; } }
 
+    function normalizeCategoryLabel(value) {
+        if (value === null || value === undefined) return '';
+        var text = String(value).trim();
+        if (!text) return '';
+        var normalized = text.replace(/[-_\s]+/g, ' ').trim().toLowerCase();
+        if (['co ord set', 'co ord sets', 'co ord', 'coord set', 'coord sets'].indexOf(normalized) !== -1) {
+            return 'Co-ord Sets';
+        }
+        return text;
+    }
+
+    function aggregateCategoryBreakdown(items) {
+        var grouped = {};
+        (items || []).forEach(function(item) {
+            var category = normalizeCategoryLabel(item && item.category);
+            if (!category) category = 'Other';
+            if (!grouped[category]) {
+                grouped[category] = { category: category, revenue: 0, quantity: 0 };
+            }
+            grouped[category].revenue += Number(item.revenue || 0);
+            grouped[category].quantity += Number(item.quantity || 0);
+        });
+        return Object.keys(grouped).map(function(key) { return grouped[key]; }).sort(function(a, b) { return b.revenue - a.revenue; });
+    }
+
     function fitKpiValuesForPanel(panelSelector, desktopMaxRem, mobileMaxRem) {
         var values = document.querySelectorAll(panelSelector + ' .kpi-value');
         if (!values.length) return;
@@ -1178,8 +1203,9 @@
             // Category chart
             destroyChart('salesCategory');
             var cctx = document.getElementById('sales-category-chart').getContext('2d');
-            if (data.category_breakdown && data.category_breakdown.length > 0) {
-                charts.salesCategory = new Chart(cctx, { type: 'pie', data: { labels: data.category_breakdown.map(function(c) { return c.category; }), datasets: [{ data: data.category_breakdown.map(function(c) { return c.revenue; }), backgroundColor: chartColors.slice(0, data.category_breakdown.length), borderWidth: 2 }] }, options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 11 } } } } } });
+            var categoryBreakdown = aggregateCategoryBreakdown(data.category_breakdown || []);
+            if (categoryBreakdown.length > 0) {
+                charts.salesCategory = new Chart(cctx, { type: 'pie', data: { labels: categoryBreakdown.map(function(c) { return c.category; }), datasets: [{ data: categoryBreakdown.map(function(c) { return c.revenue; }), backgroundColor: chartColors.slice(0, categoryBreakdown.length), borderWidth: 2 }] }, options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 11 } } } } } });
             }
 
             // Top products table
