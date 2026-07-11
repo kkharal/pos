@@ -277,9 +277,10 @@ fi
 
 # Determine run mode
 MODE="${RUN_MODE:-production}"
-HOST="${HOST:-0.0.0.0}"
+HOST="${HOST:-127.0.0.1}"
 PORT="${PORT:-5000}"
-WORKERS="${GUNICORN_WORKERS:-4}"
+WORKERS="${GUNICORN_WORKERS:-3}"
+SERVICE_NAME="${SERVICE_NAME:-pos.service}"
 
 # Create logs directory if it doesn't exist
 mkdir -p logs
@@ -345,15 +346,23 @@ else
         $PIP install gunicorn
     fi
 
-    nohup ./venv/bin/gunicorn \
-        --workers "$WORKERS" \
-        --bind "${HOST}:${PORT}" \
-        --access-logfile logs/access.log \
-        --error-logfile logs/error.log \
-        --timeout 120 \
-        app:app >> "$LOG_FILE" 2>&1 &
-    echo $! > logs/app.pid
-    echo "✓ Gunicorn started (PID: $!)"
+    if systemctl list-unit-files "$SERVICE_NAME" >/dev/null 2>&1; then
+        echo "  🔄 Using systemd service: $SERVICE_NAME"
+        systemctl daemon-reload >/dev/null 2>&1 || true
+        systemctl enable "$SERVICE_NAME" >/dev/null 2>&1 || true
+        systemctl restart "$SERVICE_NAME" >/dev/null 2>&1 || true
+        echo "✓ Service restarted (systemd)"
+    else
+        nohup ./venv/bin/gunicorn \
+            --workers "$WORKERS" \
+            --bind "${HOST}:${PORT}" \
+            --access-logfile logs/access.log \
+            --error-logfile logs/error.log \
+            --timeout 120 \
+            app:app >> "$LOG_FILE" 2>&1 &
+        echo $! > logs/app.pid
+        echo "✓ Gunicorn started (PID: $!)"
+    fi
 fi
 
 echo "  View logs: tail -f $LOG_FILE"
