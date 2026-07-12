@@ -120,7 +120,7 @@ function bindMobileSidebarLinkClose() {
 function initSidebarAccordions() {
     // Inline SVG icon set — monochrome outline, 24×24 viewBox, Tabler/Feather style
     var NAV_ICONS = {
-        home:           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11L12 3l9 8v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9Z"/><path d="M9 21v-6h6v6"/></svg>',
+        home:           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><rect x="13" y="3" width="8" height="5" rx="1"/><rect x="13" y="11" width="8" height="10" rx="1"/></svg>',
         sales:          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5Z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>',
         products:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h7l5 6-5 6H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/><circle cx="8.5" cy="12" r="1" fill="currentColor"/></svg>',
         customers:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M3 21v-1a6 6 0 0 1 12 0v1"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-1a4 4 0 0 0-4-4"/></svg>',
@@ -143,6 +143,21 @@ function initSidebarAccordions() {
         if (next && next.classList && next.classList.contains('sidebar-divider')) {
             next.classList.add('sidebar-divider-after-single-tab');
         }
+        
+        // Expand sidebar when dashboard is clicked while collapsed
+        homeLink.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const mainWrapper = document.getElementById('main-wrapper');
+            if (sidebar && sidebar.classList.contains('collapsed')) {
+                e.preventDefault();
+                sidebar.classList.remove('collapsed');
+                if (mainWrapper) mainWrapper.classList.remove('sidebar-collapsed');
+                try { localStorage.setItem('sidebar_collapsed', '0'); } catch(ex) {}
+                setTimeout(() => {
+                    window.location.href = homeLink.getAttribute('href');
+                }, 100);
+            }
+        });
     }
 
     const storageKey = 'sidebar_group_state_v1';
@@ -338,6 +353,22 @@ function initSidebarAccordions() {
                 link.classList.add('active');
                 hasActiveChild = true;
             }
+            
+            // Expand sidebar when group item is clicked while collapsed
+            link.addEventListener('click', function(e) {
+                const sidebar = document.getElementById('sidebar');
+                const mainWrapper = document.getElementById('main-wrapper');
+                if (sidebar && sidebar.classList.contains('collapsed')) {
+                    e.preventDefault();
+                    sidebar.classList.remove('collapsed');
+                    if (mainWrapper) mainWrapper.classList.remove('sidebar-collapsed');
+                    try { localStorage.setItem('sidebar_collapsed', '0'); } catch(ex) {}
+                    setTimeout(() => {
+                        window.location.href = link.getAttribute('href');
+                    }, 100);
+                }
+            });
+            
             const li = document.createElement('li');
             li.appendChild(link);
             syncChildVisibility(li, link);
@@ -421,6 +452,16 @@ function initSidebarAccordions() {
         setOpen(item, startOpen, false);
 
         item.trigger.addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            const mainWrapper = document.getElementById('main-wrapper');
+            
+            // If sidebar is collapsed, expand it first
+            if (sidebar && sidebar.classList.contains('collapsed')) {
+                sidebar.classList.remove('collapsed');
+                if (mainWrapper) mainWrapper.classList.remove('sidebar-collapsed');
+                try { localStorage.setItem('sidebar_collapsed', '0'); } catch(e) {}
+            }
+            
             const currentlyOpen = item.trigger.getAttribute('aria-expanded') === 'true';
             if (currentlyOpen) {
                 setOpen(item, false, true);
