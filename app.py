@@ -946,8 +946,28 @@ def normalize_color_value(value):
     # Canonicalize token order so equivalent permutations map together
     # (e.g. "golden brown" and "brown golden").
     tokens = [t for t in color.split(' ') if t]
+    # collapse duplicate tokens while preserving order ("blue blue dark" -> "blue dark")
+    seen = set()
+    uniq = []
+    for t in tokens:
+        if t not in seen:
+            seen.add(t)
+            uniq.append(t)
+    tokens = uniq
+
+    # Prefer modifier-first phrasing for common modifiers like 'dark'/'light'
+    modifiers = {'dark', 'light', 'medium', 'pale'}
     if len(tokens) > 1:
-        color = ' '.join(sorted(tokens))
+        mod_tokens = [t for t in tokens if t in modifiers]
+        non_mod = [t for t in tokens if t not in modifiers]
+        if mod_tokens and non_mod:
+            # e.g. ['blue','dark'] -> 'dark blue'
+            color = ' '.join(mod_tokens + non_mod)
+        else:
+            color = ' '.join(sorted(tokens))
+
+    if not color:
+        return None
 
     return ' '.join(part.capitalize() for part in color.split(' '))
 
