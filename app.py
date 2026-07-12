@@ -76,6 +76,31 @@ def apply_cache_headers(response):
 
     return response
 
+
+@app.before_request
+def enforce_shop_selection_for_mutations():
+    """Block write operations when super_admin/shop_owner is in all-shops mode."""
+    if request.method not in {'POST', 'PUT', 'PATCH', 'DELETE'}:
+        return None
+
+    role = session.get('role')
+    if role not in ('super_admin', 'shop_owner'):
+        return None
+
+    if get_current_shop_id() is not None:
+        return None
+
+    allowed_paths = {
+        '/api/shops',
+        '/api/shops/switch',
+        '/api/change-password',
+    }
+    if request.path in allowed_paths:
+        return None
+
+    return jsonify({'success': False, 'error': 'Please select a shop before performing this action'}), 403
+
+
 # Initialize database on startup
 init_db()
 
