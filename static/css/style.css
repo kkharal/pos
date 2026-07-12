@@ -1489,6 +1489,10 @@ body.has-sidebar {
     overflow: hidden;
 }
 
+.sidebar-item .sidebar-icon {
+    overflow: visible;
+}
+
 .sidebar-item:hover {
     background: var(--lighter);
     color: var(--text);
@@ -1504,10 +1508,13 @@ body.has-sidebar {
     font-size: 1.05rem;
     flex-shrink: 0;
     width: 20px;
+    height: 20px;
     text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: visible;
+    line-height: 1;
 }
 
 /* Inline SVG icons inside sidebar icon slots */
@@ -1517,6 +1524,25 @@ body.has-sidebar {
     height: 20px;
     display: block;
     flex-shrink: 0;
+}
+
+/* Image icons inside sidebar icon slots */
+.sidebar-icon img {
+    width: 20px;
+    height: 20px;
+    display: block;
+    flex-shrink: 0;
+    object-fit: contain;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar.collapsed .sidebar-icon {
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    width: 20px;
+    height: 20px;
 }
 
 .sidebar-label {
@@ -1529,12 +1555,15 @@ body.has-sidebar {
 .sidebar.collapsed .sidebar-label {
     opacity: 0;
     max-width: 0;
+    min-width: 0;
+    flex: 0;
 }
 
 .sidebar.collapsed .sidebar-item {
     justify-content: center;
     padding: 0.65rem;
     margin: 0.1rem 0.35rem;
+    gap: 0;
 }
 
 /* === True Navigation List Style (No Cards) === */
