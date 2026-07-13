@@ -3561,12 +3561,18 @@ def get_inventory_report():
 
         top_movements = cursor.execute(top_movements_query, [start_date_time, end_date_time] + flt_params_sh).fetchall()
 
-        # Low stock items
+        # Low stock items (count first, then fetch top 10 only)
+        low_stock_count = cursor.execute(
+            f'SELECT COUNT(*) as cnt FROM products WHERE is_active = 1 AND stock_quantity < 5 {flt_sql}',
+            flt_params
+        ).fetchone()['cnt']
+
         low_stock_query = f'''
             SELECT name, sku, stock_quantity, category
             FROM products
             WHERE is_active = 1 AND stock_quantity < 5 {flt_sql}
             ORDER BY stock_quantity ASC
+            LIMIT 10
         '''
 
         low_stock = cursor.execute(low_stock_query, flt_params).fetchall()
@@ -3574,7 +3580,7 @@ def get_inventory_report():
         # Summary statistics
         summary = {
             'total_products': len(inventory),
-            'low_stock_items': len(low_stock),
+            'low_stock_items': low_stock_count,
             'total_stock_quantity': sum(item['stock_quantity'] for item in inventory)
         }
 
@@ -3625,6 +3631,7 @@ def get_inventory_report():
             'stock_movements': [dict(row) for row in stock_movements],
             'top_movements': [dict(row) for row in top_movements],
             'low_stock': [dict(row) for row in low_stock],
+            'low_stock_total': low_stock_count,
             'slow_moving': slow_moving
         }
 

@@ -35,7 +35,7 @@ A full-featured Point of Sale (POS) web application for managing one or multiple
 ## Tech Stack
 
 - **Backend**: Python 3.8+ with Flask 3.0.0
-- **Database**: MySQL 9.x (via `mysql-connector-python`) — with full multi-shop/multi-tenant support
+- **Database**: MySQL 8.x / 9.x (via `mysql-connector-python`) — with full multi-shop/multi-tenant support
 - **Frontend**: HTML, CSS, JavaScript, Chart.js
 - **Reports**: ReportLab (PDF), OpenPyXL (Excel)
 - **Alerts**: SMTP email integration with APScheduler for automation
@@ -1056,12 +1056,34 @@ The system starts with common categories, but you can create custom categories:
 
 ## System Requirements
 
-- Python 3.8+
-- Modern web browser (Chrome, Firefox, Safari, Edge)
-- 50MB free disk space
-- SMTP server access (for email alerts - optional)
-- Internet connection (for email alerts and Chart.js CDN - optional)
-- Flask app running continuously (for automatic scheduled email alerts)
+### Software
+- **Python**: 3.8 or higher (tested on 3.12.3)
+- **MySQL**: 8.x or 9.x (tested on 8.0.46)
+- **Nginx**: 1.18+ (for production HTTPS deployment)
+- **OS**: Ubuntu 22.04 / 24.04 LTS recommended (also works on macOS, Windows)
+- **Browser**: Chrome, Firefox, Safari, or Edge (modern versions)
+- **SMTP server**: optional — only required for low stock email alerts
+- **Internet connection**: optional — only required for email alerts and Chart.js CDN
+
+### Hardware (Ubuntu Server — validated measurements)
+
+| Component | RAM used (measured) |
+|-----------|---------------------|
+| MySQL | ~437 MB |
+| Gunicorn (3 workers) | ~190 MB total |
+| Nginx | ~42 MB total |
+| OS + headroom | ~300 MB |
+| **Total** | **~970 MB** |
+
+| Tier | CPU | RAM | Disk | Suitable for |
+|------|-----|-----|------|--------------|
+| **Minimum** | 1 vCPU | 1 GB ¹ | 20 GB | Testing / single user |
+| **Recommended** | 1–2 vCPU | 2 GB | 25 GB | Small shop, a few concurrent users |
+| **Comfortable** | 2 vCPU | 4 GB | 40 GB | Multiple shops, higher traffic |
+
+> ¹ 1 GB is very tight — add at least 1 GB swap if running on a 1 GB VPS.
+
+- **Flask app must keep running** for automatic scheduled email alerts to work (use `./start.sh`)
 
 ## Support
 

@@ -1272,9 +1272,14 @@
             // Low stock table
             var lowBody = document.getElementById('inv-low-stock-body');
             if (data.low_stock && data.low_stock.length > 0) {
-                lowBody.innerHTML = data.low_stock.map(function(item) {
+                var rows = data.low_stock.map(function(item) {
                     return '<tr><td><strong>' + item.name + '</strong></td><td>' + (item.sku || '-') + '</td><td>' + item.category + '</td><td class="text-right" style="color:#dc2626;font-weight:600;">' + item.stock_quantity + '</td></tr>';
                 }).join('');
+                var total = data.low_stock_total || data.low_stock.length;
+                if (total > data.low_stock.length) {
+                    rows += '<tr><td colspan="4" class="text-center" style="color:#92400e;font-size:0.82rem;padding:6px;">…and ' + (total - data.low_stock.length) + ' more low stock items</td></tr>';
+                }
+                lowBody.innerHTML = rows;
             } else { lowBody.innerHTML = '<tr><td colspan="4" class="text-center" style="color:#16a34a;">✓ No low stock items</td></tr>'; }
 
             // Stock movements table
