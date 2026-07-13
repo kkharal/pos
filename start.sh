@@ -74,7 +74,9 @@ if ! command -v mysql &> /dev/null; then
     elif [[ "$OS" == "amazon" ]]; then
         echo "Installing MySQL Community Edition on Amazon Linux..."
         sudo $AMAZON_PKG install -y "$AMAZON_MYSQL_RPM"
-        sudo $AMAZON_PKG install -y mysql-community-server
+        # Import the current MySQL GPG key (the bundled 2022 key often mismatches packages)
+        sudo rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2023 2>/dev/null || true
+        sudo $AMAZON_PKG install -y --nogpgcheck mysql-community-server
     elif [[ "$OS" == "redhat" ]]; then
         echo "Installing MySQL using dnf..."
         sudo dnf install -y mysql-server mysql
