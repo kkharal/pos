@@ -3,21 +3,7 @@
 echo "Starting Clothing Shop POS System..."
 echo ""
 
-# Check if Python 3 is installed
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Error: Python 3 is not installed!"
-    echo ""
-    echo "Please install Python 3 first:"
-    echo "  Ubuntu/Debian: sudo apt update && sudo apt install python3 python3-pip python3-venv"
-    echo "  Fedora/RHEL:   sudo dnf install python3 python3-pip"
-    echo "  macOS:         brew install python3"
-    echo ""
-    exit 1
-fi
-
-echo "✓ Python 3 found: $(python3 --version)"
-
-# Detect OS
+# ── Detect OS ────────────────────────────────────────────────────────────────
 if [[ "$OSTYPE" == "darwin"* ]]; then
     OS="macos"
 elif [[ -f /etc/debian_version ]]; then
@@ -28,18 +14,83 @@ else
     OS="linux"
 fi
 
-# Ensure Python venv support is installed on Debian/Ubuntu
-if [[ "$OS" == "debian" ]]; then
-    if ! dpkg -s python3-venv python3-pip >/dev/null 2>&1; then
-        echo "Installing python3-venv and python3-pip..."
-        sudo apt update && sudo apt install -y python3-venv python3-pip python3.12-venv
-        if [ $? -ne 0 ]; then
-            echo "❌ Error: Failed to install python3-venv/python3-pip."
-            echo "Please install them manually: sudo apt install python3-venv python3-pip"
+# ── Install Python 3 if missing ──────────────────────────────────────────────
+if ! command -v python3 &> /dev/null; then
+    echo "Python 3 not found. Installing..."
+    if [[ "$OS" == "macos" ]]; then
+        if command -v brew &> /dev/null; then
+            brew install python3
+        else
+            echo "❌ Error: Homebrew not found. Install it first: https://brew.sh"
             exit 1
         fi
+    elif [[ "$OS" == "debian" ]]; then
+        sudo apt-get update -qq
+        sudo apt-get install -y python3 python3-pip python3-venv python3-full
+    elif [[ "$OS" == "redhat" ]]; then
+        sudo dnf install -y python3 python3-pip
+    else
+        echo "❌ Error: Cannot auto-install Python 3 on this OS."
+        echo "Please install Python 3 manually and rerun this script."
+        exit 1
+    fi
+
+    if ! command -v python3 &> /dev/null; then
+        echo "❌ Error: Python 3 installation failed."
+        exit 1
     fi
 fi
+
+echo "✓ Python 3 found: $(python3 --version)"
+
+# ── Ensure venv+ensurepip are available ──────────────────────────────────────
+# On Ubuntu 24.04+ python3-pip/python3-venv may not be in the apt repo.
+# Fall back to bootstrapping pip via get-pip.py + virtualenv.
+_ensure_venv_tool() {
+    # If we can already create a venv or virtualenv is available, nothing to do
+    if python3 -c "import ensurepip" &>/dev/null 2>&1; then
+        return 0
+    fi
+    if python3 -m virtualenv --version &>/dev/null 2>&1; then
+        return 0
+    fi
+
+    if [[ "$OS" == "debian" ]]; then
+        PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+        MINOR="${PY_VER##*.}"
+        echo "Installing Python venv support (python3.${MINOR}-venv / python3-full)..."
+        sudo apt-get update -qq
+        sudo apt-get install -y "python3.${MINOR}-venv" 2>/dev/null || \
+            sudo apt-get install -y python3-full 2>/dev/null || true
+    elif [[ "$OS" == "redhat" ]]; then
+        sudo dnf install -y python3-venv 2>/dev/null || sudo dnf install -y python3-virtualenv || true
+    fi
+
+    # If ensurepip still missing, bootstrap pip + virtualenv via get-pip.py
+    if ! python3 -c "import ensurepip" &>/dev/null 2>&1; then
+        if ! python3 -m virtualenv --version &>/dev/null 2>&1; then
+            echo "Bootstrapping pip via get-pip.py (apt packages unavailable)..."
+            if ! command -v curl &>/dev/null && ! command -v wget &>/dev/null; then
+                if [[ "$OS" == "debian" ]]; then sudo apt-get install -y curl; fi
+            fi
+            if command -v curl &>/dev/null; then
+                curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+            else
+                wget -q https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py
+            fi
+            python3 /tmp/get-pip.py --break-system-packages --quiet
+            python3 -m pip install --break-system-packages --quiet virtualenv
+            rm -f /tmp/get-pip.py
+        fi
+        # Confirm virtualenv is now available
+        if ! python3 -m virtualenv --version &>/dev/null 2>&1; then
+            echo "❌ Error: Could not set up a Python venv tool. Please install python3-full manually."
+            exit 1
+        fi
+        echo "✓ pip + virtualenv bootstrapped successfully"
+    fi
+}
+_ensure_venv_tool
 
 # Check if MySQL is installed
 if ! command -v mysql &> /dev/null; then
@@ -141,18 +192,59 @@ SQL
     fi
 fi
 
+# ── Provision the application DB user from .env ──────────────────────────────
+# Read DB credentials (may not be exported yet if .env hasn't been sourced)
+_DB_USER=$(grep -E '^DB_USER=' .env 2>/dev/null | cut -d= -f2- | tr -d '[:space:]')
+_DB_PASS=$(grep -E '^DB_PASSWORD=' .env 2>/dev/null | cut -d= -f2- | tr -d '[:space:]')
+_DB_NAME=$(grep -E '^DB_NAME=' .env 2>/dev/null | cut -d= -f2- | tr -d '[:space:]')
+_DB_USER="${_DB_USER:-root}"
+_DB_PASS="${_DB_PASS:-}"
+_DB_NAME="${_DB_NAME:-pos_mysql_app}"
+
+if [[ "$_DB_USER" != "root" ]]; then
+    if ! sudo mysql -e "SELECT 1 FROM mysql.user WHERE User='${_DB_USER}'" 2>/dev/null | grep -q 1; then
+        echo "Creating MySQL application user '${_DB_USER}'..."
+        sudo mysql <<SQL
+CREATE USER IF NOT EXISTS '${_DB_USER}'@'localhost' IDENTIFIED WITH mysql_native_password BY '${_DB_PASS}';
+CREATE USER IF NOT EXISTS '${_DB_USER}'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY '${_DB_PASS}';
+CREATE DATABASE IF NOT EXISTS \`${_DB_NAME}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL PRIVILEGES ON \`${_DB_NAME}\`.* TO '${_DB_USER}'@'localhost';
+GRANT ALL PRIVILEGES ON \`${_DB_NAME}\`.* TO '${_DB_USER}'@'127.0.0.1';
+FLUSH PRIVILEGES;
+SQL
+        if [ $? -eq 0 ]; then
+            echo "✓ MySQL user '${_DB_USER}' created with access to '${_DB_NAME}'"
+        else
+            echo "❌ Error: Failed to create MySQL user '${_DB_USER}'. Check that root has the necessary privileges."
+            exit 1
+        fi
+    else
+        echo "✓ MySQL user '${_DB_USER}' already exists"
+    fi
+fi
+
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
     echo "Virtual environment not found. Creating one..."
-    if ! python3 -m venv venv; then
-        if [[ "$OS" == "debian" ]]; then
-            echo "Installing python3-venv package..."
-            sudo apt update && sudo apt install -y python3-venv python3.12-venv
-        elif [[ "$OS" == "redhat" ]]; then
-            echo "Installing python3-venv package..."
-            sudo dnf install -y python3-venv || sudo dnf install -y python3-virtualenv
+    if ! python3 -m venv venv 2>/dev/null; then
+        # ensurepip not available — use virtualenv if present
+        if python3 -m virtualenv --version &>/dev/null 2>&1; then
+            echo "Using virtualenv to create environment..."
+            python3 -m virtualenv venv
+        else
+            if [[ "$OS" == "debian" ]]; then
+                echo "Installing python3-full / python3.X-venv package..."
+                PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+                MINOR="${PY_VER##*.}"
+                sudo apt-get update -qq
+                sudo apt-get install -y "python3.${MINOR}-venv" 2>/dev/null || \
+                    sudo apt-get install -y python3-full
+            elif [[ "$OS" == "redhat" ]]; then
+                echo "Installing python3-venv package..."
+                sudo dnf install -y python3-venv || sudo dnf install -y python3-virtualenv
+            fi
+            python3 -m venv venv
         fi
-        python3 -m venv venv
     fi
 
     if [ $? -ne 0 ]; then
@@ -176,7 +268,11 @@ PIP="./venv/bin/pip"
 if [ ! -x "$PYTHON" ]; then
     echo "❌ Error: Virtual environment seems corrupted. Deleting and recreating..."
     rm -rf venv
-    python3 -m venv venv
+    if python3 -m virtualenv --version &>/dev/null 2>&1; then
+        python3 -m virtualenv venv
+    else
+        python3 -m venv venv
+    fi
 fi
 
 # Bootstrapping pip if needed

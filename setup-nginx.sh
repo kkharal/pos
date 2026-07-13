@@ -78,10 +78,38 @@ echo ""
 
 echo "[1/5] Installing Nginx and Certbot..."
 
-apt update -qq
-apt install -y nginx certbot python3-certbot-nginx > /dev/null 2>&1
+apt-get update -qq
 
-echo "  ✓ Nginx and Certbot installed"
+# Install Nginx
+if ! command -v nginx &>/dev/null; then
+    apt-get install -y nginx
+fi
+
+# Install Certbot — prefer snap (works on Ubuntu 24.04 where apt package is gone)
+if ! command -v certbot &>/dev/null; then
+    if command -v snap &>/dev/null; then
+        echo "  Installing certbot via snap..."
+        snap install --classic certbot
+        ln -sf /snap/bin/certbot /usr/bin/certbot
+    else
+        # Fallback: try apt (older Ubuntu / Debian)
+        apt-get install -y snapd
+        snap install --classic certbot
+        ln -sf /snap/bin/certbot /usr/bin/certbot
+    fi
+fi
+
+# Install the Nginx plugin for certbot (snap variant bundles it; apt variant needs separate package)
+if ! certbot plugins 2>/dev/null | grep -q nginx; then
+    if snap list certbot &>/dev/null 2>&1; then
+        snap set certbot trust-plugin-with-root=ok 2>/dev/null || true
+        snap install certbot-nginx 2>/dev/null || true
+    else
+        apt-get install -y python3-certbot-nginx 2>/dev/null || true
+    fi
+fi
+
+echo "  ✓ Nginx $(nginx -v 2>&1 | grep -oP '[\d.]+') and Certbot $(certbot --version 2>&1 | grep -oP '[\d.]+') installed"
 
 # ── Step 2: Configure firewall (UFW) ─────────────────────────────────────────
 
