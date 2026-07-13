@@ -352,7 +352,13 @@ start.bat
 # Ubuntu/Debian
 sudo apt update && sudo apt install python3 python3-pip python3-venv
 
-# Fedora/RHEL
+# Amazon Linux 2023
+sudo dnf install python3 python3-pip
+
+# Amazon Linux 2
+sudo yum install python3 python3-pip
+
+# Fedora/RHEL/CentOS
 sudo dnf install python3 python3-pip
 
 # macOS (requires Homebrew)
@@ -392,6 +398,17 @@ Then open your browser to: **http://localhost:8080**
   ```bash
   sudo apt update
   sudo apt install python3 python3-pip python3-venv
+  ```
+
+- **Amazon Linux 2023 (EC2):**
+  ```bash
+  sudo dnf install python3 python3-pip
+  # python3-venv is bundled — no separate package needed
+  ```
+
+- **Amazon Linux 2 (EC2):**
+  ```bash
+  sudo yum install python3 python3-pip
   ```
 
 - **Fedora/RHEL/CentOS:**
@@ -497,6 +514,35 @@ sudo apt install mysql-server
 sudo systemctl start mysql
 sudo systemctl enable mysql
 mysql -u root -p
+```
+
+#### Amazon Linux 2023 (EC2)
+MySQL is not in the default AL2023 repo — install via the official MySQL community RPM:
+```bash
+sudo dnf install -y https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
+sudo dnf install -y mysql-community-server
+sudo systemctl start mysqld
+sudo systemctl enable mysqld
+
+# MySQL generates a temporary root password on first start
+sudo grep 'temporary password' /var/log/mysqld.log
+
+# Log in with the temp password, then change it immediately
+mysql -u root -p
+# Inside MySQL:
+# ALTER USER 'root'@'localhost' IDENTIFIED BY 'YourNewPassword123!';
+```
+
+#### Amazon Linux 2 (EC2)
+```bash
+sudo yum install -y https://dev.mysql.com/get/mysql80-community-release-el7-11.noarch.rpm
+sudo yum install -y mysql-community-server
+sudo systemctl start mysqld
+sudo systemctl enable mysqld
+
+sudo grep 'temporary password' /var/log/mysqld.log
+mysql -u root -p
+# ALTER USER 'root'@'localhost' IDENTIFIED BY 'YourNewPassword123!';
 ```
 
 #### Windows
@@ -614,12 +660,12 @@ python app.py
 
 ### 🚀 Production Deployment (HTTPS with Nginx)
 
-For deploying on a VPS/cloud server (Ubuntu/Debian) with HTTPS:
+For deploying on a VPS/cloud server with HTTPS. Supported: **Ubuntu/Debian**, **Amazon Linux 2023**, **Amazon Linux 2**.
 
 #### Prerequisites
 - A domain name (e.g., `myshop.example.com`)
-- Ubuntu/Debian server with root access
-- Ports 80 and 443 open in your hosting provider's firewall
+- Server with root access (Ubuntu/Debian or Amazon Linux EC2)
+- Ports 80 and 443 open — via UFW (Ubuntu) or AWS Security Group inbound rules (EC2)
 
 #### Step 0: Point your domain to your server
 
@@ -668,11 +714,25 @@ Port 8080 is **never exposed** to the internet. Nginx handles SSL termination.
 #### Manual Setup (if you prefer)
 
 ```bash
-# Install Nginx & Certbot
+# Ubuntu/Debian
 sudo apt update && sudo apt install -y nginx certbot python3-certbot-nginx
 
+# Amazon Linux 2023
+sudo dnf install -y nginx certbot python3-certbot-nginx
+
+# Amazon Linux 2
+sudo amazon-linux-extras enable nginx1
+sudo yum install -y nginx
+sudo yum install -y certbot python3-certbot-nginx
+```
+
+> **Amazon Linux (EC2) firewall note:** AL2023 uses `firewalld`; AL2 often has no host firewall at all. Use your **AWS Security Group** to allow ports 22, 80, and 443 — you do not need to run `ufw` commands.
+
+```bash
 # Create Nginx config
-sudo nano /etc/nginx/sites-available/pos
+sudo nano /etc/nginx/conf.d/pos.conf   # Amazon Linux path
+# OR
+sudo nano /etc/nginx/sites-available/pos  # Ubuntu path
 ```
 
 Paste:
@@ -1060,7 +1120,7 @@ The system starts with common categories, but you can create custom categories:
 - **Python**: 3.8 or higher (tested on 3.12.3)
 - **MySQL**: 8.x or 9.x (tested on 8.0.46)
 - **Nginx**: 1.18+ (for production HTTPS deployment)
-- **OS**: Ubuntu 22.04 / 24.04 LTS recommended (also works on macOS, Windows)
+- **OS**: Ubuntu 22.04 / 24.04 LTS recommended; also supported: Amazon Linux 2023 / Amazon Linux 2 (EC2), macOS, Windows
 - **Browser**: Chrome, Firefox, Safari, or Edge (modern versions)
 - **SMTP server**: optional — only required for low stock email alerts
 - **Internet connection**: optional — only required for email alerts and Chart.js CDN
@@ -1123,6 +1183,8 @@ For issues or questions, please check the application logs in the terminal where
 **"python: command not found" or "pip: command not found":**
 - Install Python 3:
   - Ubuntu/Debian: `sudo apt install python3 python3-pip python3-venv`
+  - Amazon Linux 2023: `sudo dnf install python3 python3-pip`
+  - Amazon Linux 2: `sudo yum install python3 python3-pip`
   - Fedora/RHEL: `sudo dnf install python3 python3-pip`
   - macOS: `brew install python3`
 - Use `python3` and `pip3` commands instead of `python` and `pip`
@@ -1131,6 +1193,10 @@ For issues or questions, please check the application logs in the terminal where
 ```bash
 # Ubuntu/Debian
 sudo apt install python3-venv
+
+# Amazon Linux 2023 / Amazon Linux 2
+# venv is bundled with python3 — no separate package needed
+python3 -m venv venv   # should work as-is
 
 # Fedora/RHEL
 sudo dnf install python3-venv
@@ -1158,6 +1224,8 @@ chmod +x start.sh
   ```
 - On some systems you may need build tools:
   - Ubuntu/Debian: `sudo apt install build-essential python3-dev`
+  - Amazon Linux 2023: `sudo dnf install gcc python3-devel`
+  - Amazon Linux 2: `sudo yum install gcc python3-devel`
   - Fedora/RHEL: `sudo dnf install gcc python3-devel`
 
 **Port 5001 already in use:**

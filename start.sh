@@ -8,9 +8,11 @@ if ! command -v python3 &> /dev/null; then
     echo "❌ Error: Python 3 is not installed!"
     echo ""
     echo "Please install Python 3 first:"
-    echo "  Ubuntu/Debian: sudo apt update && sudo apt install python3 python3-pip python3-venv"
-    echo "  Fedora/RHEL:   sudo dnf install python3 python3-pip"
-    echo "  macOS:         brew install python3"
+    echo "  Ubuntu/Debian:      sudo apt update && sudo apt install python3 python3-pip python3-venv"
+    echo "  Amazon Linux 2023:  sudo dnf install python3 python3-pip"
+    echo "  Amazon Linux 2:     sudo yum install python3 python3-pip"
+    echo "  Fedora/RHEL:        sudo dnf install python3 python3-pip"
+    echo "  macOS:              brew install python3"
     echo ""
     exit 1
 fi
@@ -22,6 +24,15 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     OS="macos"
 elif [[ -f /etc/debian_version ]]; then
     OS="debian"
+elif grep -qi 'Amazon Linux' /etc/os-release 2>/dev/null; then
+    OS="amazon"
+    if grep -q 'VERSION_ID="2023"' /etc/os-release 2>/dev/null; then
+        AMAZON_PKG="dnf"
+        AMAZON_MYSQL_RPM="https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm"
+    else
+        AMAZON_PKG="yum"
+        AMAZON_MYSQL_RPM="https://dev.mysql.com/get/mysql80-community-release-el7-11.noarch.rpm"
+    fi
 elif [[ -f /etc/redhat-release ]]; then
     OS="redhat"
 else
@@ -60,6 +71,10 @@ if ! command -v mysql &> /dev/null; then
     elif [[ "$OS" == "debian" ]]; then
         echo "Installing MySQL using apt..."
         sudo apt update && sudo apt install -y mysql-server mysql-client
+    elif [[ "$OS" == "amazon" ]]; then
+        echo "Installing MySQL Community Edition on Amazon Linux..."
+        sudo $AMAZON_PKG install -y "$AMAZON_MYSQL_RPM"
+        sudo $AMAZON_PKG install -y mysql-community-server
     elif [[ "$OS" == "redhat" ]]; then
         echo "Installing MySQL using dnf..."
         sudo dnf install -y mysql-server mysql
@@ -67,9 +82,11 @@ if ! command -v mysql &> /dev/null; then
         echo "❌ Error: Could not detect package manager to install MySQL."
         echo ""
         echo "Please install MySQL manually:"
-        echo "  Ubuntu/Debian: sudo apt install mysql-server mysql-client"
-        echo "  Fedora/RHEL:   sudo dnf install mysql-server"
-        echo "  macOS:         brew install mysql"
+        echo "  Ubuntu/Debian:      sudo apt install mysql-server mysql-client"
+        echo "  Amazon Linux 2023:  sudo dnf install -y https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm && sudo dnf install -y mysql-community-server"
+        echo "  Amazon Linux 2:     sudo yum install -y https://dev.mysql.com/get/mysql80-community-release-el7-11.noarch.rpm && sudo yum install -y mysql-community-server"
+        echo "  Fedora/RHEL:        sudo dnf install mysql-server"
+        echo "  macOS:              brew install mysql"
         echo ""
         exit 1
     fi
@@ -141,6 +158,26 @@ SQL
     fi
 fi
 
+# Amazon Linux: MySQL starts with a generated temporary root password
+if [[ "$OS" == "amazon" ]]; then
+    if ! mysql -h 127.0.0.1 -u root -e "SELECT 1" &>/dev/null; then
+        echo "Configuring MySQL root user on Amazon Linux..."
+        TEMP_PW=$(sudo grep 'temporary password' /var/log/mysqld.log 2>/dev/null | tail -1 | awk '{print $NF}')
+        if [ -n "$TEMP_PW" ]; then
+            mysql -h 127.0.0.1 -u root --password="$TEMP_PW" --connect-expired-password \
+                -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY ''; FLUSH PRIVILEGES;" 2>/dev/null
+            if mysql -h 127.0.0.1 -u root -e "SELECT 1" &>/dev/null; then
+                echo "✓ MySQL root configured (temporary password cleared)"
+            else
+                echo "⚠ Could not auto-clear temp password. Add this to your .env:"
+                echo "  DB_PASSWORD=$TEMP_PW"
+            fi
+        else
+            echo "⚠ No temporary password found in /var/log/mysqld.log. Set DB credentials in .env if needed."
+        fi
+    fi
+fi
+
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
     echo "Virtual environment not found. Creating one..."
@@ -148,6 +185,9 @@ if [ ! -d "venv" ]; then
         if [[ "$OS" == "debian" ]]; then
             echo "Installing python3-venv package..."
             sudo apt update && sudo apt install -y python3-venv python3.12-venv
+        elif [[ "$OS" == "amazon" ]]; then
+            # venv is bundled with python3 on Amazon Linux; reinstall python3 if broken
+            sudo $AMAZON_PKG install -y python3
         elif [[ "$OS" == "redhat" ]]; then
             echo "Installing python3-venv package..."
             sudo dnf install -y python3-venv || sudo dnf install -y python3-virtualenv
@@ -159,8 +199,9 @@ if [ ! -d "venv" ]; then
         echo "❌ Error: Failed to create virtual environment!"
         echo ""
         echo "Please install python3-venv manually and rerun the script:"
-        echo "  Ubuntu/Debian: sudo apt install python3-venv"
-        echo "  Fedora/RHEL:   sudo dnf install python3-venv"
+        echo "  Ubuntu/Debian:  sudo apt install python3-venv"
+        echo "  Amazon Linux:   sudo dnf install python3  (venv is bundled)"
+        echo "  Fedora/RHEL:    sudo dnf install python3-venv"
         echo ""
         exit 1
     fi
@@ -185,6 +226,8 @@ if [ ! -x "$PIP" ]; then
     if ! $PYTHON -m ensurepip --upgrade >/dev/null 2>&1; then
         if [[ "$OS" == "debian" ]]; then
             sudo apt update && sudo apt install -y python3-pip python3.12-venv
+        elif [[ "$OS" == "amazon" ]]; then
+            sudo $AMAZON_PKG install -y python3-pip
         elif [[ "$OS" == "redhat" ]]; then
             sudo dnf install -y python3-pip
         fi
