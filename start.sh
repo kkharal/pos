@@ -442,22 +442,54 @@ else
         $PIP install gunicorn
     fi
 
-    if systemctl list-unit-files "$SERVICE_NAME" >/dev/null 2>&1; then
-        echo "  🔄 Using systemd service: $SERVICE_NAME"
-        systemctl daemon-reload >/dev/null 2>&1 || true
-        systemctl enable "$SERVICE_NAME" >/dev/null 2>&1 || true
-        systemctl restart "$SERVICE_NAME" >/dev/null 2>&1 || true
-        echo "✓ Service restarted (systemd)"
+    APP_DIR="$(pwd)"
+    APP_USER="$(whoami)"
+    SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}"
+
+    # Create the systemd service unit if it doesn't exist or is outdated
+    EXPECTED_EXEC="${APP_DIR}/venv/bin/gunicorn"
+    CURRENT_EXEC=$(grep "^ExecStart=" "$SERVICE_FILE" 2>/dev/null | cut -d= -f2- | awk '{print $1}')
+
+    if [ ! -f "$SERVICE_FILE" ] || [ "$CURRENT_EXEC" != "$EXPECTED_EXEC" ]; then
+        echo "Creating systemd service: $SERVICE_FILE"
+        sudo tee "$SERVICE_FILE" > /dev/null <<UNIT
+[Unit]
+Description=Clothing Shop POS Gunicorn Service
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=${APP_USER}
+WorkingDirectory=${APP_DIR}
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-${APP_DIR}/.env
+ExecStart=${APP_DIR}/venv/bin/gunicorn --workers ${WORKERS} --bind ${HOST}:${PORT} app:app --access-logfile ${APP_DIR}/logs/access.log --error-logfile ${APP_DIR}/logs/error.log --timeout 120
+Restart=always
+RestartSec=5
+StandardOutput=append:${APP_DIR}/logs/app.log
+StandardError=append:${APP_DIR}/logs/error.log
+KillMode=mixed
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+        sudo systemctl daemon-reload
+        sudo systemctl enable "$SERVICE_NAME"
+        echo "✓ Systemd service created and enabled (auto-starts on boot)"
+    fi
+
+    sudo systemctl restart "$SERVICE_NAME"
+    sleep 1
+
+    if systemctl is-active --quiet "$SERVICE_NAME"; then
+        PID=$(systemctl show -p MainPID --value "$SERVICE_NAME" 2>/dev/null || echo "?")
+        echo $PID > logs/app.pid 2>/dev/null || true
+        echo "✓ Service started via systemd (PID: $PID)"
     else
-        nohup ./venv/bin/gunicorn \
-            --workers "$WORKERS" \
-            --bind "${HOST}:${PORT}" \
-            --access-logfile logs/access.log \
-            --error-logfile logs/error.log \
-            --timeout 120 \
-            app:app >> "$LOG_FILE" 2>&1 &
-        echo $! > logs/app.pid
-        echo "✓ Gunicorn started (PID: $!)"
+        echo "❌ Service failed to start. Check logs:"
+        sudo journalctl -u "$SERVICE_NAME" --no-pager -n 20
+        exit 1
     fi
 fi
 
