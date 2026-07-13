@@ -115,7 +115,7 @@ if [[ "$OS" == "macos" ]]; then
             echo "✓ MySQL already running"
         fi
     fi
-elif [[ "$OS" == "debian" || "$OS" == "redhat" || "$OS" == "linux" ]]; then
+elif [[ "$OS" == "debian" || "$OS" == "redhat" || "$OS" == "amazon" || "$OS" == "linux" ]]; then
     if ! mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then
         echo "Starting MySQL service..."
         sudo systemctl start mysql 2>/dev/null || sudo systemctl start mysqld 2>/dev/null || sudo service mysql start 2>/dev/null
