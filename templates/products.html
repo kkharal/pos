@@ -3246,7 +3246,7 @@
             try {
                 const r = await fetch('/api/current-user'); const user = await r.json();
                 if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
-                if (user.shop_icon) { setNavBrandIcon(user.shop_icon); }
+                applyShopBranding(user.shop_icon || '', user.shop_name || user.shop || '');
                 currentUserRole = user.role;
                 if (user.currency) currencySymbol = user.currency;
                 document.getElementById('user-icon').textContent = (user.full_name||user.username).charAt(0).toUpperCase();

@@ -69,6 +69,50 @@ function setNavBrandIcon(icon) {
     }
 }
 
+// Sets the browser tab favicon from a shop icon (SVG file or emoji).
+function setFavicon(icon) {
+    var link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+    }
+    if (isShopIconSvg(icon)) {
+        link.type = 'image/svg+xml';
+        link.href = '/static/icons/shop-icons/' + icon;
+    } else if (icon && icon.trim().length > 0) {
+        // Emoji — render on canvas
+        var canvas = document.createElement('canvas');
+        canvas.width = 32; canvas.height = 32;
+        var ctx = canvas.getContext('2d');
+        ctx.font = '26px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(icon, 16, 17);
+        link.type = 'image/png';
+        link.href = canvas.toDataURL('image/png');
+    } else {
+        // Default fallback
+        link.type = 'image/svg+xml';
+        link.href = '/static/icons/icon-dashboard.svg';
+    }
+}
+
+// Updates the browser tab title to include the shop name.
+// e.g. "Dashboard - POS System" → "Dashboard — LUXOR Men's Wear"
+function updatePageTitle(shopName) {
+    if (!shopName) return;
+    var base = document.title.split(' - ')[0].split(' — ')[0].trim();
+    document.title = base + ' — ' + shopName;
+}
+
+// Combined: call this whenever the active shop changes.
+function applyShopBranding(icon, shopName) {
+    setNavBrandIcon(icon);
+    setFavicon(icon);
+    if (shopName) updatePageTitle(shopName);
+}
+
 // ===== Modal / Drawer Scroll Lock =====
 // Prevents the page from scrolling behind open modals and drawers — iOS + Android safe.
 // Uses position:fixed trick (saves/restores scroll Y) so iOS Safari honours it.

@@ -465,7 +465,7 @@
                 var resp = await fetch('/api/current-user');
                 var user = await resp.json();
                 if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
-                if (user.shop_icon) { setNavBrandIcon(user.shop_icon); }
+                applyShopBranding(user.shop_icon || '', user.shop_name || user.shop || '');
                 var initial = (user.full_name || user.username).charAt(0).toUpperCase();
                 document.getElementById('user-icon').textContent = initial;
                 document.getElementById('user-name').textContent = user.full_name || user.username;

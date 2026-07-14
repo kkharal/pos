@@ -3163,10 +3163,7 @@
                 var user = await response.json();
 
                 if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
-                if (user.shop_icon) {
-                    var bi = document.querySelector('.navbar-brand-icon');
-                    setNavBrandIcon(user.shop_icon);
-                }
+                applyShopBranding(user.shop_icon || '', user.shop_name || '');
                 if (user.currency) currencySymbol = user.currency;
 
                 var initial = (user.full_name || user.username).charAt(0).toUpperCase();

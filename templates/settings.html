@@ -1111,10 +1111,7 @@
                 var user = await response.json();
 
                 if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
-                if (user.shop_icon) {
-                    var bi = document.querySelector('.navbar-brand-icon');
-                    setNavBrandIcon(user.shop_icon);
-                }
+                applyShopBranding(user.shop_icon || '', user.shop_name || '');
 
                 var initial = (user.full_name || user.username).charAt(0).toUpperCase();
                 document.getElementById('user-icon').textContent = initial;
@@ -1317,7 +1314,7 @@
                 }
 
                 document.getElementById('shop-name-title').textContent = shopName;
-                setNavBrandIcon(shopIcon);
+                applyShopBranding(shopIcon, document.getElementById('shop-name-input') ? document.getElementById('shop-name-input').value.trim() : '');
                 currencySymbol = currency;
                 showMessage('success', 'Shop settings updated successfully!');
             } catch (error) { showMessage('error', 'Error updating shop settings'); }
