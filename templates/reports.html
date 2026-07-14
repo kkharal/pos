@@ -225,7 +225,9 @@
             .analytics-content { padding: 1.25rem 1rem; }
             .chart-grid-2, .chart-grid-equal { grid-template-columns: 1fr; }
             .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-            .table-scroll .data-table { min-width: 640px; }
+            /* Only force min-width on wide tables (sales/customers); narrow tables scroll naturally */
+            #panel-sales .table-scroll .data-table,
+            #panel-customers .table-scroll .data-table { min-width: 480px; }
 
             #panel-sales .kpi-grid,
             #panel-overview .kpi-grid,
@@ -594,10 +596,12 @@
                     <div class="data-card-header">
                         <div class="data-card-title">Stock Movements</div>
                     </div>
+                    <div class="table-scroll">
                     <table class="data-table">
                         <thead><tr><th>Date</th><th>Type</th><th class="text-right">Transactions</th><th class="text-right">Added</th><th class="text-right">Removed</th></tr></thead>
                         <tbody id="inv-movements-body"><tr><td colspan="5" class="text-center">No data</td></tr></tbody>
                     </table>
+                    </div>
                 </div>
             </div>
 
@@ -707,10 +711,12 @@
                     <div class="data-card-header">
                         <div class="data-card-title">Expense Categories</div>
                     </div>
+                    <div class="table-scroll">
                     <table class="data-table">
                         <thead><tr><th>Category</th><th class="text-right">Amount</th><th class="text-right">% of Total</th></tr></thead>
                         <tbody id="fin-expense-categories-body"><tr><td colspan="3" class="text-center">No expenses</td></tr></tbody>
                     </table>
+                    </div>
                 </div>
             </div>
 

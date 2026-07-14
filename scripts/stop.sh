@@ -1,4 +1,7 @@
 #!/bin/bash
+# Resolve repo root regardless of where the script is called from
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
+cd "$ROOT_DIR"
 
 set -euo pipefail
 
@@ -43,9 +46,22 @@ if [ -f "$PID_FILE" ]; then
     PID=$(cat "$PID_FILE" 2>/dev/null || true)
     if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
         kill "$PID" 2>/dev/null || true
+        echo "✓ Stopped process (PID: $PID)"
     fi
     rm -f "$PID_FILE"
 fi
+
+# Fallback: kill any gunicorn/python process bound to the app port
+APP_PORT="${PORT:-8080}"
+PORT_PIDS=$(lsof -ti :"$APP_PORT" 2>/dev/null || true)
+if [ -n "$PORT_PIDS" ]; then
+    echo "$PORT_PIDS" | xargs kill 2>/dev/null || true
+    echo "✓ Killed processes on port $APP_PORT (PIDs: $(echo $PORT_PIDS | tr '\n' ' '))"
+fi
+
+# Final fallback: kill by process name
+pkill -f "gunicorn.*app:app" 2>/dev/null || true
+pkill -f "python.*app\.py" 2>/dev/null || true
 
 if [[ "$STOP_MYSQL" =~ ^[Yy]([Ee][Ss])?$|^true$ ]]; then
     if [[ "$OSTYPE" == "darwin"* ]] && command -v brew &> /dev/null; then

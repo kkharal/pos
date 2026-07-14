@@ -55,7 +55,7 @@
         .dash-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
 
         /* ===== Cards ===== */
-        .dash-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; }
+        .dash-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; min-width: 0; overflow: hidden; }
         .dash-card-title { font-size: 0.88rem; font-weight: 600; color: #1e293b; margin-bottom: 1rem; }
 
         /* ===== Top Products ===== */
@@ -97,50 +97,65 @@
             .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
 
+        /* Medium mobile: chart + top products side by side */
+        @media (min-width: 501px) and (max-width: 768px) {
+            .dash-grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+            #salesTrendChart { height: 150px !important; max-height: 150px !important; }
+            #best-sellers-list { max-height: 150px; overflow-y: auto; }
+        }
+
         @media (max-width: 768px) {
-            .dash-layout { padding: 1rem; }
-            .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .kpi-grid { gap: 0.75rem; margin-bottom: 0.85rem; }
-            .kpi-card { min-height: 88px; padding: 0.75rem; border-radius: 16px; }
-            .kpi-value { font-size: 1.02rem; }
-            .kpi-change { font-size: 0.66rem; }
+            .dash-layout { padding: 0.85rem 0.9rem; }
+            .dash-header { margin-bottom: 0.85rem; }
+            .dash-greeting { font-size: 1.1rem; }
+            .dash-subtitle { font-size: 0.78rem; margin-top: 0.1rem; }
 
-            .dash-grid { gap: 0.75rem; margin-bottom: 0.85rem; }
-            .dash-card { padding: 0.75rem; border-radius: 16px; }
-            .dash-card-title { font-size: 0.8rem; margin-bottom: 0.55rem; }
+            .quick-actions { gap: 0.4rem; margin-bottom: 1rem; }
+            .quick-action { padding: 0.42rem 0.8rem; font-size: 0.8rem; border-radius: 7px; }
 
-            #sales-trend-card,
-            #top-products-card {
-                padding: 0.75rem;
-                border-radius: 16px;
-            }
+            .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 0.65rem; }
+            .kpi-card { min-height: 80px; padding: 0.65rem 0.75rem; border-radius: 12px; }
+            .kpi-label { font-size: 0.63rem; margin-bottom: 0.15rem; }
+            .kpi-value { font-size: 1rem; }
+            .kpi-change { font-size: 0.64rem; }
 
-            #sales-trend-card .dash-card-title,
-            #top-products-card .dash-card-title {
-                font-size: 0.8rem;
-                margin-bottom: 0.55rem;
-            }
+            .dash-grid { gap: 0.65rem; margin-bottom: 0.65rem; }
+            .dash-card { padding: 0.75rem; border-radius: 12px; }
+            .dash-card-title { font-size: 0.8rem; margin-bottom: 0.5rem; }
 
-            #salesTrendChart {
-                height: 172px !important;
-                max-height: 172px !important;
-            }
-
-            #best-sellers-list {
-                max-height: 96px;
-                overflow-y: auto;
-                padding-right: 0.15rem;
-            }
-
-            .top-product { padding: 0.22rem 0; gap: 0.45rem; }
-            .top-product-rank { width: 20px; height: 20px; font-size: 0.66rem; }
+            .top-product { padding: 0.22rem 0; gap: 0.4rem; }
+            .top-product-rank { width: 20px; height: 20px; font-size: 0.64rem; }
             .top-product-name { font-size: 0.76rem; }
             .top-product-stat { font-size: 0.7rem; }
 
-            .card-toggle-btn {
-                font-size: 0.68rem;
-                padding: 0.22rem 0.56rem;
-            }
+            .activity-item { gap: 0.5rem; padding: 0.45rem 0; }
+            .activity-icon { width: 28px; height: 28px; font-size: 0.78rem; border-radius: 7px; }
+            .activity-title { font-size: 0.78rem; }
+            .activity-time { font-size: 0.66rem; }
+            .activity-amount { font-size: 0.78rem; }
+
+            .alert-banner { padding: 0.6rem 0.85rem; font-size: 0.8rem; gap: 0.5rem; }
+            .card-toggle-btn { font-size: 0.66rem; padding: 0.2rem 0.52rem; }
+        }
+
+        /* Small mobile: stacked, ultra compact */
+        @media (max-width: 500px) {
+            .dash-layout { padding: 0.65rem 0.7rem; }
+            .dash-greeting { font-size: 1rem; }
+
+            .quick-actions { gap: 0.35rem; margin-bottom: 0.85rem; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 0.1rem; }
+            .quick-actions::-webkit-scrollbar { display: none; }
+            .quick-action { padding: 0.38rem 0.7rem; font-size: 0.76rem; white-space: nowrap; flex-shrink: 0; }
+
+            .kpi-grid { gap: 0.4rem; margin-bottom: 0.55rem; }
+            .kpi-card { min-height: 72px; padding: 0.55rem 0.65rem; }
+            .kpi-label { font-size: 0.6rem; }
+            .kpi-value { font-size: 0.92rem; }
+
+            .dash-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+            .dash-card { padding: 0.65rem; }
+            #salesTrendChart { height: 120px !important; max-height: 120px !important; }
+            #best-sellers-list { max-height: 90px; overflow-y: auto; }
         }
     </style>
 </head>
@@ -277,7 +292,7 @@
                 <!-- Sales Trend -->
                 <div class="dash-card" id="sales-trend-card">
                     <div class="dash-card-title">Sales Trend (7 days)</div>
-                    <canvas id="salesTrendChart" style="max-height: 220px;"></canvas>
+                    <canvas id="salesTrendChart" style="max-height:220px;width:100%;display:block;"></canvas>
                 </div>
 
                 <!-- Top Products -->
