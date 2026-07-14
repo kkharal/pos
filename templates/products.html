@@ -1719,7 +1719,7 @@
                         g.variants.some(v => (v.sku||'').toLowerCase().includes(search) || (v.size||'').toLowerCase().includes(search) || (v.color||'').toLowerCase().includes(search));
                 });
             }
-            if (groupNames.length === 0) { container.innerHTML = '<div class="products-empty"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><p>No products found</p></div>'; return; }
+            if (groupNames.length === 0) { container.innerHTML = (search ? '<div class="products-empty"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><p>No results for &ldquo;' + search + '&rdquo;.</p><button class="empty-action secondary" onclick="document.getElementById(\'product-search\').value=\'\';renderProductList();">Clear search</button></div>' : '<div class="products-empty"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><p>No products yet.</p><button class="empty-action" onclick="openAddProductModal()">+ Add Product</button></div>'); return; }
             container.innerHTML = groupNames.map(name => {
                 const g = groupedProducts[name], st = getGroupStatus(g), active = selectedGroup === name;
                 return `<div class="product-row ${active?'active':''}" onclick="openDrawer('${name.replace(/'/g,"\\'")}')">
@@ -2781,6 +2781,10 @@
         document.getElementById('add-product-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (e.target.dataset.submitting === '1') return;
+            var _pOk = true;
+            _pOk = validateField(e.target.querySelector('[name="name"]'), 'Product name is required') && _pOk;
+            _pOk = validateField(e.target.querySelector('[name="price"]'), 'Selling price is required') && _pOk;
+            if (!_pOk) return;
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const fd = new FormData(e.target); const data = Object.fromEntries(fd);
             const catSel = document.getElementById('category-select'), custom = document.getElementById('custom-category-input').value.trim();

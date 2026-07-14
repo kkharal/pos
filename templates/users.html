@@ -212,7 +212,7 @@
 
             <!-- User Cards -->
             <div class="user-grid" id="user-grid">
-                <div class="user-empty"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20v-2a6 6 0 0 1 12 0v2"/></svg></div><p>Loading...</p></div>
+                <div style="display:flex;flex-direction:column;gap:0.75rem;padding:0.25rem 0;"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div>
             </div>
         </div>
 
@@ -641,7 +641,8 @@
 
             var grid = document.getElementById('user-grid');
             if (!filtered.length) {
-                grid.innerHTML = '<div class="user-empty"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20v-2a6 6 0 0 1 12 0v2"/></svg></div><p>No users found</p></div>';
+                var _userSearch = (document.getElementById('user-search') ? (document.getElementById('user-search').value || '').trim() : '');
+            grid.innerHTML = '<div class="user-empty"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20v-2a6 6 0 0 1 12 0v2"/></svg></div>' + (_userSearch ? '<p>No results. <button class="empty-action secondary" onclick="var el=document.getElementById(\'user-search\');if(el){el.value=\'\';renderUsers();}">Clear search</button></p>' : '<p>No users yet.</p><button class="empty-action" onclick="openAddUserModal()">+ Add User</button>') + '</div>';
                 return;
             }
 
@@ -780,7 +781,7 @@
             else { shopField.style.display = isSuperAdmin ? '' : 'none'; multiField.style.display = 'none'; }
         }
 
-        function closeAddUserModal() { document.getElementById('add-user-modal').classList.remove('active'); document.getElementById('add-user-form').reset(); }
+        function closeAddUserModal() { document.getElementById('add-user-modal').classList.remove('active'); document.getElementById('add-user-form').reset(); clearFormErrors(document.getElementById('add-user-form')); }
 
         document.getElementById('role-select').addEventListener('change', function() {
             var hint = document.getElementById('role-hint');
@@ -793,6 +794,12 @@
 
         document.getElementById('add-user-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            var _uForm = document.getElementById('add-user-form');
+            var _uOk = true;
+            _uOk = validateField(_uForm.querySelector('[name="username"]'), 'Username is required') && _uOk;
+            _uOk = validateField(_uForm.querySelector('[name="password"]'), 'Password is required') && _uOk;
+            _uOk = validateField(_uForm.querySelector('[name="role"]'), 'Please select a role') && _uOk;
+            if (!_uOk) return;
             var fd = new FormData(e.target);
             var data = Object.fromEntries(fd);
             if (data.role === 'shop_owner') {

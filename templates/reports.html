@@ -223,6 +223,39 @@
         /* ===== Responsive ===== */
         @media (max-width: 768px) {
             .analytics-content { padding: 1.25rem 1rem; }
+            /* Mobile panel tab strip */
+            .reports-mobile-nav {
+                display: flex;
+                gap: 0.35rem;
+                overflow-x: auto;
+                scrollbar-width: none;
+                padding-bottom: 0.15rem;
+                margin-bottom: 1.1rem;
+                -webkit-overflow-scrolling: touch;
+            }
+            .reports-mobile-nav::-webkit-scrollbar { display: none; }
+            .reports-mobile-nav-pill {
+                flex-shrink: 0;
+                padding: 0.38rem 0.85rem;
+                border-radius: 999px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                border: 1px solid #e2e8f0;
+                background: white;
+                color: #64748b;
+                cursor: pointer;
+                white-space: nowrap;
+                transition: all 0.15s;
+            }
+            .reports-mobile-nav-pill.active {
+                background: #1e293b;
+                color: white;
+                border-color: #1e293b;
+            }
+        }
+        @media (min-width: 769px) {
+            .reports-mobile-nav { display: none; }
+        }
             .chart-grid-2, .chart-grid-equal { grid-template-columns: 1fr; }
             .kpi-grid { grid-template-columns: repeat(2, 1fr); }
             /* Only force min-width on wide tables (sales/customers); narrow tables scroll naturally */
@@ -401,6 +434,15 @@
     <div class="analytics-layout">
         <!-- ===== Right Content ===== -->
         <div class="analytics-content">
+
+            <!-- Mobile-only panel navigation -->
+            <div class="reports-mobile-nav" id="reports-mobile-nav">
+                <button class="reports-mobile-nav-pill active" onclick="switchPanel('overview')" data-panel="overview">Overview</button>
+                <button class="reports-mobile-nav-pill" onclick="switchPanel('sales')" data-panel="sales">Sales</button>
+                <button class="reports-mobile-nav-pill" onclick="switchPanel('inventory')" data-panel="inventory">Inventory</button>
+                <button class="reports-mobile-nav-pill admin-only" onclick="switchPanel('customers')" data-panel="customers">Customers</button>
+                <button class="reports-mobile-nav-pill admin-only" onclick="switchPanel('finance')" data-panel="finance">Finance</button>
+            </div>
 
             <!-- ========== OVERVIEW PANEL ========== -->
             <div class="analytics-panel active" id="panel-overview">
@@ -758,6 +800,10 @@
         document.querySelectorAll('.analytics-nav-item').forEach(function(item) { item.classList.remove('active'); });
         var activeNav = document.querySelector('.analytics-nav-item[data-panel="' + name + '"]');
         if (activeNav) activeNav.classList.add('active');
+        // Update mobile pill nav
+        document.querySelectorAll('.reports-mobile-nav-pill').forEach(function(p) { p.classList.remove('active'); });
+        var activePill = document.querySelector('.reports-mobile-nav-pill[data-panel="' + name + '"]');
+        if (activePill) { activePill.classList.add('active'); activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); }
         document.querySelectorAll('.analytics-panel').forEach(function(p) { p.classList.remove('active'); });
         var panel = document.getElementById('panel-' + name);
         if (panel) panel.classList.add('active');
