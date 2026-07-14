@@ -20,6 +20,7 @@ A full-featured Point of Sale (POS) web application for managing one or multiple
 - ✅ **Background scheduler** for automated tasks
 - ✅ **Advanced POS** with category tabs, held carts, refunds, keyboard shortcuts
 - ✅ **Product management** with master-detail layout, variant grouping, and price overrides
+- ✅ **Product images** — upload per-product photos (WebP, auto-converted, 800×800 center-crop, cache-busted), visible in Inventory list, product drawer, POS cards, and cart
 - ✅ **CSV import/export** for products
 - ✅ **Audit log** tracking all product changes
 - ✅ **Per-product reorder levels** with stock movement charts
@@ -38,6 +39,7 @@ A full-featured Point of Sale (POS) web application for managing one or multiple
 - **Database**: MySQL 8.x / 9.x (via `mysql-connector-python`) — with full multi-shop/multi-tenant support
 - **Frontend**: HTML, CSS, JavaScript, Chart.js
 - **Reports**: ReportLab (PDF), OpenPyXL (Excel)
+- **Image processing**: Pillow — WebP conversion, center-crop, EXIF auto-rotation
 - **Alerts**: SMTP email integration with APScheduler for automation
 - **Scheduler**: APScheduler 3.10.4 for background tasks
 
@@ -96,6 +98,13 @@ The system has **four roles**, each with distinct permissions:
 - **Duplicate product**: Clone a product with one click (creates copy with 0 stock)
 - **Per-product reorder level**: Set custom low stock threshold per variant (overrides global default)
 - **Audit log**: Track who changed what, when — see old vs new values
+- **Product images**: Upload a photo per product (JPG, PNG, or WebP, max 5 MB)
+  - Automatically converted to WebP and center-cropped to 800×800 on the server
+  - One shared image per product group — all size/color variants show the same photo
+  - Displayed as a 48×48 thumbnail in the Inventory list, 120×120 preview in the product drawer, 64×64 in POS cards, and 32×32 in the cart
+  - Cache-busted URL (`?v=<timestamp>`) prevents stale browser caches after re-upload
+  - Replace or remove the image at any time from the product drawer (admin only)
+  - Files stored at `static/uploads/products/<id>.webp`; products without an image show styled initials
 - **Search**: Search by name, SKU, size, color, or category
 - **Stock status dots**: Green (in stock), Orange (low/some out), Red (all out of stock)
 - **Summary cards**: Products count, Units in Stock, Low Stock alerts
@@ -438,6 +447,7 @@ Then open your browser to: **http://localhost:8080**
   - APScheduler 3.10.4 - Background task scheduling
   - mysql-connector-python 8.2.0 - MySQL driver
   - PyMySQL 1.1.0 - MySQL compatibility layer
+  - Pillow 10.0+ - Image processing (WebP conversion, crop, resize)
 
 4. **Configure MySQL credentials** via environment variables:
   ```bash

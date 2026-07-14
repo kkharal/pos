@@ -24,6 +24,7 @@ from apscheduler.triggers.cron import CronTrigger
 import atexit
 import fcntl
 import logging
+import time
 
 app = Flask(__name__)
 _secret = os.environ.get('SECRET_KEY')
@@ -34,6 +35,12 @@ CORS(app, origins=os.environ.get('ALLOWED_ORIGINS', 'http://localhost:5000').spl
 
 # Build/version token that can be used in templates for cache-busting query params.
 ASSET_VERSION = os.environ.get('ASSET_VERSION') or datetime.utcnow().strftime('%Y%m%d%H%M%S')
+
+# Product image upload settings
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', 'products')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp'}
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
 
 
 def normalize_category_label(value):
@@ -1454,6 +1461,21 @@ def get_products():
         for product in products_list:
             product.pop('cost_price', None)
 
+    # Attach image_url with cache-busting timestamp
+    for product in products_list:
+        ip = product.get('image_path')
+        if ip:
+            iu = product.get('image_updated_at')
+            ts_qs = ''
+            if iu:
+                try:
+                    ts_qs = '?v=' + str(int(datetime.strptime(str(iu), '%Y-%m-%d %H:%M:%S').timestamp()))
+                except Exception:
+                    pass
+            product['image_url'] = f'/static/uploads/products/{ip}{ts_qs}'
+        else:
+            product['image_url'] = None
+
     return jsonify(products_list)
 
 @app.route('/api/products', methods=['POST'])
@@ -1830,6 +1852,90 @@ def delete_product(product_id):
         conn.rollback()
         conn.close()
         return jsonify({'success': False, 'error': str(e)}), 400
+
+# API Routes - Product Image
+@app.route('/api/products/<int:product_id>/image', methods=['POST', 'DELETE'])
+@login_required
+@admin_required
+def product_image(product_id):
+    from PIL import Image as PILImage, ImageOps
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    flt_sql, flt_params = shop_filter()
+    try:
+        product = cursor.execute(
+            f'SELECT id, name, shop_id, image_path FROM products WHERE id=? AND is_active=1 {flt_sql}',
+            [product_id] + flt_params
+        ).fetchone()
+        if not product:
+            return jsonify({'success': False, 'error': 'Product not found'}), 404
+
+        shop_id = product['shop_id']
+
+        if request.method == 'DELETE':
+            if product['image_path']:
+                file_path = os.path.join(UPLOAD_FOLDER, product['image_path'])
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            cursor.execute(
+                'UPDATE products SET image_path=NULL, image_updated_at=NULL WHERE name=? AND shop_id=?',
+                (product['name'], shop_id)
+            )
+            conn.commit()
+            return jsonify({'success': True})
+
+        # POST — upload
+        if 'image' not in request.files:
+            return jsonify({'success': False, 'error': 'No image file provided'}), 400
+        f = request.files['image']
+        if not f or not f.filename:
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+        ext = f.filename.rsplit('.', 1)[-1].lower() if '.' in f.filename else ''
+        if ext not in ALLOWED_IMAGE_EXTENSIONS:
+            return jsonify({'success': False, 'error': 'Invalid file type. Allowed: jpg, jpeg, png, webp'}), 400
+        allowed_mime = {'image/jpeg', 'image/png', 'image/webp'}
+        if f.content_type and f.content_type.split(';')[0].strip() not in allowed_mime:
+            return jsonify({'success': False, 'error': 'Invalid file content type'}), 400
+
+        data = f.read(MAX_IMAGE_SIZE + 1)
+        if len(data) > MAX_IMAGE_SIZE:
+            return jsonify({'success': False, 'error': 'Image too large. Maximum size is 5 MB'}), 400
+
+        # Use min variant ID in the group as stable filename anchor
+        row = cursor.execute(
+            'SELECT MIN(id) as min_id FROM products WHERE name=? AND shop_id=? AND is_active=1',
+            (product['name'], shop_id)
+        ).fetchone()
+        anchor_id = row['min_id'] if row and row['min_id'] else product_id
+        filename = f'{anchor_id}.webp'
+        dest = os.path.join(UPLOAD_FOLDER, filename)
+
+        # Convert, center-crop to square, resize to 800×800, save as WebP
+        img = PILImage.open(BytesIO(data))
+        img = ImageOps.exif_transpose(img)
+        img = img.convert('RGB')
+        w, h = img.size
+        side = min(w, h)
+        img = img.crop(((w - side) // 2, (h - side) // 2, (w + side) // 2, (h + side) // 2))
+        img = img.resize((800, 800), PILImage.LANCZOS)
+        img.save(dest, 'WEBP', quality=82, method=4)
+
+        now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        cursor.execute(
+            'UPDATE products SET image_path=?, image_updated_at=? WHERE name=? AND shop_id=?',
+            (filename, now, product['name'], shop_id)
+        )
+        conn.commit()
+        ts = str(int(time.time()))
+        return jsonify({'success': True, 'image_url': f'/static/uploads/products/{filename}?v={ts}'})
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        conn.close()
+
 
 # API Routes - Stock Management
 @app.route('/api/products/<int:product_id>/stock', methods=['POST'])
