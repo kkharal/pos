@@ -639,6 +639,10 @@ def init_db():
         cursor.execute("ALTER TABLE products ADD COLUMN variant_group VARCHAR(100) NULL")
     if not _column_exists(cursor, "products", "is_active"):
         cursor.execute("ALTER TABLE products ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1")
+    if not _column_exists(cursor, "products", "image_path"):
+        cursor.execute("ALTER TABLE products ADD COLUMN image_path VARCHAR(255) NULL")
+    if not _column_exists(cursor, "products", "image_updated_at"):
+        cursor.execute("ALTER TABLE products ADD COLUMN image_updated_at DATETIME NULL")
 
     # Backfill missing variant_group values so manually added variants join the correct family.
     # Legacy databases may not have products.shop_id yet at this point in the migration.

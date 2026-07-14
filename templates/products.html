@@ -163,6 +163,16 @@
         .modal-content.product-entry-modal { width: min(560px, calc(100vw - 2rem)); max-width: 560px; max-height: 92vh; overflow-y: auto; }
         .modal-content.variant-entry-modal { width: min(700px, calc(100vw - 2rem)); max-width: 700px; max-height: 92vh; overflow-y: auto; }
         .modal-content.stock-entry-modal { width: min(520px, calc(100vw - 2rem)); max-width: 520px; max-height: 92vh; overflow-y: auto; }
+        /* Product thumbnail */
+        .product-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: block; }
+        .product-initials { font-size: 0.72rem; font-weight: 700; color: #64748b; letter-spacing: 0.02em; user-select: none; }
+        /* Image upload zone in drawer */
+        .img-upload-zone { width: 112px; height: 112px; border: 2px dashed #d1d5db; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; background: #f9fafb; transition: border-color 0.15s; flex-shrink: 0; }
+        .img-upload-zone:hover { border-color: #3b82f6; background: #f0f7ff; }
+        .img-upload-zone img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .img-upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; color: #9ca3af; font-size: 0.7rem; text-align: center; padding: 0.5rem; }
+        .img-upload-icon { font-size: 1.6rem; line-height: 1; }
+        .img-photo-section { display: flex; align-items: flex-end; gap: 0.85rem; margin-bottom: 1rem; }
         .modal-content.variant-override-entry-modal { width: min(560px, calc(100vw - 2rem)); max-width: 560px; max-height: 92vh; overflow-y: auto; }
         .modal-two-col { display: flex; gap: 1rem; }
         .modal-two-col .form-group { flex: 1; min-width: 0; }
@@ -1634,10 +1644,13 @@
             products.forEach(p => {
                 const key = p.name;
                 if (!groupedProducts[key]) {
-                    groupedProducts[key] = { name: p.name, category: normalizeCategoryLabel(p.category), variants: [], totalStock: 0, price: p.price, cost_price: p.cost_price || 0 };
+                    groupedProducts[key] = { name: p.name, category: normalizeCategoryLabel(p.category), variants: [], totalStock: 0, price: p.price, cost_price: p.cost_price || 0, image_url: p.image_url || null };
                 }
                 groupedProducts[key].variants.push(p);
                 groupedProducts[key].totalStock += p.stock_quantity;
+                if (p.image_url && !groupedProducts[key].image_url) {
+                    groupedProducts[key].image_url = p.image_url;
+                }
             });
             // Set group price/cost to the most common (mode) among variants
             Object.values(groupedProducts).forEach(g => {
@@ -1658,6 +1671,10 @@
         }
 
         function getThreshold(product) { return product.low_stock_threshold || globalThreshold; }
+
+        function getInitials(name) {
+            return String(name || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] ? w[0].toUpperCase() : '').join('');
+        }
 
         function getGroupStatus(group) {
             const lowCount = group.variants.filter(v => v.stock_quantity > 0 && v.stock_quantity < getThreshold(v)).length;
@@ -1707,7 +1724,7 @@
             container.innerHTML = groupNames.map(name => {
                 const g = groupedProducts[name], st = getGroupStatus(g), active = selectedGroup === name;
                 return `<div class="product-row ${active?'active':''}" onclick="openDrawer('${name.replace(/'/g,"\\'")}')">
-                    <div class="product-info"><div class="product-icon">${getCategoryIcon(g.category)}</div><div class="product-text"><div class="product-name">${name}</div><div class="product-meta">${g.category}</div></div></div>
+                    <div class="product-info">${g.image_url ? `<img class="product-icon" src="${g.image_url}" alt="${name}" style="object-fit:cover;">` : `<div class="product-icon product-initials">${getInitials(name)}</div>`}<div class="product-text"><div class="product-name">${name}</div><div class="product-meta">${g.category}</div></div></div>
                     <div class="row-stats">
                         <div class="col-variants">${g.variants.length}</div>
                         <div class="col-stock">${g.totalStock}</div>
@@ -1873,6 +1890,17 @@
 
             let body = `${summaryHTML}${tabsHTML}
                 <div class="drawer-tab-content active" id="tab-inventory">
+                    <div class="img-photo-section">
+                        <div class="img-upload-zone" id="img-upload-zone" ${isAdmin ? `onclick="triggerImageUpload('${esc}')"` : ''} title="${isAdmin ? 'Click to upload photo' : 'Product photo'}">
+                            ${group.image_url ? `<img id="product-img-preview" src="${group.image_url}" alt="Product photo">` : `<div class="img-upload-placeholder"><span class="img-upload-icon">📷</span><span>${isAdmin ? 'Add Photo' : 'No Photo'}</span></div>`}
+                        </div>
+                        ${isAdmin ? `<div style="display:flex;flex-direction:column;gap:0.4rem;">
+                            <div style="font-size:0.7rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;">Product Photo</div>
+                            <button class="btn btn-secondary" style="font-size:0.75rem;padding:0.32rem 0.7rem;" onclick="triggerImageUpload('${esc}')">${group.image_url ? 'Replace Image' : 'Upload Image'}</button>
+                            ${group.image_url ? `<button class="btn" style="font-size:0.75rem;padding:0.32rem 0.7rem;color:#dc2626;border-color:#fca5a5;" onclick="removeProductImage('${esc}')">Remove Image</button>` : ''}
+                            <input type="file" id="product-img-input" accept=".jpg,.jpeg,.png,.webp" style="display:none" onchange="handleImageUpload(event,'${esc}')">
+                        </div>` : ''}
+                    </div>
                     <div class="inv-workspace">
                         <div class="inv-main">
                             <div class="inv-legend" style="margin-bottom:0.65rem;">
@@ -1992,6 +2020,38 @@
             document.getElementById('drawer-overlay').classList.remove('show');
             document.getElementById('products-main').classList.remove('drawer-open');
             renderProductList();
+        }
+
+        function triggerImageUpload(groupName) {
+            var input = document.getElementById('product-img-input');
+            if (input) input.click();
+        }
+
+        async function handleImageUpload(event, groupName) {
+            var file = event.target.files[0];
+            if (!file) return;
+            var group = groupedProducts[groupName];
+            if (!group || !group.variants.length) return;
+            if (file.size > 5 * 1024 * 1024) { showToast('Image too large. Max 5 MB.', 'error'); return; }
+            var formData = new FormData();
+            formData.append('image', file);
+            try {
+                var r = await fetch('/api/products/' + group.variants[0].id + '/image', { method: 'POST', body: formData });
+                var res = await r.json();
+                if (res.success) { showToast('Image uploaded!', 'success'); await loadProducts(); openDrawer(groupName); }
+                else showToast(res.error || 'Upload failed', 'error');
+            } catch(e) { showToast('Upload failed', 'error'); }
+        }
+
+        async function removeProductImage(groupName) {
+            var group = groupedProducts[groupName];
+            if (!group || !group.variants.length) return;
+            try {
+                var r = await fetch('/api/products/' + group.variants[0].id + '/image', { method: 'DELETE' });
+                var res = await r.json();
+                if (res.success) { showToast('Image removed', 'success'); await loadProducts(); openDrawer(groupName); }
+                else showToast(res.error || 'Error', 'error');
+            } catch(e) { showToast('Error', 'error'); }
         }
 
         function switchDrawerTab(tabName) {
