@@ -3267,7 +3267,7 @@
                 shops.forEach(function(s) {
                     var opt = document.createElement('option');
                     opt.value = s.id;
-                    opt.textContent = (s.icon || '\uD83D\uDED2') + ' ' + s.name;
+                    opt.textContent = s.name;
                     if (activeShopId && String(s.id) === String(activeShopId)) opt.selected = true;
                     sel.appendChild(opt);
                 });
