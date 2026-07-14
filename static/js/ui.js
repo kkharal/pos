@@ -8,6 +8,41 @@ function parseUTC(dtStr) {
     return new Date(dtStr.replace(' ', 'T') + 'Z');
 }
 
+// ===== Inline Form Validation =====
+function validateField(inputEl, message) {
+    var el = typeof inputEl === 'string' ? document.getElementById(inputEl) : inputEl;
+    if (!el) return true;
+    var val = el.tagName === 'SELECT' ? el.value : (el.value || '').trim();
+    var valid = val !== '' && val !== null && val !== undefined;
+    if (!valid) {
+        el.classList.add('input-error');
+        if (!el.nextElementSibling || !el.nextElementSibling.classList.contains('field-error')) {
+            el.insertAdjacentHTML('afterend', '<div class="field-error">' + (message || 'This field is required') + '</div>');
+        }
+        // Auto-clear on next input/change
+        var clearOnce = function() { clearFieldError(el); el.removeEventListener('input', clearOnce); el.removeEventListener('change', clearOnce); };
+        el.addEventListener('input', clearOnce);
+        el.addEventListener('change', clearOnce);
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+        clearFieldError(el);
+    }
+    return valid;
+}
+
+function clearFieldError(el) {
+    if (!el) return;
+    el.classList.remove('input-error');
+    var next = el.nextElementSibling;
+    if (next && next.classList.contains('field-error')) next.remove();
+}
+
+function clearFormErrors(formEl) {
+    if (!formEl) return;
+    formEl.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); });
+    formEl.querySelectorAll('.field-error').forEach(function(el) { el.remove(); });
+}
+
 // ===== Shop Icon Helpers =====
 // Handles both SVG filenames (e.g. "male-clothes.svg") and legacy emoji strings.
 

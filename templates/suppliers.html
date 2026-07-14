@@ -176,7 +176,7 @@
 
         <!-- Supplier Cards Grid -->
         <div class="supplier-grid" id="supplier-grid">
-            <div class="supplier-empty"><div class="empty-icon" style="font-size:0"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></div><p>Loading suppliers...</p></div>
+            <div style="display:flex;flex-direction:column;gap:0.75rem;padding:0.25rem 0;"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div>
         </div>
     </div>
 
@@ -385,7 +385,10 @@
 
             var grid = document.getElementById('supplier-grid');
             if (filtered.length === 0) {
-                grid.innerHTML = '<div class="supplier-empty"><div class="empty-icon" style="font-size:0"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></div><p>No suppliers found</p></div>';
+                var _supSearch = (document.getElementById('supplier-search').value || '').trim();
+            var _supStatus = document.getElementById('status-filter').value;
+            var _supHasFilter = _supSearch || _supStatus;
+            grid.innerHTML = '<div class="supplier-empty"><div class="empty-icon" style="font-size:0"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></div>' + (_supHasFilter ? '<p>No results. <button class="empty-action secondary" onclick="document.getElementById(\'supplier-search\').value=\'\';document.getElementById(\'status-filter\').value=\'\';renderSuppliers();">Clear filters</button></p>' : '<p>No suppliers yet.</p><button class="empty-action" onclick="openAddModal()">+ Add Supplier</button>') + '</div>';
                 return;
             }
 
@@ -525,6 +528,7 @@
         function openAddModal() {
             document.getElementById('modal-title').textContent = 'Add Supplier';
             document.getElementById('supplier-form').reset();
+            clearFormErrors(document.getElementById('supplier-form'));
             document.getElementById('supplier-id').value = '';
             document.getElementById('supplier-modal').classList.add('active');
         }
@@ -547,6 +551,7 @@
 
         document.getElementById('supplier-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            if (!validateField('supplier-name', 'Supplier name is required')) return;
             var id = document.getElementById('supplier-id').value;
             var data = {
                 name: document.getElementById('supplier-name').value,

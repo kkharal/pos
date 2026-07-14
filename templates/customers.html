@@ -408,7 +408,8 @@
 
             var grid = document.getElementById('customer-grid');
             if (filtered.length === 0) {
-                grid.innerHTML = '<div class="cust-empty"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="19" cy="9" r="3"/><path d="M23 21v-1a3 3 0 0 0-3-3h-1"/></svg></div><p>No customers found</p></div>';
+                var _custSearch = (document.getElementById('customer-search').value || '').trim();
+            grid.innerHTML = '<div class="cust-empty"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="19" cy="9" r="3"/><path d="M23 21v-1a3 3 0 0 0-3-3h-1"/></svg></div>' + (_custSearch ? '<p>No results for &ldquo;' + _custSearch + '&rdquo;. <button class="empty-action secondary" onclick="document.getElementById(\'customer-search\').value=\'\';renderCustomers();">Clear search</button></p>' : '<p>No customers yet.</p><button class="empty-action" onclick="openAddModal()">+ Add Customer</button>') + '</div>';
                 return;
             }
 
@@ -564,6 +565,7 @@
         function openAddModal() {
             document.getElementById('modal-title').textContent = 'Add Customer';
             document.getElementById('customer-form').reset();
+            clearFormErrors(document.getElementById('customer-form'));
             document.getElementById('customer-id').value = '';
             document.getElementById('cust-credit-limit').value = '0';
             document.getElementById('customer-modal').classList.add('active');
@@ -588,6 +590,7 @@
 
         document.getElementById('customer-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            if (!validateField('cust-name', 'Customer name is required')) return;
             var id = document.getElementById('customer-id').value;
             var data = {
                 name: document.getElementById('cust-name').value,
