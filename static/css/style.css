@@ -1395,9 +1395,10 @@ body.has-sidebar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 0.75rem 0.75rem;
+    padding: 0 0.75rem;
     border-bottom: 1px solid var(--border);
-    min-height: 64px;
+    height: 56px;
+    min-height: 56px;
     flex-shrink: 0;
     gap: 0.5rem;
 }
