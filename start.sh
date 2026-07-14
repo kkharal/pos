@@ -442,17 +442,31 @@ else
         $PIP install gunicorn
     fi
 
-    APP_DIR="$(pwd)"
-    APP_USER="$(whoami)"
-    SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}"
+    # ── macOS: no systemd, just run gunicorn directly ─────────────────────
+    if [[ "$OS" == "macos" ]]; then
+        nohup ./venv/bin/gunicorn \
+            --workers "$WORKERS" \
+            --bind "${HOST}:${PORT}" \
+            --access-logfile logs/access.log \
+            --error-logfile logs/error.log \
+            --timeout 120 \
+            app:app >> "$LOG_FILE" 2>&1 &
+        echo $! > logs/app.pid
+        echo "✓ Gunicorn started (PID: $!)"
+        echo "  Stop: kill \$(cat logs/app.pid)"
 
-    # Create the systemd service unit if it doesn't exist or is outdated
-    EXPECTED_EXEC="${APP_DIR}/venv/bin/gunicorn"
-    CURRENT_EXEC=$(grep "^ExecStart=" "$SERVICE_FILE" 2>/dev/null | cut -d= -f2- | awk '{print $1}')
+    # ── Linux: create/update systemd service ─────────────────────────────
+    else
+        APP_DIR="$(pwd)"
+        APP_USER="$(whoami)"
+        SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}"
 
-    if [ ! -f "$SERVICE_FILE" ] || [ "$CURRENT_EXEC" != "$EXPECTED_EXEC" ]; then
-        echo "Creating systemd service: $SERVICE_FILE"
-        sudo tee "$SERVICE_FILE" > /dev/null <<UNIT
+        EXPECTED_EXEC="${APP_DIR}/venv/bin/gunicorn"
+        CURRENT_EXEC=$(grep "^ExecStart=" "$SERVICE_FILE" 2>/dev/null | cut -d= -f2- | awk '{print $1}')
+
+        if [ ! -f "$SERVICE_FILE" ] || [ "$CURRENT_EXEC" != "$EXPECTED_EXEC" ]; then
+            echo "Creating systemd service: $SERVICE_FILE"
+            sudo tee "$SERVICE_FILE" > /dev/null <<UNIT
 [Unit]
 Description=Clothing Shop POS Gunicorn Service
 After=network.target mysql.service
@@ -474,22 +488,23 @@ TimeoutStopSec=30
 [Install]
 WantedBy=multi-user.target
 UNIT
-        sudo systemctl daemon-reload
-        sudo systemctl enable "$SERVICE_NAME"
-        echo "✓ Systemd service created and enabled (auto-starts on boot)"
-    fi
+            sudo systemctl daemon-reload
+            sudo systemctl enable "$SERVICE_NAME"
+            echo "✓ Systemd service created and enabled (auto-starts on boot)"
+        fi
 
-    sudo systemctl restart "$SERVICE_NAME"
-    sleep 1
+        sudo systemctl restart "$SERVICE_NAME"
+        sleep 1
 
-    if systemctl is-active --quiet "$SERVICE_NAME"; then
-        PID=$(systemctl show -p MainPID --value "$SERVICE_NAME" 2>/dev/null || echo "?")
-        echo $PID > logs/app.pid 2>/dev/null || true
-        echo "✓ Service started via systemd (PID: $PID)"
-    else
-        echo "❌ Service failed to start. Check logs:"
-        sudo journalctl -u "$SERVICE_NAME" --no-pager -n 20
-        exit 1
+        if systemctl is-active --quiet "$SERVICE_NAME"; then
+            PID=$(systemctl show -p MainPID --value "$SERVICE_NAME" 2>/dev/null || echo "?")
+            echo $PID > logs/app.pid 2>/dev/null || true
+            echo "✓ Service started via systemd (PID: $PID)"
+        else
+            echo "❌ Service failed to start. Check logs:"
+            sudo journalctl -u "$SERVICE_NAME" --no-pager -n 20
+            exit 1
+        fi
     fi
 fi
 
