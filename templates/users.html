@@ -112,10 +112,10 @@
 <body class="has-sidebar">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-brand">
+            <a href="/" class="sidebar-brand" title="Go to Dashboard" style="text-decoration:none;color:inherit;">
                 <div class="navbar-brand-icon">🛒</div>
                 <span class="sidebar-brand-name" id="shop-name-title">{{ initial_shop_name }}</span>
-            </div>
+            </a>
         </div>
         <div class="sidebar-nav">
             <a href="/" class="sidebar-item"><span class="sidebar-icon"></span><span class="sidebar-label">Dashboard</span></a>
@@ -764,14 +764,14 @@
             var sel = document.getElementById('user-shop-select');
             sel.innerHTML = '<option value="">Select shop...</option>';
             _allShops.forEach(function(s) {
-                sel.innerHTML += '<option value="' + s.id + '">' + (s.icon || '🛒') + ' ' + escHtml(s.name) + '</option>';
+                sel.innerHTML += '<option value="' + s.id + '">' + escHtml(s.name) + '</option>';
             });
             if (activeShopId) sel.value = activeShopId;
 
             var container = document.getElementById('multi-shop-checkboxes');
             container.innerHTML = _allShops.map(function(s) {
                 return '<label style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.25rem;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:0.88rem;">' +
-                    '<input type="checkbox" name="shop_ids" value="' + s.id + '" style="width:16px;height:16px;"> ' + (s.icon || '🛒') + ' ' + escHtml(s.name) + '</label>';
+                    '<input type="checkbox" name="shop_ids" value="' + s.id + '" style="width:16px;height:16px;"> ' + escHtml(s.name) + '</label>';
             }).join('');
 
             var shopField = document.getElementById('shop-field');
@@ -879,7 +879,7 @@
                 var assignedIds = assigned.map(function(s){ return s.id; });
                 document.getElementById('shop-assign-list').innerHTML = allShops.map(function(s) {
                     return '<label style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.3rem;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:0.88rem;">' +
-                        '<input type="checkbox" value="' + s.id + '" ' + (assignedIds.indexOf(s.id) >= 0 ? 'checked' : '') + ' style="width:1.1rem;height:1.1rem;"> ' + (s.icon||'🛒') + ' ' + escHtml(s.name) + '</label>';
+                        '<input type="checkbox" value="' + s.id + '" ' + (assignedIds.indexOf(s.id) >= 0 ? 'checked' : '') + ' style="width:1.1rem;height:1.1rem;"> ' + escHtml(s.name) + '</label>';
                 }).join('');
             } catch(e) { document.getElementById('shop-assign-list').innerHTML = '<p style="color:#ef4444;">Error loading</p>'; }
         }
@@ -910,7 +910,7 @@
                 var resp = await fetch('/api/shops');
                 var shops = await resp.json();
                 sel.innerHTML = '<option value="">Select shop...</option>' + shops.map(function(s) {
-                    return '<option value="' + s.id + '" ' + (s.id === currentShopId ? 'selected' : '') + '>' + (s.icon||'🛒') + ' ' + escHtml(s.name) + '</option>';
+                    return '<option value="' + s.id + '" ' + (s.id === currentShopId ? 'selected' : '') + '>' + escHtml(s.name) + '</option>';
                 }).join('');
             } catch(e) { sel.innerHTML = '<option value="">Error</option>'; }
         }
@@ -938,7 +938,7 @@
                 sel.innerHTML = '<option value="">All Shops</option>';
                 shops.forEach(function(s) {
                     var opt = document.createElement('option');
-                    opt.value = s.id; opt.textContent = (s.icon || '🛒') + ' ' + s.name;
+                    opt.value = s.id; opt.textContent = s.name;
                     if (activeId && String(s.id) === String(activeId)) opt.selected = true;
                     sel.appendChild(opt);
                 });

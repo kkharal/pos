@@ -1411,6 +1411,11 @@ body.has-sidebar {
     gap: 0.65rem;
     flex: 1;
     min-width: 0;
+    border-radius: 8px;
+    transition: background 0.15s;
+}
+.sidebar-brand:hover {
+    background: rgba(0,0,0,0.05);
 }
 
 .sidebar-brand-name {

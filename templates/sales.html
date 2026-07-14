@@ -163,10 +163,10 @@
 <body class="has-sidebar">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-brand">
+            <a href="/" class="sidebar-brand" title="Go to Dashboard" style="text-decoration:none;color:inherit;">
                 <div class="navbar-brand-icon">🛒</div>
                 <span class="sidebar-brand-name" id="shop-name-title">{{ initial_shop_name }}</span>
-            </div>
+            </a>
         </div>
         <div class="sidebar-nav">
             <a href="/" class="sidebar-item"><span class="sidebar-icon"></span><span class="sidebar-label">Dashboard</span></a>
@@ -996,7 +996,7 @@
                 shops.forEach(function(s) {
                     var opt = document.createElement('option');
                     opt.value = s.id;
-                    opt.textContent = (s.icon || '🛒') + ' ' + s.name;
+                    opt.textContent = s.name;
                     if (activeShopId && String(s.id) === String(activeShopId)) opt.selected = true;
                     sel.appendChild(opt);
                 });

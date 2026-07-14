@@ -1025,10 +1025,10 @@
 <body class="has-sidebar">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-brand">
+            <a href="/" class="sidebar-brand" title="Go to Dashboard" style="text-decoration:none;color:inherit;">
                 <div class="navbar-brand-icon">🛒</div>
                 <span class="sidebar-brand-name" id="shop-name-title">{{ initial_shop_name }}</span>
-            </div>
+            </a>
         </div>
         <div class="sidebar-nav">
             <a href="/" class="sidebar-item"><span class="sidebar-icon"></span><span class="sidebar-label">Dashboard</span></a>
@@ -3242,7 +3242,7 @@
             try {
                 const r = await fetch('/api/current-user'); const user = await r.json();
                 if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
-                if (user.shop_icon) { const bi = document.querySelector('.navbar-brand-icon'); if(bi) bi.textContent = user.shop_icon; }
+                if (user.shop_icon) { setNavBrandIcon(user.shop_icon); }
                 currentUserRole = user.role;
                 if (user.currency) currencySymbol = user.currency;
                 document.getElementById('user-icon').textContent = (user.full_name||user.username).charAt(0).toUpperCase();
@@ -3304,7 +3304,7 @@
                 const r = await fetch('/api/shops'); const shops = await r.json();
                 const sel = document.getElementById('shop-select');
                 sel.innerHTML = '<option value="">All Shops</option>';
-                shops.forEach(s => { const o=document.createElement('option'); o.value=s.id; o.textContent=(s.icon||'🛒')+' '+s.name; if(activeShopId&&String(s.id)===String(activeShopId))o.selected=true; sel.appendChild(o); });
+                shops.forEach(s => { const o=document.createElement('option'); o.value=s.id; o.textContent=s.name; if(activeShopId&&String(s.id)===String(activeShopId))o.selected=true; sel.appendChild(o); });
                 if(!activeShopId) sel.value='';
                 document.getElementById('shop-switcher').style.display='';
             } catch(e){ console.error('Failed to load shops',e); }
