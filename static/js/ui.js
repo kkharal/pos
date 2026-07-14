@@ -8,6 +8,135 @@ function parseUTC(dtStr) {
     return new Date(dtStr.replace(' ', 'T') + 'Z');
 }
 
+// ===== Shop Icon Helpers =====
+// Handles both SVG filenames (e.g. "male-clothes.svg") and legacy emoji strings.
+
+function isShopIconSvg(icon) {
+    return icon && icon.toLowerCase().endsWith('.svg');
+}
+
+function shopIconHtml(icon, size) {
+    size = size || 24;
+    if (isShopIconSvg(icon)) {
+        return '<img src="/static/icons/shop-icons/' + icon + '" width="' + size + '" height="' + size + '" style="object-fit:contain;display:block;" alt="">';
+    }
+    return '<span>' + (icon || '') + '</span>';
+}
+
+// Sets the .navbar-brand-icon element — works for both SVG files and emoji.
+function setNavBrandIcon(icon) {
+    var bi = document.querySelector('.navbar-brand-icon');
+    if (!bi) return;
+    if (isShopIconSvg(icon)) {
+        bi.innerHTML = '<img src="/static/icons/shop-icons/' + icon + '" style="width:22px;height:22px;object-fit:contain;display:block;" alt="">';
+    } else {
+        bi.textContent = icon || '';
+    }
+}
+
+// ===== Modal / Drawer Scroll Lock =====
+// Prevents the page from scrolling behind open modals and drawers — iOS + Android safe.
+// Uses position:fixed trick (saves/restores scroll Y) so iOS Safari honours it.
+var _modalScrollY = 0;
+var _modalOpenCount = 0;
+
+function lockBodyScroll() {
+    if (_modalOpenCount === 0) {
+        _modalScrollY = window.scrollY || window.pageYOffset;
+        document.body.style.position = 'fixed';
+        document.body.style.top = '-' + _modalScrollY + 'px';
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.overflow = 'hidden';
+    }
+    _modalOpenCount++;
+}
+
+function unlockBodyScroll() {
+    _modalOpenCount = Math.max(0, _modalOpenCount - 1);
+    if (_modalOpenCount === 0) {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, _modalScrollY);
+    }
+}
+
+// openModal / closeModal: convenience wrappers — also used directly by templates.
+// The MutationObserver below handles ALL other classList.add/remove('active') calls
+// automatically, so templates that haven't been updated still get scroll lock.
+function openModal(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.add('active');
+    // lock is applied by the MutationObserver
+}
+
+function closeModal(id) {
+    var el = document.getElementById(id);
+    if (el && el.classList.contains('active')) el.classList.remove('active');
+    // unlock is applied by the MutationObserver
+}
+
+// ===== Auto scroll-lock via MutationObserver =====
+// Watches the entire DOM for any .modal gaining/losing 'active',
+// and any full-screen drawer (.product-drawer, sidebar-like) gaining/losing 'open'/'mobile-open'.
+// This covers EVERY page without needing per-template changes.
+(function () {
+    // Drawers that should lock scroll only on mobile
+    var DRAWER_CLASSES = ['product-drawer', 'pos-cart-panel'];
+    var MOBILE_BREAKPOINT = 900;
+
+    function isDrawerEl(el) {
+        return DRAWER_CLASSES.some(function (cls) { return el.classList.contains(cls); });
+    }
+
+    var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            if (mutation.type !== 'attributes' || mutation.attributeName !== 'class') return;
+            var el = mutation.target;
+
+            // --- Modals (.modal with 'active') ---
+            if (el.classList.contains('modal')) {
+                if (el.classList.contains('active')) {
+                    lockBodyScroll();
+                } else {
+                    unlockBodyScroll();
+                }
+            }
+
+            // --- Full-screen drawers on mobile ---
+            if (isDrawerEl(el) && window.innerWidth <= MOBILE_BREAKPOINT) {
+                var isOpen = el.classList.contains('open') || el.classList.contains('mobile-open');
+                var wasOpen = mutation.oldValue &&
+                    (mutation.oldValue.includes(' open') || mutation.oldValue.startsWith('open') ||
+                     mutation.oldValue.includes('mobile-open'));
+                if (isOpen && !wasOpen) {
+                    lockBodyScroll();
+                } else if (!isOpen && wasOpen) {
+                    unlockBodyScroll();
+                }
+            }
+        });
+    });
+
+    function startObserver() {
+        observer.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['class'],
+            attributeOldValue: true,
+            subtree: true
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startObserver);
+    } else {
+        startObserver();
+    }
+})();
+
 // ===== Toast Notification System =====
 function _ensureToastContainer() {
     let c = document.getElementById('toast-container');

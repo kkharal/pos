@@ -588,9 +588,12 @@
         .s-banner-warn { background: #fefce8; border: 1px solid #fde047; color: #854d0e; }
 
         /* ===== Icon Picker ===== */
-        .icon-grid button { width: 38px; height: 38px; font-size: 1.2rem; border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+        .icon-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .icon-grid button { width: 44px; height: 44px; border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; padding: 6px; }
+        .icon-grid button img { width: 100%; height: 100%; object-fit: contain; display: block; }
         .icon-grid button.selected { border-color: #3b82f6; background: #eff6ff; transform: scale(1.08); }
-        .icon-grid button:hover { border-color: #94a3b8; }
+        .icon-grid button:hover { border-color: #94a3b8; background: #f8fafc; }
+        .icon-grid-empty { font-size: 0.82rem; color: #94a3b8; padding: 0.5rem 0; }
 
         .icon-picker-hint {
             font-size: 0.76rem;
@@ -781,10 +784,9 @@
                                 <div class="form-group">
                                     <label>Shop Icon</label>
                                     <div class="shop-icon-toolbar">
-                                        <div class="icon-grid" id="icon-picker"></div>
-                                        <button type="button" id="icon-more-btn" class="icon-more-btn" onclick="toggleMoreIcons()">+ More</button>
+                                        <div class="icon-grid" id="icon-picker"><span class="icon-grid-empty">Loading icons…</span></div>
                                     </div>
-                                    <div class="icon-picker-hint">Pick an icon for your shop display.</div>
+                                    <div class="icon-picker-hint">Pick an icon for your shop display. Add more SVGs to <code>static/icons/shop-icons/</code> to expand the list.</div>
                                 </div>
                             </div>
 
@@ -792,14 +794,14 @@
                                 <div class="shop-preview-label">Preview</div>
                                 <div class="shop-preview-card">
                                     <div class="shop-preview">
-                                        <span class="preview-icon" id="icon-preview">🛒</span>
+                                        <div id="icon-preview" class="preview-icon" style="width:2rem;height:2rem;display:flex;align-items:center;justify-content:center;"></div>
                                         <span class="preview-name" id="name-preview">Shop Name</span>
                                     </div>
                                     <div class="shop-preview-subline" id="preview-subline">Main Shop</div>
                                 </div>
                             </div>
                         </div>
-                        <input type="hidden" id="shop-icon-input" value="🛒">
+                        <input type="hidden" id="shop-icon-input" value="">
                     </section>
 
                     <section class="shop-section-card">
@@ -1111,7 +1113,7 @@
                 if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
                 if (user.shop_icon) {
                     var bi = document.querySelector('.navbar-brand-icon');
-                    if (bi) bi.textContent = user.shop_icon;
+                    setNavBrandIcon(user.shop_icon);
                 }
 
                 var initial = (user.full_name || user.username).charAt(0).toUpperCase();
@@ -1205,9 +1207,17 @@
         }
 
         // ── SHOP: Shop Name & Icon ───────────────────────────────────────
-        var SHOP_ICONS = ['🛒','🏪','👕','👗','🧥','👔','👠','👟','🎽','👜','💼','🛍️','🧢','👒','🕶️','💎','⌚','🎀','🧵','✂️','🏬','🏠','☕','🍕','🍔','🎂','🌸','🎨','📦','💰','⭐','🔥','💡','🎯','🚀','💫','🏆','❤️','🌈','✨'];
-        var ICON_COLLAPSED_COUNT = 8;
-        var showAllIcons = false;
+        var _shopIcons = [];
+
+        function setIconPreview(icon) {
+            var el = document.getElementById('icon-preview');
+            if (!el) return;
+            if (isShopIconSvg(icon)) {
+                el.innerHTML = '<img src="/static/icons/shop-icons/' + icon + '" style="width:100%;height:100%;object-fit:contain;display:block;" alt="">';
+            } else {
+                el.innerHTML = '<span style="font-size:1.6rem;">' + (icon || '') + '</span>';
+            }
+        }
 
         function updateShopPreview() {
             var shopName = (document.getElementById('shop-name-input').value || '').trim();
@@ -1216,40 +1226,33 @@
             document.getElementById('preview-subline').textContent = brandName || 'Main Shop';
         }
 
-        function initIconPicker() {
+        async function initIconPicker() {
             var picker = document.getElementById('icon-picker');
-            var currentIcon = document.getElementById('shop-icon-input').value;
-            var currentIndex = SHOP_ICONS.indexOf(currentIcon);
-            if (currentIndex >= ICON_COLLAPSED_COUNT) showAllIcons = true;
-
-            picker.innerHTML = SHOP_ICONS.map(function(icon, index) {
-                var classes = [];
-                if (icon === currentIcon) classes.push('selected');
-                if (!showAllIcons && index >= ICON_COLLAPSED_COUNT && icon !== currentIcon) classes.push('hidden-icon');
-                return '<button type="button" class="' + classes.join(' ') + '" onclick="selectShopIcon(this,\'' + icon + '\')">' + icon + '</button>';
-            }).join('');
-
-            var moreBtn = document.getElementById('icon-more-btn');
-            if (moreBtn) {
-                if (showAllIcons || SHOP_ICONS.length <= ICON_COLLAPSED_COUNT) {
-                    moreBtn.style.display = 'none';
-                } else {
-                    moreBtn.style.display = 'inline-flex';
-                }
+            if (!picker) return;
+            if (_shopIcons.length === 0) {
+                try {
+                    var r = await fetch('/api/shop-icons');
+                    _shopIcons = await r.json();
+                } catch(e) { _shopIcons = []; }
             }
+            if (_shopIcons.length === 0) {
+                picker.innerHTML = '<span class="icon-grid-empty">No icons found. Add SVG files to static/icons/shop-icons/</span>';
+                return;
+            }
+            var currentIcon = document.getElementById('shop-icon-input').value;
+            picker.innerHTML = _shopIcons.map(function(icon) {
+                var sel = icon === currentIcon ? ' selected' : '';
+                var label = icon.replace(/\.svg$/i, '').replace(/[-_]/g, ' ');
+                return '<button type="button" class="' + sel + '" onclick="selectShopIcon(\'' + icon + '\')" title="' + label + '"><img src="/static/icons/shop-icons/' + icon + '" alt="' + label + '"></button>';
+            }).join('');
         }
 
-        function toggleMoreIcons() {
-            showAllIcons = true;
-            initIconPicker();
-        }
-
-        function selectShopIcon(btn, icon) {
-            document.querySelectorAll('#icon-picker button').forEach(function(b) { b.classList.remove('selected'); });
-            btn.classList.add('selected');
+        function selectShopIcon(icon) {
             document.getElementById('shop-icon-input').value = icon;
-            document.getElementById('icon-preview').textContent = icon;
-            initIconPicker();
+            setIconPreview(icon);
+            document.querySelectorAll('#icon-picker button').forEach(function(b) {
+                b.classList.toggle('selected', b.getAttribute('onclick').includes('\'' + icon + '\''));
+            });
         }
         document.getElementById('shop-name-input').addEventListener('input', updateShopPreview);
         document.getElementById('brand-name-input').addEventListener('input', updateShopPreview);
@@ -1262,10 +1265,9 @@
                 document.getElementById('name-preview').textContent = data.shop_name;
                 if (data.shop_icon) {
                     document.getElementById('shop-icon-input').value = data.shop_icon;
-                    document.getElementById('icon-preview').textContent = data.shop_icon;
+                    setIconPreview(data.shop_icon);
                 }
-                showAllIcons = false;
-                initIconPicker();
+                await initIconPicker();
                 updateShopPreview();
             } catch (error) { console.error('Error loading shop name:', error); initIconPicker(); }
         }
@@ -1315,8 +1317,7 @@
                 }
 
                 document.getElementById('shop-name-title').textContent = shopName;
-                var brandIcon = document.querySelector('.navbar-brand-icon');
-                if (brandIcon) brandIcon.textContent = shopIcon;
+                setNavBrandIcon(shopIcon);
                 currencySymbol = currency;
                 showMessage('success', 'Shop settings updated successfully!');
             } catch (error) { showMessage('error', 'Error updating shop settings'); }

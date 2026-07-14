@@ -1229,6 +1229,17 @@ def get_current_user():
 def index():
     return render_template('index.html')
 
+@app.route('/api/shop-icons')
+@login_required
+def list_shop_icons():
+    """Return sorted list of SVG filenames from static/icons/shop-icons/."""
+    folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'icons', 'shop-icons')
+    try:
+        icons = sorted([f for f in os.listdir(folder) if f.lower().endswith('.svg')])
+    except FileNotFoundError:
+        icons = []
+    return jsonify(icons)
+
 @app.route('/products')
 @login_required
 def products_page():

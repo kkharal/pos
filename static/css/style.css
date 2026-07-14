@@ -558,6 +558,8 @@ table tr:hover {
     width: 90%;
     max-height: 90vh;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     animation: modalSlideIn 0.25s ease;
 }
 
@@ -2008,4 +2010,18 @@ body.has-sidebar .container {
     color: #64748b;
     letter-spacing: 0.02em;
     user-select: none;
+}
+
+/* ===== Prevent iOS auto-zoom on inputs (font-size < 16px triggers zoom) ===== */
+@media (max-width: 768px) {
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    input[type="date"],
+    input[type="tel"],
+    select,
+    textarea { font-size: 16px !important; }
+    button, .btn, a { touch-action: manipulation; }
 }

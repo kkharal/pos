@@ -113,7 +113,7 @@
 
         /* ===== Empty State ===== */
         .empty-state { text-align: center; padding: 3rem 2rem; }
-        .empty-state-icon { font-size: 2rem; opacity: 0.4; margin-bottom: 0.5rem; }
+        .empty-state-icon { line-height: 1; opacity: 0.7; margin-bottom: 0.5rem; }
         .empty-state p { font-size: 0.88rem; color: #64748b; margin: 0; }
         .empty-state small { font-size: 0.78rem; color: #94a3b8; }
 
@@ -238,7 +238,7 @@
                     <div class="page-subtitle">View and manage all transactions</div>
                 </div>
                 <div class="page-actions">
-                    <a href="/pos" class="btn-export">🛒 New Sale</a>
+                    <a href="/pos" class="btn-export">New Sale</a>
                     <button class="btn-export" onclick="exportSalesCSV()">⬇ Export CSV</button>
                 </div>
             </div>
@@ -253,7 +253,7 @@
                 <div class="filter-card">
                     <div class="filter-row">
                         <div class="filter-search-wrap">
-                            <span class="search-icon">🔍</span>
+                            <span class="search-icon">&#128269;</span>
                             <input type="text" id="filter-search" class="filter-search" placeholder="Search orders, invoice #, product, or customer…">
                         </div>
                         <select id="filter-date-period" class="filter-select" aria-label="Date filter">
@@ -655,7 +655,7 @@
             }
 
             if (sales.length === 0) {
-                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🧾</div><p>No orders found</p><small>Try adjusting your filters or date range</small></div>';
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><p>No orders found</p><small>Try adjusting your filters or date range</small></div>';
                 return;
             }
 
@@ -823,7 +823,7 @@
             document.getElementById('drawer-body').innerHTML = body;
 
             // Actions
-            var actions = '<button class="btn btn-primary" onclick="reprintReceipt(' + sale.id + ')">🖨 Print Receipt</button>';
+            var actions = '<button class="btn btn-primary" onclick="reprintReceipt(' + sale.id + ')">Print Receipt</button>';
             if (sale.refund_count > 0) {
                 actions += '<button class="btn btn-danger" onclick="viewRefundDetails(' + sale.id + ')">↩ Refunds (' + sale.refund_count + ')</button>';
             }
@@ -942,7 +942,7 @@
                 var response = await fetch('/api/current-user');
                 var user = await response.json();
                 if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
-                if (user.shop_icon) { var bi = document.querySelector('.navbar-brand-icon'); if (bi) bi.textContent = user.shop_icon; }
+                if (user.shop_icon) { setNavBrandIcon(user.shop_icon); }
                 currentUserRole = user.role;
                 if (user.currency) currencySymbol = user.currency;
 

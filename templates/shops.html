@@ -20,7 +20,15 @@
         .shop-card.active-shop { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
 
         .shop-card-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
-        .shop-card-icon { width: 52px; height: 52px; background: #f1f5f9; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; }
+        .shop-card-icon { width: 52px; height: 52px; background: #f1f5f9; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; overflow: hidden; padding: 8px; }
+        .shop-card-icon img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .shop-detail-icon img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        /* Shop SVG icon picker grid */
+        .shops-icon-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.25rem; }
+        .shops-icon-grid button { width: 44px; height: 44px; border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; transition: all 0.15s; }
+        .shops-icon-grid button img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .shops-icon-grid button.selected { border-color: #3b82f6; background: #eff6ff; transform: scale(1.08); }
+        .shops-icon-grid button:hover { border-color: #94a3b8; background: #f8fafc; }
         .shop-card-title { font-size: 1.1rem; font-weight: 700; color: #1e293b; line-height: 1.3; }
         .shop-card-location { font-size: 0.82rem; color: #64748b; margin-top: 0.15rem; display: flex; align-items: center; gap: 0.3rem; }
 
@@ -148,7 +156,7 @@
 
         <!-- Shop Cards -->
         <div class="shop-grid" id="shop-grid">
-            <div class="shop-empty"><div class="empty-icon">🏪</div><p>Loading...</p></div>
+            <div class="shop-empty"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><p>Loading...</p></div>
         </div>
     </div>
 
@@ -178,34 +186,12 @@
                 </div>
                 <div class="form-group">
                     <label>Icon</label>
-                    <div style="display:flex; gap:0.5rem; align-items:center;">
-                        <span id="shop-icon-preview" style="font-size:1.8rem; min-width:2rem;">🛒</span>
-                        <select id="shop-icon" style="flex:1;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius);height:36px;box-sizing:border-box;">
-                            <option value="🛒">🛒  Shopping Cart</option>
-                            <option value="🏪">🏪  Convenience Store</option>
-                            <option value="🏬">🏬  Department Store</option>
-                            <option value="🏦">🏦  Bank / Finance</option>
-                            <option value="🍎">🍎  Grocery / Food</option>
-                            <option value="👗">👗  Clothing / Fashion</option>
-                            <option value="👔">👔  Men's Wear</option>
-                            <option value="👟">👟  Shoes / Footwear</option>
-                            <option value="💄">💄  Beauty / Cosmetics</option>
-                            <option value="💻">💻  Electronics</option>
-                            <option value="📱">📱  Mobile / Telecom</option>
-                            <option value="🔧">🔧  Hardware / Tools</option>
-                            <option value="🏠">🏠  Home & Furniture</option>
-                            <option value="📚">📚  Books / Stationery</option>
-                            <option value="🎮">🎮  Games / Toys</option>
-                            <option value="💊">💊  Pharmacy / Health</option>
-                            <option value="🚗">🚗  Auto Parts</option>
-                            <option value="🌿">🌿  Garden / Plants</option>
-                            <option value="☕">☕  Café / Bakery</option>
-                            <option value="🍕">🍕  Restaurant / Food</option>
-                            <option value="🎁">🎁  Gifts / Souvenirs</option>
-                            <option value="__custom__">✏️  Custom…</option>
-                        </select>
+                    <div class="shops-icon-grid" id="shops-icon-grid"><span style="font-size:0.82rem;color:#94a3b8;">Loading icons…</span></div>
+                    <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;">
+                        <div id="shop-icon-preview" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid #e2e8f0;border-radius:6px;padding:3px;background:#f8fafc;"></div>
+                        <span style="font-size:0.78rem;color:#64748b;">Selected icon</span>
                     </div>
-                    <input type="text" id="shop-icon-custom" placeholder="Paste any emoji" maxlength="8" style="display:none; margin-top:0.5rem; width:100%;">
+                    <input type="hidden" id="shop-icon" value="">
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
                     <div class="form-group">
@@ -286,7 +272,7 @@
                 var user = await resp.json();
                 activeShopId = user.active_shop_id || null;
                 if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
-                if (user.shop_icon) { var bi = document.querySelector('.navbar-brand-icon'); if (bi) bi.textContent = user.shop_icon; }
+                if (user.shop_icon) { setNavBrandIcon(user.shop_icon); }
                 var initial = (user.full_name || user.username).charAt(0).toUpperCase();
                 document.getElementById('user-icon').textContent = initial;
                 document.getElementById('user-name').textContent = user.full_name || user.username;
@@ -329,7 +315,7 @@
         function renderShops() {
             var grid = document.getElementById('shop-grid');
             if (!shops.length) {
-                grid.innerHTML = '<div class="shop-empty"><div class="empty-icon">🏪</div><p>No shops yet</p><small>Click <strong>+ New Shop</strong> to create your first workspace</small></div>';
+                grid.innerHTML = '<div class="shop-empty"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><p>No shops yet</p><small>Click <strong>+ New Shop</strong> to create your first workspace</small></div>';
                 return;
             }
             grid.innerHTML = shops.map(function(s) {
@@ -341,7 +327,7 @@
                 return '<div class="shop-card ' + (isActive ? 'active-shop' : '') + '" onclick="openShopDetail(' + s.id + ')">' +
                     (isActive ? '<span class="shop-active-badge">Active</span>' : '') +
                     '<div class="shop-card-header">' +
-                        '<div class="shop-card-icon">' + (s.icon || '🛒') + '</div>' +
+                        '<div class="shop-card-icon">' + shopIconHtml(s.icon, 28) + '</div>' +
                         '<div>' +
                             '<div class="shop-card-title">' + escHtml(s.name) + '</div>' +
                             (s.address ? '<div class="shop-card-location">📍 ' + escHtml(s.address) + '</div>' : '') +
@@ -388,7 +374,7 @@
             var customers = s.customer_count || 0;
 
             var html = '<div class="shop-detail-header">' +
-                '<div class="shop-detail-icon">' + (s.icon || '🛒') + '</div>' +
+                '<div class="shop-detail-icon">' + shopIconHtml(s.icon, 36) + '</div>' +
                 '<div><div class="shop-detail-title">' + escHtml(s.name) + '</div>' +
                 (s.address ? '<div class="shop-detail-sub">📍 ' + escHtml(s.address) + '</div>' : '<div class="shop-detail-sub" style="color:#94a3b8;">No address set</div>') +
                 '</div></div>';
@@ -438,10 +424,37 @@
         }
 
         // ── Add/Edit Shop ──
+        var _shopsIcons = [];
+
+        async function loadShopsIconGrid() {
+            if (_shopsIcons.length === 0) {
+                try { var r = await fetch('/api/shop-icons'); _shopsIcons = await r.json(); } catch(e) { _shopsIcons = []; }
+            }
+            var grid = document.getElementById('shops-icon-grid');
+            if (!grid) return;
+            if (_shopsIcons.length === 0) {
+                grid.innerHTML = '<span style="font-size:0.82rem;color:#94a3b8;">No icons found. Add SVG files to static/icons/shop-icons/</span>';
+                return;
+            }
+            var cur = document.getElementById('shop-icon').value;
+            grid.innerHTML = _shopsIcons.map(function(icon) {
+                var label = icon.replace(/\.svg$/i, '').replace(/[-_]/g, ' ');
+                var sel = icon === cur ? ' selected' : '';
+                return '<button type="button" class="' + sel + '" onclick="selectShopsIcon(\'' + icon + '\');" title="' + label + '"><img src="/static/icons/shop-icons/' + icon + '" alt="' + label + '"></button>';
+            }).join('');
+        }
+
+        function selectShopsIcon(icon) {
+            document.getElementById('shop-icon').value = icon;
+            var prev = document.getElementById('shop-icon-preview');
+            if (prev) prev.innerHTML = '<img src="/static/icons/shop-icons/' + icon + '" style="width:100%;height:100%;object-fit:contain;display:block;" alt="">';
+            document.querySelectorAll('#shops-icon-grid button').forEach(function(b) {
+                b.classList.toggle('selected', b.title === icon.replace(/\.svg$/i, '').replace(/[-_]/g, ' '));
+            });
+        }
+
         function getIconValue() {
-            var sel = document.getElementById('shop-icon');
-            if (sel.value === '__custom__') return document.getElementById('shop-icon-custom').value.trim();
-            return sel.value;
+            return document.getElementById('shop-icon').value;
         }
         function getCurrencyValue() {
             var sel = document.getElementById('shop-currency');
@@ -449,13 +462,15 @@
             return sel.value;
         }
         function setIconValue(val) {
-            var sel = document.getElementById('shop-icon');
-            var customInput = document.getElementById('shop-icon-custom');
-            sel.value = val;
-            if (!sel.value || sel.value === '__custom__') {
-                sel.value = '__custom__'; customInput.value = val; customInput.style.display = '';
-                document.getElementById('shop-icon-preview').textContent = val || '?';
-            } else { customInput.style.display = 'none'; document.getElementById('shop-icon-preview').textContent = val; }
+            document.getElementById('shop-icon').value = val || '';
+            var prev = document.getElementById('shop-icon-preview');
+            if (prev && val) {
+                if (isShopIconSvg(val)) {
+                    prev.innerHTML = '<img src="/static/icons/shop-icons/' + val + '" style="width:100%;height:100%;object-fit:contain;display:block;" alt="">';
+                } else {
+                    prev.textContent = val;
+                }
+            }
         }
         function setCurrencyValue(val) {
             var sel = document.getElementById('shop-currency');
@@ -470,10 +485,10 @@
             document.getElementById('shop-submit-btn').textContent = 'Create Shop';
             document.getElementById('shop-id').value = '';
             document.getElementById('shop-form').reset();
-            document.getElementById('shop-icon-custom').style.display = 'none';
             document.getElementById('shop-currency-custom').style.display = 'none';
-            document.getElementById('shop-icon').value = '🛒';
-            document.getElementById('shop-icon-preview').textContent = '🛒';
+            document.getElementById('shop-icon').value = '';
+            document.getElementById('shop-icon-preview').innerHTML = '';
+            loadShopsIconGrid();
             document.getElementById('shop-currency').value = '$';
             document.getElementById('shop-low-stock').value = '5';
             document.getElementById('shop-modal').classList.add('active');
@@ -486,7 +501,7 @@
             document.getElementById('shop-submit-btn').textContent = 'Save Changes';
             document.getElementById('shop-id').value = s.id;
             document.getElementById('shop-name').value = s.name || '';
-            setIconValue(s.icon || '🛒');
+            setIconValue(s.icon || ''); loadShopsIconGrid();
             setCurrencyValue(s.currency_symbol || '$');
             document.getElementById('shop-low-stock').value = s.low_stock_threshold || 5;
             document.getElementById('shop-address').value = s.address || '';
@@ -528,12 +543,6 @@
         }
 
         // ── Icon/Currency interactivity ──
-        document.getElementById('shop-icon').addEventListener('change', function() {
-            var customInput = document.getElementById('shop-icon-custom');
-            if (this.value === '__custom__') { customInput.style.display = ''; customInput.focus(); document.getElementById('shop-icon-preview').textContent = customInput.value || '?'; }
-            else { customInput.style.display = 'none'; document.getElementById('shop-icon-preview').textContent = this.value; }
-        });
-        document.getElementById('shop-icon-custom').addEventListener('input', function() { document.getElementById('shop-icon-preview').textContent = this.value || '?'; });
         document.getElementById('shop-currency').addEventListener('change', function() {
             var customInput = document.getElementById('shop-currency-custom');
             if (this.value === '__custom__') { customInput.style.display = ''; customInput.focus(); } else customInput.style.display = 'none';

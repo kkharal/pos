@@ -40,7 +40,7 @@
         .exp-row-method { font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 0.1rem; text-transform: capitalize; }
 
         .exp-empty { text-align: center; padding: 3rem 2rem; }
-        .exp-empty .empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.5rem; }
+        .exp-empty .empty-icon { line-height: 1; opacity: 0.7; margin-bottom: 0.5rem; }
         .exp-empty p { color: #94a3b8; margin: 0; font-size: 0.9rem; }
 
         /* ===== Category Breakdown ===== */
@@ -220,7 +220,7 @@
                         </div>
                     </div>
                     <div id="expense-list-body">
-                        <div class="exp-empty"><div class="empty-icon">💰</div><p>Loading...</p></div>
+                        <div class="exp-empty"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><p>Loading...</p></div>
                     </div>
                 </div>
 
@@ -244,7 +244,7 @@
                 </div>
             </div>
             <div class="recurring-grid" id="recurring-grid">
-                <div class="exp-empty"><div class="empty-icon">🔄</div><p>Loading...</p></div>
+                <div class="exp-empty"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div><p>Loading...</p></div>
             </div>
         </div>
 
@@ -255,7 +255,7 @@
                 <button class="btn btn-primary" onclick="openAddCategoryModal()">+ Add Category</button>
             </div>
             <div class="cat-grid" id="categories-grid">
-                <div class="exp-empty"><div class="empty-icon">📂</div><p>Loading...</p></div>
+                <div class="exp-empty"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div><p>Loading...</p></div>
             </div>
         </div>
     </div>
@@ -429,7 +429,7 @@
                 var user = await response.json();
                 if (user.currency) currencySymbol = user.currency;
                 if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
-                if (user.shop_icon) { var bi = document.querySelector('.navbar-brand-icon'); if (bi) bi.textContent = user.shop_icon; }
+                if (user.shop_icon) { setNavBrandIcon(user.shop_icon); }
                 var initial = (user.full_name || user.username).charAt(0).toUpperCase();
                 document.getElementById('user-icon').textContent = initial;
                 document.getElementById('user-name').textContent = user.full_name || user.username;
@@ -547,7 +547,7 @@
                 container.innerHTML = data.map(function(c) {
                     var pct = maxAmount > 0 ? Math.round((c.total / maxAmount) * 100) : 0;
                     return '<div class="cat-breakdown-item">' +
-                        '<div class="cat-breakdown-icon">' + (c.icon || '📝') + '</div>' +
+                        '' +
                         '<div style="flex:1;">' +
                             '<div style="display:flex;justify-content:space-between;align-items:center;">' +
                                 '<span class="cat-breakdown-name">' + escHtml(c.name) + '</span>' +
@@ -575,12 +575,12 @@
         function renderCategories() {
             var grid = document.getElementById('categories-grid');
             if (!allCategories.length) {
-                grid.innerHTML = '<div class="exp-empty"><div class="empty-icon">📂</div><p>No categories yet</p></div>';
+                grid.innerHTML = '<div class="exp-empty"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div><p>No categories yet</p></div>';
                 return;
             }
             grid.innerHTML = allCategories.map(function(c) {
                 return '<div class="cat-card">' +
-                    '<div class="cat-card-icon">' + (c.icon || '📝') + '</div>' +
+                    '' +
                     '<div class="cat-card-name">' + escHtml(c.name) + '</div>' +
                     (c.description ? '<div class="cat-card-desc">' + escHtml(c.description) + '</div>' : '') +
                     '<div class="cat-card-stats">' + (c.expense_count || 0) + ' expenses</div>' +
@@ -593,10 +593,10 @@
         }
 
         function populateCategorySelects() {
-            var options = '<option value="">Select category...</option>' + allCategories.map(function(c){ return '<option value="' + c.id + '">' + (c.icon||'📝') + ' ' + escHtml(c.name) + '</option>'; }).join('');
+            var options = '<option value="">Select category...</option>' + allCategories.map(function(c){ return '<option value="' + c.id + '">' + escHtml(c.name) + '</option>'; }).join('');
             document.getElementById('exp-category').innerHTML = options;
             document.getElementById('rec-category').innerHTML = options;
-            var filterOpts = '<option value="">All Categories</option>' + allCategories.map(function(c){ return '<option value="' + c.id + '">' + (c.icon||'📝') + ' ' + escHtml(c.name) + '</option>'; }).join('');
+            var filterOpts = '<option value="">All Categories</option>' + allCategories.map(function(c){ return '<option value="' + c.id + '">' + escHtml(c.name) + '</option>'; }).join('');
             document.getElementById('exp-cat-filter').innerHTML = filterOpts;
         }
 
@@ -632,14 +632,14 @@
             var body = document.getElementById('expense-list-body');
 
             if (!filtered.length) {
-                body.innerHTML = '<div class="exp-empty"><div class="empty-icon">💰</div><p>No expenses found</p></div>';
+                body.innerHTML = '<div class="exp-empty"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><p>No expenses found</p></div>';
                 return;
             }
 
             body.innerHTML = filtered.map(function(e) {
                 return '<div class="exp-row" onclick="openDetail(' + e.id + ')">' +
                     '<div class="exp-row-date">' + formatDate(e.expense_date) + '</div>' +
-                    '<div><div class="exp-row-cat"><span class="cat-icon">' + (e.category_icon || '📝') + '</span>' + escHtml(e.category_name || 'Unknown') + '</div>' +
+                    '<div><div class="exp-row-cat">' + escHtml(e.category_name || 'Unknown') + '</div>' +
                         (e.description ? '<div class="exp-row-desc">' + escHtml(e.description) + '</div>' : '') +
                     '</div>' +
                     '<div></div>' +
@@ -654,7 +654,7 @@
             if (!e) return;
 
             var html = '<div class="exp-detail-amount">' + fmt(e.amount) + '</div>';
-            html += '<div class="exp-detail-cat">' + (e.category_icon || '📝') + ' ' + escHtml(e.category_name || 'Unknown') + '</div>';
+            html += '<div class="exp-detail-cat">' + escHtml(e.category_name || 'Unknown') + '</div>';
             html += '<div class="exp-detail-fields">';
             html += '<div class="exp-detail-field"><div class="label">Date</div><div class="value">' + e.expense_date + '</div></div>';
             if (e.description) html += '<div class="exp-detail-field"><div class="label">Description</div><div class="value">' + escHtml(e.description) + '</div></div>';
@@ -689,7 +689,7 @@
         function renderRecurring() {
             var grid = document.getElementById('recurring-grid');
             if (!allRecurring.length) {
-                grid.innerHTML = '<div class="exp-empty" style="grid-column:1/-1;"><div class="empty-icon">🔄</div><p>No recurring expenses</p></div>';
+                grid.innerHTML = '<div class="exp-empty" style="grid-column:1/-1;"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div><p>No recurring expenses</p></div>';
                 return;
             }
             var today = new Date().toISOString().split('T')[0];
@@ -703,7 +703,7 @@
                 return '<div class="recurring-card ' + (r.is_active ? '' : 'paused') + '">' +
                     '<span class="recurring-card-badge ' + badgeCls + '">' + badgeText + '</span>' +
                     '<div class="recurring-card-header">' +
-                        '<div class="recurring-card-title">' + (r.category_icon || '📝') + ' ' + escHtml(r.category_name || r.description || 'Expense') + '</div>' +
+                        '<div class="recurring-card-title">' + escHtml(r.category_name || r.description || 'Expense') + '</div>' +
                     '</div>' +
                     '<div class="recurring-card-amount">' + fmt(r.amount) + '</div>' +
                     (r.description ? '<div style="font-size:0.82rem;color:#64748b;margin-top:0.3rem;">' + escHtml(r.description) + '</div>' : '') +

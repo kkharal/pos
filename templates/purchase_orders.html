@@ -49,7 +49,7 @@
         .po-product-search { position: relative; }
         .po-product-search input { width: 100%; padding: 0.6rem 0.75rem 0.6rem 2.2rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; background: #f8fafc; }
         .po-product-search input:focus { outline: none; border-color: #3b82f6; background: white; }
-        .po-product-search::before { content: '🔍'; position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); font-size: 0.85rem; opacity: 0.5; pointer-events: none; }
+        .po-product-search::before { content: ''; }
 
         /* ===== Items table ===== */
         .po-items-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 0.75rem; }
@@ -65,6 +65,15 @@
         .po-items-table input[type="number"]:focus { outline: none; border-color: #3b82f6; }
         .po-items-table .remove-btn { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1rem; padding: 0.2rem 0.4rem; border-radius: 4px; }
         .po-items-table .remove-btn:hover { background: #fef2f2; color: #ef4444; }
+        /* Stepper (qty / cost) */
+        .po-stepper { display: inline-flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; background: white; }
+        .po-stepper button { background: #f8fafc; border: none; color: #475569; font-size: 1rem; font-weight: 600; width: 28px; height: 30px; cursor: pointer; flex-shrink: 0; line-height: 1; transition: background 0.12s; }
+        .po-stepper button:hover { background: #e2e8f0; color: #1e293b; }
+        .po-stepper button:active { background: #cbd5e1; }
+        .po-stepper input[type="number"] { width: 56px; border: none; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-radius: 0; text-align: center; font-size: 0.85rem; padding: 0.25rem 0.2rem; -moz-appearance: textfield; }
+        .po-stepper input[type="number"]::-webkit-outer-spin-button,
+        .po-stepper input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .po-stepper input[type="number"]:focus { outline: none; border-color: #3b82f6; background: #eff6ff; }
 
         /* ===== Summary ===== */
         .po-summary { display: flex; justify-content: flex-end; padding: 1rem 0 0; }
@@ -84,7 +93,7 @@
 
         /* ===== Empty states ===== */
         .po-empty-state { text-align: center; padding: 2.5rem 1.5rem; }
-        .po-empty-state .empty-icon { font-size: 2rem; opacity: 0.4; margin-bottom: 0.4rem; }
+        .po-empty-state .empty-icon { line-height: 1; opacity: 0.7; margin-bottom: 0.4rem; }
         .po-empty-state p { font-size: 0.9rem; color: #94a3b8; margin: 0; }
 
         /* ===== Page header ===== */
@@ -150,21 +159,21 @@
                 border: 1px solid #e2e8f0;
                 border-radius: 8px;
                 margin-bottom: 0.5rem;
-                padding: 0.6rem 0.75rem;
+                padding: 0.55rem 0.7rem;
                 border-bottom: 1px solid #e2e8f0 !important;
             }
             .po-items-table tbody td {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 0.25rem 0;
+                padding: 0.2rem 0;
                 border-bottom: none;
                 text-align: left !important;
-                font-size: 0.84rem;
+                font-size: 0.82rem;
             }
             .po-items-table tbody td::before {
                 content: attr(data-label);
-                font-size: 0.72rem;
+                font-size: 0.7rem;
                 font-weight: 600;
                 color: #94a3b8;
                 text-transform: uppercase;
@@ -172,10 +181,26 @@
                 margin-right: 0.5rem;
                 flex-shrink: 0;
             }
-            .po-items-table tbody td:first-child { display: block; padding-bottom: 0.35rem; border-bottom: 1px dashed #f1f5f9; margin-bottom: 0.25rem; }
+            .po-items-table tbody td:first-child { display: block; padding-bottom: 0.3rem; border-bottom: 1px dashed #f1f5f9; margin-bottom: 0.2rem; }
             .po-items-table tbody td:first-child::before { display: none; }
-            .po-items-table input[type="number"] { width: 60px; font-size: 0.82rem; }
-            .po-items-table .remove-btn { font-size: 0.9rem; padding: 0.25rem 0.35rem; }
+            /* Qty & Cost side by side */
+            .po-qty-cost-row { display: flex; gap: 0.5rem; padding: 0.2rem 0; }
+            .po-qty-cost-row .po-field { display: flex; flex-direction: column; flex: 1; gap: 0.18rem; }
+            .po-qty-cost-row .po-field-label { font-size: 0.68rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.03em; }
+            /* Bigger steppers on mobile */
+            .po-stepper button { width: 34px; height: 36px; font-size: 1.1rem; touch-action: manipulation; }
+            .po-stepper input[type="number"] { width: 52px; height: 36px; font-size: 16px; }
+            /* Prevent iOS zoom on ALL inputs/selects in the PO form */
+            .po-form-section input,
+            .po-form-section select,
+            .po-form-section textarea,
+            .po-items-table input { font-size: 16px !important; }
+            /* Prevent double-tap zoom on all buttons */
+            button, .btn { touch-action: manipulation; }
+            /* Total & remove row */
+            .po-total-remove { display: flex; justify-content: space-between; align-items: center; padding-top: 0.25rem; margin-top: 0.1rem; border-top: 1px dashed #f1f5f9; }
+            .po-total-remove .po-line-total { font-weight: 700; color: #1e293b; font-size: 0.9rem; }
+            .po-items-table .remove-btn { font-size: 1rem; padding: 0.3rem 0.5rem; }
 
             /* --- Summary --- */
             .po-summary { padding: 0.5rem 0 0; }
@@ -186,7 +211,14 @@
             .po-actions-bar .btn { flex: 1; font-size: 0.84rem; padding: 0.55rem 0.5rem; text-align: center; }
 
             /* --- Product selector modal --- */
-            .modal-content { margin: 0.5rem; border-radius: 12px; max-height: calc(100vh - 1rem); overflow-y: auto; }
+            .modal-content {
+                margin: 0.5rem;
+                border-radius: 12px;
+                max-height: calc(100vh - 1rem);
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
+            }
             .po-selector-step { min-height: 0; }
             #color-selector-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)) !important; }
             #size-selector-grid  { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important; }
@@ -281,7 +313,7 @@
         <!-- ======================== PO LIST VIEW ======================== -->
         <div id="po-list-view">
             <div class="page-header">
-                <h1>📋 Purchase Orders</h1>
+                <h1>Purchase Orders</h1>
                 <div class="page-header-actions">
                     <button class="btn btn-primary" onclick="showCreateForm()">+ New Purchase Order</button>
                 </div>
@@ -307,7 +339,7 @@
 
             <div id="po-cards-mobile" style="display:block;"></div>
             <div style="background:white; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;">
-                <div style="max-height:65vh; overflow-y:auto;">
+                <div style="max-height:65vh; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;">
                     <table class="po-table po-table-desktop">
                         <thead>
                             <tr>
@@ -332,7 +364,7 @@
         <!-- ======================== CREATE / EDIT PO VIEW ======================== -->
         <div id="po-create-view" style="display:none;">
             <div class="po-form-header">
-                <h2>📝 New Purchase Order <span class="po-number" id="po-form-number"></span></h2>
+                <h2>New Purchase Order <span class="po-number" id="po-form-number"></span></h2>
                 <button class="btn btn-secondary" onclick="cancelCreate()">← Back to List</button>
             </div>
 
@@ -372,7 +404,7 @@
 
                 <div style="display:flex; gap:0.5rem; align-items:center;">
                     <button class="btn btn-primary" onclick="openProductSelector()" style="flex:1;">+ Add Product Variant</button>
-                    <button class="btn btn-secondary" onclick="refreshProducts()" title="Refresh product list">🔄</button>
+                    <button class="btn btn-secondary" onclick="refreshProducts()" title="Refresh product list">Refresh</button>
                 </div>
 
                 <table class="po-items-table">
@@ -387,7 +419,7 @@
                         </tr>
                     </thead>
                     <tbody id="po-items-table">
-                        <tr><td colspan="6"><div class="po-empty-state"><div class="empty-icon">📦</div><p>Search and add products above</p></div></td></tr>
+                        <tr><td colspan="6"><div class="po-empty-state"><div class="empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><p>Search and add products above</p></div></td></tr>
                     </tbody>
                 </table>
 
@@ -425,7 +457,7 @@
                     <button class="close-btn" onclick="closeReceiveModal()">&times;</button>
                 </div>
                 <p style="color:#64748b; margin-bottom:1rem; font-size:0.9rem;">Enter the quantity received for each item. You can partially receive and come back later.</p>
-                <div style="max-height:400px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">
+                <div style="max-height:400px; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; border:1px solid #e2e8f0; border-radius:8px;">
                     <table class="po-table receive-tbl">
                         <thead>
                             <tr>
@@ -452,7 +484,7 @@
             <div class="modal-content" style="max-width:700px;">
                 <div class="modal-header">
                     <h2 id="view-po-title">Purchase Order</h2>
-                    <button class="close-btn" onclick="document.getElementById('view-po-modal').classList.remove('active')">&times;</button>
+                    <button class="close-btn" onclick="closeModal('view-po-modal')">&times;</button>
                 </div>
                 <div id="view-po-content"></div>
             </div>
@@ -473,7 +505,7 @@
                     <label style="font-weight: 600; color: #475569; margin-bottom: 0.5rem; display: block;">Step 1 of 4: Select Product</label>
                     <input type="text" id="product-selector-search" placeholder="Search by name or SKU..." style="width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem;" oninput="onProductSearch()">
                 </div>
-                <div id="product-selector-results" style="max-height: 300px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
+                <div id="product-selector-results" style="max-height: 300px; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
                 <input type="hidden" id="selector-selected-product">
             </div>
 
@@ -574,7 +606,7 @@
                 const response = await fetch('/api/current-user');
                 const user = await response.json();
                 if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
-                if (user.shop_icon) { const bi = document.querySelector('.navbar-brand-icon'); if (bi) bi.textContent = user.shop_icon; }
+                if (user.shop_icon) { setNavBrandIcon(user.shop_icon); }
                 if (user.currency) currencySymbol = user.currency;
                 const initial = (user.full_name || user.username).charAt(0).toUpperCase();
                 document.getElementById('user-icon').textContent = initial;
@@ -745,11 +777,11 @@
             const isMobile = window.innerWidth <= 640;
             if (filtered.length === 0) {
                 if (isMobile) {
-                    mobileContainer.innerHTML = `<div class="po-empty-state"><div class="empty-icon">📋</div><p>No purchase orders found</p></div>`;
+                    mobileContainer.innerHTML = `<div class="po-empty-state"><div class="empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div><p>No purchase orders found</p></div>`;
                     tbody.innerHTML = '';
                 } else {
                     mobileContainer.innerHTML = '';
-                    tbody.innerHTML = `<tr><td colspan="8"><div class="po-empty-state"><div class="empty-icon">📋</div><p>No purchase orders found</p></div></td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="8"><div class="po-empty-state"><div class="empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div><p>No purchase orders found</p></div></td></tr>`;
                 }
                 return;
             }
@@ -879,7 +911,7 @@
 
             const isMobile = window.innerWidth <= 640;
             if (isMobile) {
-                html += `<div style="display:flex; flex-direction:column; gap:0.5rem; max-height:55vh; overflow-y:auto;">`;
+                html += `<div style="display:flex; flex-direction:column; gap:0.5rem;">`;
                 items.forEach(item => {
                     const pct = item.quantity_ordered > 0 ? Math.round(item.quantity_received / item.quantity_ordered * 100) : 0;
                     const variant = [item.size, item.color].filter(Boolean).join(' / ');
@@ -901,7 +933,7 @@
                 });
                 html += `</div>`;
             } else {
-                html += `<div style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; max-height:350px; overflow-y:auto;"><table class="po-table"><thead><tr>
+                html += `<div style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; max-height:350px; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;"><table class="po-table"><thead><tr>
                     <th>Product</th><th>Ordered</th><th>Received</th><th>Cost</th><th>Line Total</th>
                 </tr></thead><tbody>`;
                 items.forEach(item => {
@@ -918,7 +950,7 @@
                 html += `</tbody></table></div>`;
             }
             document.getElementById('view-po-content').innerHTML = html;
-            document.getElementById('view-po-modal').classList.add('active');
+            openModal('view-po-modal');
         }
 
         // --- Create PO ---
@@ -961,13 +993,21 @@
             renderOrderItems();
         }
 
+        function updateItemCostStep(index, delta) {
+            var current = orderItems[index].unit_cost || 0;
+            // Step size: 1 if cost >= 1, else 0.1 for small values
+            var step = current >= 1 || delta > 0 ? 1 : 0.1;
+            orderItems[index].unit_cost = Math.max(0, parseFloat((current + delta * step).toFixed(2)));
+            renderOrderItems();
+        }
+
         function renderOrderItems() {
             const tbody = document.getElementById('po-items-table');
             const submitBtn = document.getElementById('submit-po-btn');
             const draftBtn = document.getElementById('save-draft-btn');
 
             if (orderItems.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6"><div class="po-empty-state"><div class="empty-icon">📦</div><p>Search and add products above</p></div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6"><div class="po-empty-state"><div class="empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><p>Search and add products above</p></div></td></tr>';
                 document.getElementById('po-variant-count').textContent = '0';
                 document.getElementById('po-total-qty').textContent = '0';
                 document.getElementById('po-subtotal').textContent = `${currencySymbol}0.00`;
@@ -990,10 +1030,22 @@
                         <div class="item-variant">${escapeHtml(item.variant)}</div>
                         <div class="item-stock-label${stockClass}">Stock: ${item.stock}</div>
                     </td>
-                    <td data-label="Qty" style="text-align:right;"><input type="number" value="${item.quantity}" min="1" onchange="updateItemQty(${idx}, this.value)"></td>
-                    <td data-label="Cost" style="text-align:right;"><input type="number" value="${item.unit_cost.toFixed(2)}" min="0" step="0.01" onchange="updateItemCost(${idx}, this.value)"></td>
+                    <td data-label="Qty" style="text-align:right;">
+                        <div class="po-stepper">
+                            <button type="button" onclick="updateItemQty(${idx},${item.quantity - 1})">&#8722;</button>
+                            <input type="number" value="${item.quantity}" min="1" onchange="updateItemQty(${idx},this.value)">
+                            <button type="button" onclick="updateItemQty(${idx},${item.quantity + 1})">+</button>
+                        </div>
+                    </td>
+                    <td data-label="Cost" style="text-align:right;">
+                        <div class="po-stepper">
+                            <button type="button" onclick="updateItemCostStep(${idx},-1)">&#8722;</button>
+                            <input type="number" value="${item.unit_cost.toFixed(2)}" min="0" step="0.01" onchange="updateItemCost(${idx},this.value)">
+                            <button type="button" onclick="updateItemCostStep(${idx},1)">+</button>
+                        </div>
+                    </td>
                     <td data-label="Total" style="text-align:right;font-weight:600;">${currencySymbol}${lineTotal.toFixed(2)}</td>
-                    <td><button class="remove-btn" onclick="removeOrderItem(${idx})" title="Remove">✕</button></td>
+                    <td><button class="remove-btn" onclick="removeOrderItem(${idx})" title="Remove">&#10005;</button></td>
                 </tr>`;
             }).join('');
 
@@ -1005,10 +1057,21 @@
             draftBtn.disabled = false;
         }
 
+        var _poSubmitting = false;
+
         async function submitOrder(status) {
+            if (_poSubmitting) return;
             const supplierId = document.getElementById('po-supplier').value;
             if (!supplierId) { showToast('Select a supplier', 'warning'); return; }
             if (orderItems.length === 0) { showToast('Add at least one item', 'warning'); return; }
+
+            _poSubmitting = true;
+            const submitBtn = document.getElementById('submit-po-btn');
+            const draftBtn  = document.getElementById('save-draft-btn');
+            const originalSubmitText = submitBtn ? submitBtn.textContent : 'Submit PO';
+            const originalDraftText  = draftBtn  ? draftBtn.textContent  : 'Save Draft';
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = status === 'draft' ? 'Saving…' : 'Submitting…'; }
+            if (draftBtn)  { draftBtn.disabled  = true; draftBtn.textContent  = 'Please wait…'; }
 
             const data = {
                 supplier_id: parseInt(supplierId),
@@ -1045,16 +1108,26 @@
                     showToast(res.error || 'Error creating order', 'error');
                 }
             } catch(e) { console.error('Submit PO error:', e); showToast('Error creating order: ' + e.message, 'error'); }
+            finally {
+                _poSubmitting = false;
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalSubmitText; }
+                if (draftBtn)  { draftBtn.disabled  = false; draftBtn.textContent  = originalDraftText; }
+            }
         }
 
+        var _submittingDraftId = null;
+
         async function submitDraft(poId) {
+            if (_submittingDraftId === poId) return;
             if (!confirm('Submit this draft PO? It will be marked as Ordered.')) return;
+            _submittingDraftId = poId;
             try {
                 const r = await fetch(`/api/purchase-orders/${poId}/submit`, { method: 'POST' });
                 const res = await r.json();
                 if (r.ok || res.success) { showToast('PO submitted!', 'success'); loadData(); }
                 else showToast(res.error || 'Error', 'error');
             } catch(e) { showToast('Error', 'error'); }
+            finally { _submittingDraftId = null; }
         }
 
         async function markPaid(poId) {
@@ -1094,16 +1167,23 @@
                 </tr>`;
             }).join('');
 
-            document.getElementById('receive-modal').classList.add('active');
+            openModal('receive-modal');
         }
 
-        function closeReceiveModal() { document.getElementById('receive-modal').classList.remove('active'); currentReceivePO = null; }
+        function closeReceiveModal() { closeModal('receive-modal'); currentReceivePO = null; _receiveSubmitting = false; }
 
         function receiveAll() {
             document.querySelectorAll('.receive-qty').forEach(input => { input.value = input.dataset.remaining; });
         }
 
+        var _receiveSubmitting = false;
+
         async function submitReceive() {
+            if (_receiveSubmitting) return;
+            _receiveSubmitting = true;
+            const confirmBtn = document.querySelector('#receive-modal .btn-primary');
+            const originalText = confirmBtn ? confirmBtn.textContent : 'Confirm Receive';
+            if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Saving…'; }
             if (!currentReceivePO) return;
             const items = [];
             document.querySelectorAll('.receive-qty').forEach(input => {
@@ -1128,6 +1208,10 @@
                     showToast(res.error || 'Error receiving stock', 'error');
                 }
             } catch(e) { showToast('Error receiving stock', 'error'); }
+            finally {
+                _receiveSubmitting = false;
+                if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = originalText; }
+            }
         }
 
         // --- Delete PO ---
@@ -1183,12 +1267,12 @@
             }
 
             showSelectorStep(1);
-            document.getElementById('product-selector-modal').classList.add('active');
+            openModal('product-selector-modal');
             onProductSearch();
         }
 
         function closeProductSelector() {
-            document.getElementById('product-selector-modal').classList.remove('active');
+            closeModal('product-selector-modal');
             selectorState = { step: 1, product: null, color: null, colors: [], size: null, sizes: [] };
             selectorProductGroups = [];
         }

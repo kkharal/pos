@@ -77,7 +77,7 @@
 
         /* ===== Empty state ===== */
         .cust-empty { text-align: center; padding: 3rem 2rem; }
-        .cust-empty .empty-icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.5rem; }
+        .cust-empty .empty-icon { line-height: 1; opacity: 0.7; margin-bottom: 0.5rem; }
         .cust-empty p { color: #94a3b8; margin: 0; font-size: 0.9rem; }
     </style>
 </head>
@@ -295,7 +295,7 @@
     <div id="aging-modal" class="modal">
         <div class="modal-content" style="max-width:850px;">
             <div class="modal-header">
-                <h2>📊 Aging Report</h2>
+                <h2>Aging Report</h2>
                 <button class="close-btn" onclick="document.getElementById('aging-modal').classList.remove('active')">&times;</button>
             </div>
             <div id="aging-content"></div>
@@ -330,7 +330,7 @@
                 const user = await response.json();
                 if (user.currency) currencySymbol = user.currency;
                 if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
-                if (user.shop_icon) { const bi = document.querySelector('.navbar-brand-icon'); if (bi) bi.textContent = user.shop_icon; }
+                if (user.shop_icon) { setNavBrandIcon(user.shop_icon); }
                 const initial = (user.full_name || user.username).charAt(0).toUpperCase();
                 document.getElementById('user-icon').textContent = initial;
                 document.getElementById('user-name').textContent = user.full_name || user.username;
@@ -408,7 +408,7 @@
 
             var grid = document.getElementById('customer-grid');
             if (filtered.length === 0) {
-                grid.innerHTML = '<div class="cust-empty"><div class="empty-icon">👥</div><p>No customers found</p></div>';
+                grid.innerHTML = '<div class="cust-empty"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="19" cy="9" r="3"/><path d="M23 21v-1a3 3 0 0 0-3-3h-1"/></svg></div><p>No customers found</p></div>';
                 return;
             }
 
@@ -428,7 +428,7 @@
                     '</div>' +
                     '<div class="customer-card-stats">' +
                         '<div class="customer-card-stat"><strong>' + currencySymbol + lifetime.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0}) + '</strong>Lifetime Sales</div>' +
-                        '<div class="customer-card-stat"><strong class="' + (hasBalance ? 'danger' : '') + '">' + (hasBalance ? currencySymbol + c.balance.toFixed(0) : '✓ Clear') + '</strong>Outstanding</div>' +
+                        '<div class="customer-card-stat"><strong class="' + (hasBalance ? 'danger' : '') + '">' + (hasBalance ? currencySymbol + c.balance.toFixed(0) : 'Clear') + '</strong>Outstanding</div>' +
                     '</div>' +
                     '<div class="customer-card-footer">' +
                         '<div class="customer-card-last">Last purchase: ' + lastPurchase + '</div>' +

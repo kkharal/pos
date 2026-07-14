@@ -568,12 +568,12 @@
                 <div class="chart-grid chart-grid-equal">
                     <!-- Top Sellers -->
                     <div class="data-card" style="margin-bottom:0;">
-                        <div class="data-card-title" style="margin-bottom:0.75rem;">🔥 Top Sellers</div>
+                        <div class="data-card-title" style="margin-bottom:0.75rem;">Top Sellers</div>
                         <div id="inv-top-sellers"><div class="skeleton skeleton-text" style="width:80%"></div><div class="skeleton skeleton-text" style="width:65%"></div><div class="skeleton skeleton-text" style="width:50%"></div></div>
                     </div>
                     <!-- Slow Movers -->
                     <div class="data-card" style="margin-bottom:0;">
-                        <div class="data-card-title" style="margin-bottom:0.75rem;">🐌 Slow Movers</div>
+                        <div class="data-card-title" style="margin-bottom:0.75rem;">Slow Movers</div>
                         <div id="inv-slow-movers"><div class="skeleton skeleton-text" style="width:75%"></div><div class="skeleton skeleton-text" style="width:60%"></div><div class="skeleton skeleton-text" style="width:45%"></div></div>
                     </div>
                 </div>
@@ -581,7 +581,7 @@
                 <!-- Low Stock Alerts -->
                 <div class="data-card" style="margin-top:1.25rem;">
                     <div class="data-card-header">
-                        <div class="data-card-title" style="color:#dc2626;">⚠ Low Stock Alerts</div>
+                        <div class="data-card-title" style="color:#dc2626;">Low Stock Alerts</div>
                     </div>
                     <div class="table-scroll">
                         <table class="data-table">
@@ -983,7 +983,7 @@
             var response = await fetch('/api/current-user');
             var user = await response.json();
             if (user.shop_name) document.getElementById('shop-name-title').textContent = user.shop_name;
-            if (user.shop_icon) { var bi = document.querySelector('.navbar-brand-icon'); if (bi) bi.textContent = user.shop_icon; }
+            if (user.shop_icon) { setNavBrandIcon(user.shop_icon); }
             if (user.currency) currencySymbol = user.currency;
             var initial = (user.full_name || user.username).charAt(0).toUpperCase();
             document.getElementById('user-icon').textContent = initial;
@@ -1286,7 +1286,7 @@
                     rows += '<tr><td colspan="4" class="text-center" style="color:#92400e;font-size:0.82rem;padding:6px;">…and ' + (total - data.low_stock.length) + ' more low stock items</td></tr>';
                 }
                 lowBody.innerHTML = rows;
-            } else { lowBody.innerHTML = '<tr><td colspan="4" class="text-center" style="color:#16a34a;">✓ No low stock items</td></tr>'; }
+            } else { lowBody.innerHTML = '<tr><td colspan="4" class="text-center" style="color:#16a34a;">No low stock items</td></tr>'; }
 
             // Stock movements table
             var movBody = document.getElementById('inv-movements-body');
@@ -1416,7 +1416,7 @@
             if (data.expenses_by_category && data.expenses_by_category.length > 0) {
                 expBody.innerHTML = data.expenses_by_category.map(function(cat) {
                     var pct = s.total_expenses > 0 ? ((parseFloat(cat.total_amount) / s.total_expenses) * 100).toFixed(1) : '0.0';
-                    return '<tr><td>' + (cat.category_icon || '📝') + ' ' + (cat.category_name || 'Uncategorized') + '</td><td class="text-right font-bold">' + currencySymbol + parseFloat(cat.total_amount).toFixed(2) + '</td><td class="text-right">' + pct + '%</td></tr>';
+                    return '<tr><td>' + (cat.category_name || 'Uncategorized') + '</td><td class="text-right font-bold">' + currencySymbol + parseFloat(cat.total_amount).toFixed(2) + '</td><td class="text-right">' + pct + '%</td></tr>';
                 }).join('');
             } else { expBody.innerHTML = '<tr><td colspan="3" class="text-center" style="color:#16a34a;">No expenses</td></tr>'; }
 
