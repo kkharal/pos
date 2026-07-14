@@ -1,4 +1,7 @@
 #!/bin/bash
+# Resolve repo root regardless of where the script is called from
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
+cd "$ROOT_DIR"
 
 echo "Starting Clothing Shop POS System..."
 echo ""

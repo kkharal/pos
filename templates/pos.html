@@ -1131,6 +1131,21 @@
             .pos-summary-row { font-size: 0.72rem; }
             .pos-summary-total { font-size: 0.92rem; }
         }
+
+        /* ── Hide cart completely on small screens when cart is empty ── */
+        @media (max-width: 1024px) {
+            .pos-cart-panel {
+                transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+            }
+            .pos-cart-panel.cart-empty {
+                transform: translateY(100%) !important;
+                pointer-events: none;
+                box-shadow: none !important;
+            }
+            .pos-picker.cart-empty {
+                padding-bottom: 0 !important;
+            }
+        }
     </style>
 </head>
 <body class="has-sidebar">
@@ -1237,7 +1252,7 @@
             <div class="pos-cart-overlay" id="pos-cart-overlay" onclick="closeMobileCart()"></div>
 
             <!-- RIGHT: Cart Panel -->
-            <div class="pos-cart-panel" id="pos-cart-panel">
+            <div class="pos-cart-panel cart-empty" id="pos-cart-panel">
                 <div class="pos-cart-header" onclick="toggleMobileCart()">
                     <div class="pos-cart-bar-summary">
                         <span class="pos-cart-title">Cart</span>
@@ -2044,8 +2059,8 @@
             var saved = localStorage.getItem('pos_current_cart');
             if (saved) {
                 try { cart = JSON.parse(saved); } catch(e) { cart = []; }
-                renderCart();
             }
+            renderCart(); // always run so cart-empty state is set correctly on load
         }
 
         // Cart functions
@@ -2185,8 +2200,21 @@
                 container.innerHTML = '<div class="pos-empty"><div class="pos-empty-icon">🛒</div><p>Add products to get started</p></div>';
                 document.getElementById('totals-display').innerHTML = '<div class="pos-summary-total"><span>Total</span><span id="cart-total">' + currencySymbol + '0.00</span></div>';
                 if (checkoutBtn) checkoutBtn.disabled = true;
+                // Hide cart panel on small screens when empty
+                var panel = document.getElementById('pos-cart-panel');
+                var picker = document.querySelector('.pos-picker');
+                if (panel) { panel.classList.add('cart-empty'); panel.classList.remove('mobile-open'); }
+                if (picker) picker.classList.add('cart-empty');
+                var overlay = document.getElementById('pos-cart-overlay');
+                if (overlay) overlay.classList.remove('open');
                 return;
             }
+
+            // Cart has items — show panel on small screens
+            var panel = document.getElementById('pos-cart-panel');
+            var picker = document.querySelector('.pos-picker');
+            if (panel) panel.classList.remove('cart-empty');
+            if (picker) picker.classList.remove('cart-empty');
 
             if (checkoutBtn) checkoutBtn.disabled = false;
 
