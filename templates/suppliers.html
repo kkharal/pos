@@ -65,6 +65,42 @@
         .page-header-actions .btn-secondary { background: white; color: #475569; border: 1px solid #e2e8f0; }
         .page-header-actions .btn-secondary:hover { background: #f1f5f9; border-color: #cbd5e1; }
 
+        @media (max-width: 768px) {
+            /* Keep title + buttons on one line */
+            .page-header { flex-wrap: nowrap; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+            .page-header h1 { font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+            .page-header-actions { flex-wrap: nowrap; flex-shrink: 0; gap: 0.35rem; }
+            .page-header-actions .btn {
+                font-size: 0.76rem;
+                padding: 0.38rem 0.7rem;
+                height: auto;
+                border-radius: 7px;
+                white-space: nowrap;
+            }
+            /* KPI boxes — compact chip row */
+            .supplier-kpis {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                scrollbar-width: none;
+                gap: 0.4rem;
+                margin-bottom: 1rem;
+                -webkit-overflow-scrolling: touch;
+            }
+            .supplier-kpis::-webkit-scrollbar { display: none; }
+            .supplier-kpi {
+                flex: 0 0 auto;
+                padding: 0.4rem 0.75rem;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                gap: 0.35rem;
+                flex-direction: row;
+            }
+            .supplier-kpi .kpi-value { font-size: 0.92rem; }
+            .supplier-kpi .kpi-label { font-size: 0.72rem; margin-top: 0; color: #64748b; }
+        }
+
         .supplier-search-bar { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1.25rem; }
         .supplier-search-bar input { flex: 1; max-width: 320px; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.88rem; background: #f8fafc; box-sizing: border-box; height: 36px; }
         .supplier-search-bar input:focus { outline: none; border-color: #3b82f6; background: white; }

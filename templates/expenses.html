@@ -107,6 +107,73 @@
         .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
         .page-header h1 { font-size: 1.4rem; color: #1e293b; margin: 0; font-weight: 700; }
         .page-header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+        /* ===== Mobile ===== */
+        /* Payment method group */
+        .payment-method-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.3rem;
+            flex-wrap: wrap;
+        }
+        .payment-method-option {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            cursor: pointer;
+            font-size: 0.88rem;
+            white-space: nowrap;
+        }
+        .payment-method-option input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+
+        @media (max-width: 768px) {
+            /* Payment method: equal-width buttons on mobile */
+            .payment-method-group { gap: 0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-top: 0.35rem; }
+            .payment-method-option { flex: 1; justify-content: center; padding: 0.5rem 0.25rem; border-right: 1px solid #e2e8f0; background: white; font-size: 0.82rem; transition: background 0.12s; }
+            .payment-method-option:last-child { border-right: none; }
+            .payment-method-option:has(input:checked) { background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+            .payment-method-option input[type="radio"] { display: none; }
+            .page-header h1 { font-size: 1.1rem; white-space: nowrap; min-width: 0; }
+            .page-header-actions { flex-wrap: nowrap; flex-shrink: 0; gap: 0.3rem; }
+            .page-header-actions .btn { font-size: 0.72rem !important; padding: 0.28rem 0.55rem !important; height: auto; border-radius: 7px; white-space: nowrap; }
+
+            /* KPI chips — horizontal scroll */
+            .exp-kpis { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 0.4rem; margin-bottom: 0.85rem; -webkit-overflow-scrolling: touch; }
+            .exp-kpis::-webkit-scrollbar { display: none; }
+            .exp-kpi { flex: 0 0 auto; padding: 0.4rem 0.75rem; border-radius: 8px; display: flex; align-items: center; gap: 0.35rem; }
+            .exp-kpi .kpi-value { font-size: 0.92rem; }
+            .exp-kpi .kpi-label { font-size: 0.72rem; margin-top: 0; }
+            .exp-kpi .kpi-sub { display: none; }
+
+            /* Tabs — compact */
+            .exp-tabs { margin-bottom: 1rem; }
+            .exp-tab { padding: 0.5rem 0.85rem; font-size: 0.82rem; }
+
+            /* Expense list header */
+            .exp-list-header { padding: 0.65rem 0.85rem; gap: 0.4rem; }
+            .exp-list-filters { gap: 0.35rem; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+            .exp-list-filters::-webkit-scrollbar { display: none; }
+            .exp-list-filters input, .exp-list-filters select { flex-shrink: 0; font-size: 0.76rem; height: 30px; padding: 0 0.4rem; min-width: 0; max-width: 130px; }
+
+            /* Expense row → card on mobile */
+            .exp-row { grid-template-columns: 1fr auto; gap: 0.25rem; padding: 0.65rem 0.85rem; }
+            .exp-row-date { grid-column: 1; grid-row: 2; font-size: 0.72rem; }
+            .exp-row-cat { grid-column: 1; grid-row: 1; font-size: 0.84rem; }
+            .exp-row-desc { grid-column: 1; grid-row: 3; font-size: 0.75rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .exp-row-amount { grid-column: 2; grid-row: 1 / span 3; align-self: center; font-size: 0.92rem; }
+
+            /* Category grid — 2 columns */
+            .cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+
+            /* Recurring grid — single col on small */
+            .recurring-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body class="has-sidebar">
@@ -298,14 +365,14 @@
                 </div>
                 <div class="form-group">
                     <label>Payment Method</label>
-                    <div style="display:flex; gap:1rem; margin-top:0.3rem;">
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.88rem;">
+                    <div class="payment-method-group">
+                        <label class="payment-method-option">
                             <input type="radio" name="exp-method" value="cash" checked> Cash
                         </label>
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.88rem;">
+                        <label class="payment-method-option">
                             <input type="radio" name="exp-method" value="card"> Card
                         </label>
-                        <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.88rem;">
+                        <label class="payment-method-option">
                             <input type="radio" name="exp-method" value="transfer"> Transfer
                         </label>
                     </div>
@@ -670,11 +737,13 @@
             document.getElementById('detail-content').innerHTML = html;
             document.getElementById('detail-overlay').classList.add('active');
             document.getElementById('detail-panel').classList.add('active');
+            lockBodyScroll();
         }
 
         function closeDetail() {
             document.getElementById('detail-overlay').classList.remove('active');
             document.getElementById('detail-panel').classList.remove('active');
+            unlockBodyScroll();
         }
 
         // ── Recurring ──
@@ -746,13 +815,20 @@
 
         function closeExpenseModal() { document.getElementById('expense-modal').classList.remove('active'); }
 
+        var _expenseSubmitting = false;
+
         async function saveExpense(event) {
             event.preventDefault();
+            if (_expenseSubmitting) return;
             var _expOk = true;
             _expOk = validateField('exp-amount', 'Amount is required') && _expOk;
             _expOk = validateField('exp-date', 'Date is required') && _expOk;
             _expOk = validateField('exp-category', 'Please select a category') && _expOk;
             if (!_expOk) return;
+            _expenseSubmitting = true;
+            var submitBtn = document.querySelector('#expense-form button[type="submit"]');
+            var originalText = submitBtn ? submitBtn.textContent : 'Save Expense';
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving…'; }
             var id = document.getElementById('expense-id').value;
             var payload = {
                 category_id: document.getElementById('exp-category').value,
@@ -770,6 +846,10 @@
                 if (data.success) { closeExpenseModal(); showToast(id ? 'Expense updated' : 'Expense added', 'success'); loadExpenses(); loadSummary(); loadCategoryBreakdown(); }
                 else showToast(data.error || 'Failed to save', 'error');
             } catch(e) { showToast('Network error', 'error'); }
+            finally {
+                _expenseSubmitting = false;
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalText; }
+            }
         }
 
         async function deleteExpense(id) {
@@ -806,8 +886,15 @@
 
         function closeRecurringModal() { document.getElementById('recurring-modal').classList.remove('active'); }
 
+        var _recurringSubmitting = false;
+
         async function saveRecurring(event) {
             event.preventDefault();
+            if (_recurringSubmitting) return;
+            _recurringSubmitting = true;
+            var submitBtn = document.querySelector('#recurring-form button[type="submit"]');
+            var originalText = submitBtn ? submitBtn.textContent : 'Save Recurring';
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving…'; }
             var id = document.getElementById('recurring-id').value;
             var payload = {
                 category_id: document.getElementById('rec-category').value,
@@ -824,6 +911,10 @@
                 if (data.success) { closeRecurringModal(); showToast(id ? 'Updated' : 'Added', 'success'); loadRecurring(); loadSummary(); }
                 else showToast(data.error || 'Failed to save', 'error');
             } catch(e) { showToast('Network error', 'error'); }
+            finally {
+                _recurringSubmitting = false;
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalText; }
+            }
         }
 
         async function deleteRecurring(id) {
@@ -877,8 +968,15 @@
 
         function closeCategoryModal() { document.getElementById('category-modal').classList.remove('active'); }
 
+        var _categorySubmitting = false;
+
         async function saveCategory(event) {
             event.preventDefault();
+            if (_categorySubmitting) return;
+            _categorySubmitting = true;
+            var submitBtn = document.querySelector('#category-form button[type="submit"]');
+            var originalText = submitBtn ? submitBtn.textContent : 'Save Category';
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving…'; }
             var id = document.getElementById('cat-id').value;
             var payload = { name: document.getElementById('cat-name').value, icon: document.getElementById('cat-icon').value, description: document.getElementById('cat-description').value };
             var url = id ? '/api/expense-categories/' + id : '/api/expense-categories';
@@ -889,6 +987,10 @@
                 if (data.success) { closeCategoryModal(); showToast(id ? 'Updated' : 'Added', 'success'); loadCategories(); loadCategoryBreakdown(); }
                 else showToast(data.error || 'Failed to save', 'error');
             } catch(e) { showToast('Network error', 'error'); }
+            finally {
+                _categorySubmitting = false;
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalText; }
+            }
         }
 
         async function deleteCategory(id) {

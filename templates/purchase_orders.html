@@ -117,19 +117,34 @@
         /* =============================================
            MOBILE COMPACT VIEW  (≤ 640px)
         ============================================= */
+        /* --- Medium screens: tighten filters and create form meta grid --- */
+        @media (min-width: 641px) and (max-width: 767px) {
+            .po-filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 0.35rem; -webkit-overflow-scrolling: touch; }
+            .po-filters::-webkit-scrollbar { display: none; }
+            .po-filters select, .po-filters input[type="date"] { flex-shrink: 0; font-size: 0.8rem; height: 32px; }
+            .po-meta-grid { grid-template-columns: 1fr 1fr !important; }
+            .po-table-desktop { display: none; }
+        }
+
         @media (max-width: 640px) {
 
-            /* --- Page header --- */
-            .page-header { margin-bottom: 0.75rem; gap: 0.5rem; }
-            .page-header h1 { font-size: 1.1rem; }
-            .page-header-actions .btn { font-size: 0.82rem; padding: 0.45rem 0.75rem; }
+            /* --- Page header: single row --- */
+            .page-header { margin-bottom: 0.75rem; gap: 0.5rem; flex-wrap: nowrap; align-items: center; }
+            .page-header h1 { font-size: 1.1rem; white-space: nowrap; min-width: 0; }
+            .page-header-actions { flex-shrink: 0; }
+            .page-header-actions .btn { font-size: 0.72rem; padding: 0.28rem 0.55rem; }
+            .po-btn-full { display: none; }
+            .po-btn-short { display: inline !important; }
 
-            /* --- Filters: stack into 2-col grid --- */
-            .po-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-bottom: 0.75rem; }
-            .po-filters select,
-            .po-filters input[type="date"] { width: 100%; font-size: 0.8rem; height: 34px; padding: 0.35rem 0.5rem; }
-            .po-filters span { display: none; }
-            .po-filters .clear-btn { grid-column: span 2; text-align: center; }
+            /* --- Filters: fluid 2-col grid on mobile --- */
+            /* supplier=col1/row1, status=col1/row2, date-from=col2/row1, date-to=col2/row2 */
+            .po-filters { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0.3rem; margin-bottom: 0.75rem; }
+            .po-filters > select:nth-child(1) { grid-column:1; grid-row:1; width:100%; font-size:0.76rem; height:30px; padding:0 0.35rem; }
+            .po-filters > select:nth-child(2) { grid-column:1; grid-row:2; width:100%; font-size:0.76rem; height:30px; padding:0 0.35rem; }
+            .po-filters > input:nth-child(3)  { grid-column:2; grid-row:1; width:100%; font-size:0.76rem; height:30px; padding:0 0.35rem; }
+            .po-filters > span               { display:none; }
+            .po-filters > input:nth-child(5)  { grid-column:2; grid-row:2; width:100%; font-size:0.76rem; height:30px; padding:0 0.35rem; }
+            .po-filters > #po-clear-dates    { grid-column:span 2; font-size:0.72rem; padding:0.22rem 0.5rem; text-align:center; }
 
             /* --- PO List: hide table, render as cards via JS (see renderPOList) --- */
             .po-table-desktop { display: none; }
@@ -149,8 +164,9 @@
             .po-card-num { font-weight: 700; color: #1e293b; font-size: 0.9rem; }
             .po-card-row2 { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #64748b; margin-bottom: 0.25rem; }
             .po-card-total { font-weight: 600; color: #1e293b; font-size: 0.92rem; }
-            .po-card-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #f1f5f9; }
-            .po-card-actions .btn { font-size: 0.76rem; padding: 0.3rem 0.65rem; flex: 1; text-align: center; }
+            .po-card-actions { display: flex; gap: 0.35rem; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #f1f5f9; -webkit-overflow-scrolling: touch; }
+            .po-card-actions::-webkit-scrollbar { display: none; }
+            .po-card-actions .btn { font-size: 0.76rem; padding: 0.3rem 0.65rem; flex-shrink: 0; white-space: nowrap; }
 
             /* --- Create form --- */
             .po-form-section { padding: 0.85rem 0.9rem; margin-bottom: 0.65rem; }
@@ -238,11 +254,6 @@
             .po-table.receive-tbl tbody td::before { content: attr(data-label); font-size: 0.7rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; flex-shrink: 0; margin-right: 0.5rem; }
             .receive-qty-input { width: 70px !important; font-size: 0.83rem; }
         }
-
-        @media (max-width: 420px) {
-            .po-filters { grid-template-columns: 1fr; }
-            .po-filters .clear-btn { grid-column: span 1; }
-        }
     </style>
 </head>
 <body class="has-sidebar">
@@ -321,7 +332,10 @@
             <div class="page-header">
                 <h1>Purchase Orders</h1>
                 <div class="page-header-actions">
-                    <button class="btn btn-primary" onclick="showCreateForm()">+ New Purchase Order</button>
+                    <button class="btn btn-primary" onclick="showCreateForm()">
+                        <span class="po-btn-full">+ New Purchase Order</span>
+                        <span class="po-btn-short" style="display:none;">+ New PO</span>
+                    </button>
                 </div>
             </div>
 
