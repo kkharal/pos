@@ -482,6 +482,7 @@ function initSidebarAccordions() {
         list.className = 'sidebar-group-list';
 
         let groupLinks = links;
+        let standaloneAfterGroup = []; // items to re-insert after this group
         if (label.toLowerCase() === 'settings') {
             const kept = [];
             links.forEach((link) => {
@@ -491,8 +492,9 @@ function initSidebarAccordions() {
                     link.remove();
                     return;
                 }
+                // /shops should not be grouped under Settings — keep outside
                 if (base === '/shops') {
-                    link.remove();
+                    standaloneAfterGroup.push(link);
                     return;
                 }
                 kept.push(link);
@@ -594,6 +596,13 @@ function initSidebarAccordions() {
         group.appendChild(panel);
         nav.insertBefore(group, title);
         title.remove();
+
+        // Re-insert any standalone items (e.g. /shops) that were pulled out of this group
+        standaloneAfterGroup.forEach((link) => {
+            link.classList.add('sidebar-item');
+            nav.appendChild(link);
+        });
+        standaloneAfterGroup = [];
 
         grouped.push({ group, trigger, panel, hasActiveChild, groupKey, groupLabel: label.toLowerCase(), links: groupLinks });
     }
