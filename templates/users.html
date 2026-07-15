@@ -106,6 +106,48 @@
         @media (max-width: 767px) {
             .access-event-item { grid-template-columns: 1fr; gap: 0.2rem; }
             .admin-tab-btn { font-size: 0.76rem; padding: 0.3rem 0.6rem; }
+            /* User KPI boxes — compact chip row */
+            .user-kpis {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                scrollbar-width: none;
+                gap: 0.4rem;
+                margin-bottom: 1rem;
+                -webkit-overflow-scrolling: touch;
+            }
+            .user-kpis::-webkit-scrollbar { display: none; }
+            .user-kpi {
+                flex: 0 0 auto;
+                padding: 0.4rem 0.75rem;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                gap: 0.35rem;
+            }
+            .user-kpi .kpi-value { font-size: 0.92rem; }
+            .user-kpi .kpi-label { font-size: 0.72rem; margin-top: 0; }
+            /* Access log KPI boxes */
+            .access-kpis {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                scrollbar-width: none;
+                gap: 0.4rem;
+                margin-bottom: 0.75rem;
+                -webkit-overflow-scrolling: touch;
+            }
+            .access-kpis::-webkit-scrollbar { display: none; }
+            .access-kpi {
+                flex: 0 0 auto;
+                padding: 0.4rem 0.75rem;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                gap: 0.35rem;
+            }
+            .access-kpi .value { font-size: 0.92rem; }
+            .access-kpi .label { font-size: 0.72rem; margin-top: 0; }
         }
     </style>
 </head>

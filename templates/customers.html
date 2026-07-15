@@ -75,6 +75,38 @@
         .page-header h1 { font-size: 1.4rem; color: #1e293b; margin: 0; font-weight: 700; }
         .page-header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 
+        @media (max-width: 768px) {
+            /* Keep title + buttons on one line */
+            .page-header { flex-wrap: nowrap; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+            .page-header h1 { font-size: 1.1rem; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+            .page-header-actions { flex-wrap: nowrap; flex-shrink: 0; gap: 0.3rem; }
+            .page-header-actions .btn { font-size: 0.76rem; padding: 0.34rem 0.65rem; height: auto; border-radius: 7px; white-space: nowrap; }
+            .cust-desktop-btn { display: none !important; }
+            #cust-more-wrap { display: block !important; }
+            /* KPI boxes — compact chip row */
+            .cust-kpis {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                scrollbar-width: none;
+                gap: 0.4rem;
+                margin-bottom: 1rem;
+                -webkit-overflow-scrolling: touch;
+            }
+            .cust-kpis::-webkit-scrollbar { display: none; }
+            .cust-kpi {
+                flex: 0 0 auto;
+                padding: 0.4rem 0.75rem;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                gap: 0.35rem;
+                flex-direction: row;
+            }
+            .cust-kpi .kpi-value { font-size: 0.92rem; }
+            .cust-kpi .kpi-label { font-size: 0.72rem; margin-top: 0; color: #64748b; }
+        }
+
         /* ===== Empty state ===== */
         .cust-empty { text-align: center; padding: 3rem 2rem; }
         .cust-empty .empty-icon { line-height: 1; opacity: 0.7; margin-bottom: 0.5rem; }
@@ -156,9 +188,19 @@
         <div class="page-header">
             <h1>Customers</h1>
             <div class="page-header-actions">
-                <button class="btn btn-secondary" onclick="showAgingReport()">Aging Report</button>
-                <button class="btn btn-secondary" onclick="exportCustomersCSV()">⬇ Export</button>
+                <!-- Primary: always visible -->
                 <button class="btn btn-primary" onclick="openAddModal()">+ Add Customer</button>
+                <!-- Desktop: secondary buttons -->
+                <button class="btn btn-secondary cust-desktop-btn" onclick="showAgingReport()">Aging Report</button>
+                <button class="btn btn-secondary cust-desktop-btn" onclick="exportCustomersCSV()">⬇ Export</button>
+                <!-- Mobile: More menu -->
+                <div class="cust-more-wrap" style="position:relative;display:none;" id="cust-more-wrap">
+                    <button class="btn btn-secondary" onclick="toggleCustMoreMenu()" style="padding:0.28rem 0.55rem;font-size:0.82rem;" title="More">&#8943;</button>
+                    <div id="cust-more-menu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:white;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:200;min-width:140px;">
+                        <button onclick="showAgingReport();closeCustMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.55rem 0.85rem;border:none;background:none;font-size:0.84rem;cursor:pointer;color:#374151;">Aging Report</button>
+                        <button onclick="exportCustomersCSV();closeCustMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.55rem 0.85rem;border:none;background:none;font-size:0.84rem;cursor:pointer;color:#374151;">⬇ Export</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -740,6 +782,18 @@
         }
 
         // --- Init ---
+        function toggleCustMoreMenu() {
+            var m = document.getElementById('cust-more-menu');
+            if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none';
+        }
+        function closeCustMoreMenu() {
+            var m = document.getElementById('cust-more-menu');
+            if (m) m.style.display = 'none';
+        }
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#cust-more-wrap')) closeCustMoreMenu();
+        });
+
         loadUserInfo();
         loadCustomers();
     </script>

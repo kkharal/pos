@@ -56,30 +56,48 @@
         }
 
         .finance-header {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-2);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            grid-template-rows: auto auto;
+            gap: var(--space-1) var(--space-2);
             margin-bottom: var(--space-2);
+            align-items: center;
         }
 
         .finance-title {
+            grid-column: 1;
+            grid-row: 1;
             font-size: 1.75rem;
             margin: 0;
             letter-spacing: -0.02em;
         }
 
+        .finance-header .header-actions {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
         .finance-header-right {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: var(--space-1);
+            grid-column: 1 / -1;
+            grid-row: 2;
             width: 100%;
         }
 
         .date-range-group,
         .header-actions {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: var(--space-1);
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .header-actions .btn {
+            white-space: nowrap;
+            height: 36px;
+            padding: 0 1rem;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            border-radius: 8px;
         }
 
         #range-preset {
@@ -710,27 +728,47 @@
         }
 
         @media (min-width: 760px) {
+            /* Desktop: title left, filters+buttons flush right */
             .finance-header {
+                display: flex;
                 flex-direction: row;
-                justify-content: space-between;
-                align-items: flex-end;
+                align-items: center;
+                gap: var(--space-2);
             }
 
+            .finance-title { grid-column: unset; grid-row: unset; order: 1; }
+
             .finance-header-right {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
                 width: auto;
-                grid-template-columns: auto auto;
-                align-items: end;
+                grid-column: unset;
+                grid-row: unset;
+                order: 2;
+                margin-left: auto;
+            }
+
+            .finance-header .header-actions {
+                grid-column: unset;
+                grid-row: unset;
+                order: 3;
             }
 
             .date-range-group {
-                    grid-template-columns: 160px auto;
-                }
-                .custom-range {
-                    grid-template-columns: 150px 150px auto;
+                grid-template-columns: 160px auto;
+            }
+            .custom-range {
+                grid-template-columns: 150px 150px auto;
             }
 
             .header-actions {
-                grid-template-columns: auto auto;
+                gap: 0.4rem;
+            }
+            .header-actions .btn {
+                font-size: 0.84rem;
+                padding: 0 0.9rem;
+                height: 36px;
             }
 
             .metrics-grid {
@@ -745,37 +783,46 @@
                 grid-template-columns: 1.4fr 0.85fr 0.9fr 0.9fr auto;
             }
         }
-            @media (max-width: 767px) {
-                .finance-shell { padding: 12px; }
-                .finance-title { font-size: 1.35rem; }
-                .hero-card { padding: 14px; gap: 12px; }
-                .hero-amount { font-size: 2.1rem; }
-                .hero-actions .btn { width: 100%; }
-                .metrics-grid { gap: 10px; }
-                .metric-card { padding: 10px; }
-                .metric-label { font-size: 0.74rem; }
-                .metric-value { font-size: 1.05rem; }
-                .metric-trend { font-size: 0.74rem; }
-                .metric-breakdown { font-size: 0.72rem; }
-                .section-head h2 { font-size: 0.96rem; }
-                .activity-item { grid-template-columns: 1fr auto; gap: 8px; }
-                .activity-icon { display: none; }
-                .activity-title { font-size: 0.86rem; }
-                .activity-sub, .activity-meta { font-size: 0.72rem; }
-                .activity-amount { font-size: 0.86rem; }
-                .owner-funds-grid { gap: 8px; }
-                .breakdown-row { font-size: 0.8rem; }
-                .breakdown-row:last-child { font-size: 0.88rem; }
-            }
+        @media (max-width: 767px) {
+            .finance-shell { padding: 0.75rem; }
+            .finance-title { font-size: 1.1rem; }
+            .hero-card { padding: 14px; gap: 12px; }
+            .hero-amount { font-size: 2.1rem; }
+            /* Metrics & owner funds: 2-column on mobile */
+            .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+            .owner-funds-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+            /* Ledger toolbar: 2-column grid */
+            .ledger-toolbar { grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+            /* Custom date range: side by side */
+            .custom-range { grid-template-columns: 1fr 1fr !important; gap: 0.35rem; }
+            .custom-range button { grid-column: span 2; }
+            /* Cashflow: flexible date column */
+            .flow-row { grid-template-columns: 60px 1fr auto; gap: 6px; }
+            .flow-date { font-size: 0.7rem; }
+            /* Cards */
+            .metric-card { padding: 10px; }
+            .metric-label { font-size: 0.74rem; }
+            .metric-value { font-size: 1.05rem; }
+            .metric-trend { font-size: 0.74rem; }
+            .metric-breakdown { font-size: 0.72rem; }
+            .section-head h2 { font-size: 0.96rem; }
+            .activity-item { grid-template-columns: 1fr auto; gap: 8px; }
+            .activity-icon { display: none; }
+            .activity-title { font-size: 0.86rem; }
+            .activity-sub, .activity-meta { font-size: 0.72rem; }
+            .activity-amount { font-size: 0.86rem; }
+            .breakdown-row { font-size: 0.8rem; }
+            .breakdown-row:last-child { font-size: 0.88rem; }
+        }
     </style>
 </head>
 <body class="has-sidebar">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-brand">
+            <a href="/" class="sidebar-brand" title="Go to Dashboard" style="text-decoration:none;color:inherit;">
                 <div class="navbar-brand-icon">🛒</div>
                 <span class="sidebar-brand-name" id="shop-name-title">POS System</span>
-            </div>
+            </a>
         </div>
         <div class="sidebar-nav">
             <a href="/" class="sidebar-item"><span class="sidebar-icon"></span><span class="sidebar-label">Dashboard</span></a>
@@ -837,6 +884,10 @@
         <div class="finance-shell">
             <div class="finance-header">
                 <h1 class="finance-title">Finance</h1>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="add-funds-btn">+ Add Funds</button>
+                    <button class="btn btn-danger" id="withdraw-btn">Withdraw</button>
+                </div>
                 <div class="finance-header-right">
                     <div class="date-range-group">
                             <select id="range-preset" aria-label="Date range preset">
@@ -850,10 +901,6 @@
                                 <button class="btn btn-light" id="apply-dates-btn">Apply Range</button>
                             </div>
                     </div>
-                    <div class="header-actions">
-                            <button class="btn btn-primary" id="add-funds-btn">+ Add Funds</button>
-                            <button class="btn btn-danger" id="withdraw-btn">Withdraw</button>
-                    </div>
                 </div>
             </div>
 
@@ -866,7 +913,7 @@
                     <span class="hero-status" id="hero-status">● Positive</span>
                 </div>
                 <p class="hero-message" id="hero-message">Cash flow is stable.</p>
-                <div class="hero-actions">
+                <div class="hero-actions" style="display:none;visibility:hidden;height:0;overflow:hidden;">
                     <button class="btn btn-primary" id="hero-add-funds">Add Funds</button>
                 </div>
             </section>
@@ -1754,7 +1801,6 @@
             document.getElementById('range-preset').addEventListener('change', applyRangePreset);
             document.getElementById('add-funds-btn').addEventListener('click', function() { openOwnerModal('investment'); });
             document.getElementById('withdraw-btn').addEventListener('click', function() { openOwnerModal('withdrawal'); });
-            document.getElementById('hero-add-funds').addEventListener('click', function() { openOwnerModal('investment'); });
             document.getElementById('view-ledger-link').addEventListener('click', function() {
                 setLedgerExpanded(true);
                 document.getElementById('full-ledger-section').scrollIntoView({ behavior: 'smooth', block: 'start' });

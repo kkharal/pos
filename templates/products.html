@@ -279,47 +279,45 @@
                 min-height: calc(100vh - 70px);
                 overflow-y: visible;
             }
-            .products-header { align-items: flex-start; }
-            .header-actions {
-                width: 100%;
-                justify-content: flex-start;
-                gap: 0.4rem;
-            }
-            .header-actions .btn {
-                font-size: 0.74rem !important;
-                padding: 0.34rem 0.52rem !important;
-                flex: 1 1 calc(50% - 0.2rem);
-                min-width: 0;
-            }
-            #add-blueprint-btn {
-                max-width: 100%;
-            }
+            /* Keep title + buttons on one line */
+            .products-header { flex-wrap: nowrap; align-items: center; gap: 0.5rem; margin-bottom: 0.85rem; }
+            .products-header h1 { font-size: 1.1rem; white-space: nowrap; min-width: 0; }
+            .header-actions { flex-wrap: nowrap; flex-shrink: 0; gap: 0.35rem; }
+            .header-actions .btn { font-size: 0.76rem !important; padding: 0.36rem 0.7rem !important; height: auto; white-space: nowrap; }
+            /* Hide desktop secondary buttons; show More menu */
+            .prod-desktop-btn { display: none !important; }
+            #prod-more-wrap { display: block !important; }
 
             .summary-row {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 0.5rem;
-                margin-bottom: 1rem;
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                scrollbar-width: none;
+                gap: 0.4rem;
+                margin-bottom: 0.75rem;
+                -webkit-overflow-scrolling: touch;
             }
+            .summary-row::-webkit-scrollbar { display: none; }
 
             .summary-card {
-                min-height: 88px;
-                padding: 0.55rem 0.62rem;
-                border-radius: 10px;
-                flex-direction: column;
-                align-items: flex-start;
-                justify-content: center;
-                gap: 0.14rem;
+                flex: 0 0 auto;
+                min-height: unset;
+                padding: 0.4rem 0.65rem;
+                border-radius: 8px;
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 0.35rem;
             }
 
             .summary-card .num {
-                font-size: 1.02rem;
-                line-height: 1.15;
+                font-size: 0.92rem;
+                line-height: 1;
             }
 
             .summary-card .label {
                 font-size: 0.72rem;
-                line-height: 1.15;
+                line-height: 1;
             }
 
             .inv-product-toolbar {
@@ -837,7 +835,8 @@
         /* ── Variant sizes ultra-compact for small screens ────── */
         @media (max-width: 480px) {
             .header-actions .btn {
-                flex: 1 1 100%;
+                font-size: 0.72rem !important;
+                padding: 0.28rem 0.5rem !important;
             }
 
             #variant-sizes {
@@ -1097,12 +1096,24 @@
         <div class="products-header">
             <h1>Products</h1>
             <div class="header-actions">
-                <button class="btn btn-secondary" onclick="exportCSV()" style="font-size:0.82rem; padding:0.4rem 0.75rem;">Export</button>
-                <button class="btn btn-secondary admin-only" id="import-csv-btn" onclick="document.getElementById('csv-file-input').click()" style="font-size:0.82rem; padding:0.4rem 0.75rem; display:none;">Import</button>
-                <input type="file" id="csv-file-input" accept=".csv" style="display:none;" onchange="importCSV(this)">
+                <!-- Primary: always visible -->
                 <button class="btn btn-primary admin-only" id="add-product-btn" onclick="openAddProductModal()" style="display:none;">+ Add Product</button>
-                <button class="btn btn-secondary admin-only" id="add-variants-btn" onclick="openVariantModal()" style="font-size:0.82rem; padding:0.4rem 0.75rem; display:none;">Variants</button>
-                <button class="btn btn-secondary admin-only" id="add-blueprint-btn" onclick="openBlueprintModal()" style="font-size:0.82rem; padding:0.4rem 0.75rem; display:none;">PO Seed</button>
+                <!-- Secondary: visible on desktop, hidden on mobile (moved to More menu) -->
+                <button class="btn btn-secondary prod-desktop-btn" onclick="exportCSV()" style="font-size:0.82rem; padding:0.4rem 0.75rem;">Export</button>
+                <button class="btn btn-secondary admin-only prod-desktop-btn" id="import-csv-btn" onclick="document.getElementById('csv-file-input').click()" style="font-size:0.82rem; padding:0.4rem 0.75rem; display:none;">Import</button>
+                <input type="file" id="csv-file-input" accept=".csv" style="display:none;" onchange="importCSV(this)">
+                <button class="btn btn-secondary admin-only prod-desktop-btn" id="add-variants-btn" onclick="openVariantModal()" style="font-size:0.82rem; padding:0.4rem 0.75rem; display:none;">Variants</button>
+                <button class="btn btn-secondary admin-only prod-desktop-btn" id="add-blueprint-btn" onclick="openBlueprintModal()" style="font-size:0.82rem; padding:0.4rem 0.75rem; display:none;">PO Seed</button>
+                <!-- More menu: mobile only -->
+                <div class="prod-more-wrap" style="position:relative;display:none;" id="prod-more-wrap">
+                    <button class="btn btn-secondary" onclick="toggleProdMoreMenu()" style="font-size:0.82rem;padding:0.38rem 0.6rem;" title="More actions">⋯</button>
+                    <div id="prod-more-menu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:white;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:200;min-width:140px;">
+                        <button onclick="exportCSV();closeProdMoreMenu()" style="display:block;width:100%;text-align:left;padding:0.55rem 0.85rem;border:none;background:none;font-size:0.84rem;cursor:pointer;color:#374151;">⬇ Export CSV</button>
+                        <button class="admin-only" id="import-more-btn" onclick="document.getElementById('csv-file-input').click();closeProdMoreMenu()" style="display:none;width:100%;text-align:left;padding:0.55rem 0.85rem;border:none;background:none;font-size:0.84rem;cursor:pointer;color:#374151;">⬆ Import CSV</button>
+                        <button class="admin-only" id="variants-more-btn" onclick="openVariantModal();closeProdMoreMenu()" style="display:none;width:100%;text-align:left;padding:0.55rem 0.85rem;border:none;background:none;font-size:0.84rem;cursor:pointer;color:#374151;">Bulk Variants</button>
+                        <button class="admin-only" id="blueprint-more-btn" onclick="openBlueprintModal();closeProdMoreMenu()" style="display:none;width:100%;text-align:left;padding:0.55rem 0.85rem;border:none;background:none;font-size:0.84rem;cursor:pointer;color:#374151;">PO Seed</button>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="summary-row" id="product-summary"></div>
@@ -2011,6 +2022,18 @@
             document.getElementById('products-main').classList.add('drawer-open');
             renderProductList();
         }
+
+        function toggleProdMoreMenu() {
+            var m = document.getElementById('prod-more-menu');
+            if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none';
+        }
+        function closeProdMoreMenu() {
+            var m = document.getElementById('prod-more-menu');
+            if (m) m.style.display = 'none';
+        }
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#prod-more-wrap')) closeProdMoreMenu();
+        });
 
         function closeDrawer() {
             selectedGroup = null;
@@ -3258,6 +3281,10 @@
                     document.getElementById('add-variants-btn').style.display='inline-block';
                     document.getElementById('add-blueprint-btn').style.display='inline-block';
                     document.getElementById('import-csv-btn').style.display='inline-block';
+                    // More menu admin items
+                    var ib = document.getElementById('import-more-btn'); if(ib) ib.style.display='block';
+                    var vb = document.getElementById('variants-more-btn'); if(vb) vb.style.display='block';
+                    var bb = document.getElementById('blueprint-more-btn'); if(bb) bb.style.display='block';
                 } else { document.querySelectorAll('.admin-only').forEach(el => el.style.display='none'); }
                 if (user.role==='super_admin') { document.querySelectorAll('.super-admin-only').forEach(el=>el.style.display=''); loadShopSwitcher(user.active_shop_id); }
                 else if (user.role==='shop_owner') { loadShopSwitcher(user.active_shop_id); }

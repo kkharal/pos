@@ -37,7 +37,7 @@
 
         /* ===== KPI Grid ===== */
         .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
-        .kpi-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.9rem 1rem; min-height: 108px; display: flex; flex-direction: column; transition: box-shadow 0.15s; }
+        .kpi-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.9rem 1rem; min-height: 108px; display: flex; flex-direction: column; justify-content: space-between; transition: box-shadow 0.15s; }
         .kpi-card.link { cursor: pointer; text-decoration: none; color: inherit; display: flex; flex-direction: column; }
         .kpi-card.link:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
         .kpi-label { font-size: 0.69rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.25rem; }
@@ -93,6 +93,13 @@
         .activity-amount { font-size: 0.85rem; font-weight: 600; color: #16a34a; white-space: nowrap; }
 
         /* ===== Responsive ===== */
+        /* Quick actions scroll on all mobile sizes */
+        @media (max-width: 768px) {
+            .quick-actions { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 0.1rem; }
+            .quick-actions::-webkit-scrollbar { display: none; }
+            .quick-action { flex-shrink: 0; white-space: nowrap; }
+        }
+
         @media (max-width: 1100px) {
             .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
@@ -233,7 +240,7 @@
             <!-- Header -->
             <div class="dash-header">
                 <div class="dash-greeting" id="greeting">Good evening</div>
-                <div class="dash-subtitle">Here's your store overview</div>
+                <div class="dash-subtitle" id="dash-date">Here's your store overview</div>
             </div>
 
             <!-- Quick Actions -->
@@ -256,34 +263,34 @@
             <div class="kpi-grid">
                 <div class="kpi-card">
                     <div class="kpi-label">Today's Sales</div>
-                    <div class="kpi-value" id="today-sales">$0.00</div>
+                    <div class="kpi-value" id="today-sales"><span class="skeleton skeleton-text" style="height:1.2rem;width:70%;display:inline-block;"></span></div>
                     <div class="kpi-change" id="sales-change"></div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-label">Transactions</div>
-                    <div class="kpi-value blue" id="today-count">0</div>
+                    <div class="kpi-value blue" id="today-count"><span class="skeleton skeleton-text" style="height:1.2rem;width:40%;display:inline-block;"></span></div>
                     <div class="kpi-change" id="trans-change"></div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-label">Avg Order</div>
-                    <div class="kpi-value purple" id="avg-transaction">$0.00</div>
+                    <div class="kpi-value purple" id="avg-transaction"><span class="skeleton skeleton-text" style="height:1.2rem;width:60%;display:inline-block;"></span></div>
                 </div>
                 <div class="kpi-card admin-only">
                     <div class="kpi-label">Today's Profit</div>
-                    <div class="kpi-value green" id="today-profit">$0.00</div>
+                    <div class="kpi-value green" id="today-profit"><span class="skeleton skeleton-text" style="height:1.2rem;width:65%;display:inline-block;"></span></div>
                     <div class="kpi-change" id="profit-change"></div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-label">Discounts</div>
-                    <div class="kpi-value orange" id="total-discount">$0.00</div>
+                    <div class="kpi-value orange" id="total-discount"><span class="skeleton skeleton-text" style="height:1.2rem;width:55%;display:inline-block;"></span></div>
                 </div>
                 <a href="/finance" class="kpi-card link admin-only" style="text-decoration:none; color:inherit;">
                     <div class="kpi-label">Available Funds</div>
-                    <div class="kpi-value green" id="available-funds">$0.00</div>
+                    <div class="kpi-value green" id="available-funds"><span class="skeleton skeleton-text" style="height:1.2rem;width:70%;display:inline-block;"></span></div>
                 </a>
                 <a href="/customers" class="kpi-card link admin-only" style="text-decoration:none; color:inherit;">
                     <div class="kpi-label">Outstanding</div>
-                    <div class="kpi-value red" id="total-outstanding">$0.00</div>
+                    <div class="kpi-value red" id="total-outstanding"><span class="skeleton skeleton-text" style="height:1.2rem;width:65%;display:inline-block;"></span></div>
                 </a>
             </div>
 
@@ -407,13 +414,18 @@
 
         // ── Greeting ──────────────────────────────────────────────
         function setGreeting() {
-            var hour = new Date().getHours();
+            var now = new Date();
+            var hour = now.getHours();
             var firstName = '{{ (session.get("full_name", "") or "").split()[0] if session.get("full_name", "") else "" }}';
             var greeting = 'Good evening';
             if (hour < 12) greeting = 'Good morning';
             else if (hour < 17) greeting = 'Good afternoon';
             if (firstName) greeting += ', ' + firstName;
             document.getElementById('greeting').textContent = greeting;
+            // Update subtitle with today's date
+            var dateStr = now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
+            var dateEl = document.getElementById('dash-date');
+            if (dateEl) dateEl.textContent = dateStr + ' · Here’s your overview';
         }
 
         // ── Dashboard Stats ───────────────────────────────────────
@@ -628,7 +640,7 @@
             var toggleBtn = document.getElementById('recent-activity-toggle');
             recentActivityData = recentSales || [];
             if (!recentSales || recentSales.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:1.5rem 0; font-size:0.85rem;">No recent activity</p>';
+                container.innerHTML = '<div style="text-align:center;padding:1.5rem 0;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:0.5rem;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p style="color:#94a3b8;font-size:0.82rem;margin:0;">No recent activity</p></div>';
                 toggleBtn.style.display = 'none';
                 return;
             }
@@ -642,7 +654,7 @@
                 var timeAgo = getTimeAgo(date);
                 var pm = (sale.payment_method || 'cash');
                 return '<div class="activity-item">' +
-                    '<div class="activity-icon sale">$</div>' +
+                    '<div class="activity-icon sale"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>' +
                     '<div class="activity-detail">' +
                         '<div class="activity-title">INV-' + sale.id + ' · ' + (sale.customer_name || 'Walk-in') + '</div>' +
                         '<div class="activity-time">' + pm.charAt(0).toUpperCase() + pm.slice(1) + ' · ' + timeAgo + '</div>' +
@@ -753,12 +765,12 @@
 
         // Change password
         function openChangePasswordModal() {
-            document.getElementById('change-password-modal').classList.add('active');
+            openModal('change-password-modal');
             document.getElementById('user-dropdown').classList.remove('active');
             document.getElementById('user-profile-toggle').classList.remove('active');
         }
         function closeChangePasswordModal() {
-            document.getElementById('change-password-modal').classList.remove('active');
+            closeModal('change-password-modal');
             document.getElementById('change-password-form').reset();
         }
         document.getElementById('change-password-form').addEventListener('submit', async function(e) {
